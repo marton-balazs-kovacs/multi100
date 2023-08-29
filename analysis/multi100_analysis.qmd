@@ -1,21 +1,39 @@
 ---
 title: "Multi100: Analysis"
 format: html
+editor_options: 
+  chunk_output_type: console
 ---
 
 TODO:
 years of experience integer!
 
-# Loading packages
+# Setup
+## Loading packages
 
 ```{r}
 library(tidyverse)
+```
+
+## Load custom functions
+
+```{r}
+source(here::here("R/utils.R"))
 ```
 
 # Read data
 
 ```{r}
 processed <- readr::read_csv(here::here("data/source/Multi100_Big_Dataset.csv"))
+
+# TODO: this simulation will be replaced if the effect sizes are calculated
+# variable names might change!
+processed <- 
+  processed %>% 
+  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
+  group_by(Paper_ID) %>% 
+  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
+  ungroup()
 ```
 
 # Exploratory data analysis
@@ -35,28 +53,15 @@ There are `r processed %>% filter(is.na(Direction_of_Result)) %>% nrow()` respon
 # Do different analysts arrive at the same conclusions as the analyst of the original study?
 ## Main figure
 
-Prepearing the figure data.
+Preparing the figure data.
 
 ```{r}
 # Distinct values of Direction_of_Result
 distinct(processed, Direction_of_Result)
 
-conclusions_main_data <-
+conclusions_main_data <- 
   processed %>% 
-  select(Paper_ID, Direction_of_Result) %>% 
-  count(Paper_ID, Direction_of_Result) %>% 
-  ungroup() %>% 
-  mutate(
-    Direction_of_Result = forcats::fct_relevel(Direction_of_Result, c("Same as claimed by the original study", "Opposite as claimed by the original study"))
-  ) %>%
-  tidyr::complete(Paper_ID, Direction_of_Result, fill = list(n = 0)) %>% 
-  group_by(Paper_ID) %>% 
-  mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = relative_frequency * 100,
-    ) %>% 
-  ungroup() %>% 
+  calculate_conclusion(., Paper_ID) %>% 
   mutate(
     # TODO: Check if there is a more tidy solution
     Paper_ID = fct_reorder(Paper_ID, ifelse(Direction_of_Result == "Same as claimed by the original study", percentage, NA), .desc = TRUE, .na_rm = TRUE)
@@ -67,155 +72,59 @@ Creating the figure.
 
 ```{r}
 conclusion_main_plot <-
-  conclusions_main_data %>% 
-  ggplot() +
-  aes(
-    y = Paper_ID,
-    x = percentage,
-    fill = Direction_of_Result
-  ) +
-  geom_bar(
-    stat = "identity",
-    width = 0.6
-    ) +
-  scale_x_continuous(
-    expand = c(0, 0),
-    labels = scales::percent_format(scale = 1)) +
-  labs(
-    fill = "Direction of\nthe results",
-    x = "Percentage"
-  ) +
+  plot_conclusion(conclusions_main_data, Paper_ID) +
   theme(
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank(),
     axis.text.y = element_text(size = 8),
     axis.text.x = element_text(size = 10),
     axis.title.x = element_text(size = 15),
-    legend.position = "bottom",
     legend.justification = "right",
     legend.box = "horizontal",
-    legend.text = element_text(size = 10),
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    panel.background = element_blank(),
-    panel.grid = element_blank()
+    legend.text = element_text(size = 10)
     )
 
 ggsave(here::here("figures/conclusion_main_plot.jpg"), conclusion_main_plot, width = 8.27, height = 11.69, dpi = 300)
+
+conclusion_main_plot
 ```
 
 ## By discipline
 
 ```{r}
-conclusions_discipline_data <-
+conclusions_discipline_data <- 
   processed %>% 
-  select(Paper_ID, Paper_Discipline, Direction_of_Result) %>% 
   filter(Paper_Discipline %in% c("psychology", "economics", "political science")) %>% 
-  count(Paper_Discipline, Direction_of_Result) %>% 
-  ungroup() %>% 
-  mutate(
-    Direction_of_Result = forcats::fct_relevel(Direction_of_Result, c("Same as claimed by the original study", "Opposite as claimed by the original study")),
-# TODO: Do this during data preprocessing once harry sends me the code
-    Paper_Discipline = str_to_title(Paper_Discipline)
-  ) %>%
-  group_by(Paper_Discipline) %>% 
-  mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = relative_frequency * 100,
-    ) %>% 
-  ungroup()
+  mutate(Paper_Discipline = str_to_title(Paper_Discipline)) %>% 
+  calculate_conclusion(., Paper_Discipline)
 
-conclusions_discipline_plot <- 
-  conclusions_discipline_data %>% 
-  ggplot() +
-  aes(
-    y = Paper_Discipline,
-    x = percentage,
-    fill = Direction_of_Result
-  ) +
-  geom_bar(
-    stat = "identity",
-    width = 0.8
-    ) +
-  scale_x_continuous(
-    expand = c(0, 0),
-    labels = scales::percent_format(scale = 1)) +
-  scale_y_discrete(expand = c(0, 0)) +
-  labs(
-    fill = "Direction of\nthe results",
-    x = "Percentage"
-  ) +
-  theme(
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank(),
-    legend.box = "horizontal",
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    legend.position = "bottom",
-    legend.text = element_text(size = 6),
-    panel.background = element_blank(),
-    panel.grid = element_blank()
-    )
+conclusions_discipline_plot <- plot_conclusion(conclusions_discipline_data, Paper_Discipline) + theme(legend.text = element_text(size = 6))
 
 ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
+
+conclusions_discipline_plot
 ```
 
 ## By expertise
 
 ```{r}
-conclusions_expertise_data <-
-  processed %>% 
-  select(Paper_ID, Expertise_Self_Rating, Direction_of_Result) %>% 
-  count(Expertise_Self_Rating, Direction_of_Result) %>% 
-  ungroup() %>% 
-  mutate(
-    Direction_of_Result = forcats::fct_relevel(Direction_of_Result, c("Same as claimed by the original study", "Opposite as claimed by the original study")),
-    Expertise_Self_Rating = as.factor(Expertise_Self_Rating)
-  ) %>%
-  group_by(Expertise_Self_Rating) %>% 
-  mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = relative_frequency * 100,
-    ) %>% 
-  ungroup()
+conclusions_expertise_data <- calculate_conclusion(processed, Expertise_Self_Rating)
 
-conclusions_expertise_plot <-
-  conclusions_expertise_data %>% 
-  ggplot() +
-  aes(
-    y = Expertise_Self_Rating,
-    x = percentage,
-    fill = Direction_of_Result
-  ) +
-  geom_bar(
-    stat = "identity",
-    width = 0.8
-    ) +
-  scale_x_continuous(
-    expand = c(0, 0),
-    labels = scales::percent_format(scale = 1)) +
-  scale_y_discrete(expand = c(0, 0)) +
-  labs(
-    fill = "Direction of\nthe results",
-    x = "Percentage"
-  ) +
-  theme(
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank(),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    panel.background = element_blank(),
-    panel.grid = element_blank()
-    )
+conclusions_expertise_plot <- plot_conclusion(conclusions_expertise_data, Expertise_Self_Rating) + theme(legend.text = element_text(size = 6))
 
 ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, dpi = 300)
+
+conclusions_expertise_plot
 ```
 
 ## By suitability of their self-judged analysis
 
 ```{r}
+conclusions_suitability_data <- calculate_conclusion(processed, Confidence_in_Approach)
 
+conclusions_suitability_plot <- plot_conclusion(conclusions_suitability_data, Confidence_in_Approach) + theme(legend.text = element_text(size = 6))
+
+ggsave(here::here("figures/conclusions_suitability_plot.jpg"), conclusions_suitability_plot, dpi = 300)
+
+conclusions_suitability_plot
 ```
 
 ## By sample size
@@ -303,73 +212,21 @@ effect_main_plot <-
     )
 
 ggsave(here::here("figures/effect_main_plot.jpg"), effect_main_plot, width = 8.27, height = 11.69, dpi = 300)
+
+effect_main_plot
 ```
 
 ## What percentage of the new effect sizes were beyond the tolerance region?
 ### By paper
 
 ```{r}
-effect_region_all_data <-
-  processed %>% 
-  # TODO: Simulating effect size variable replace it later
-  # Also filter needs to be added as not all the studies have effect sizes?
-  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
-  group_by(Paper_ID) %>% 
-  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
-  ungroup() %>% 
-  select(Paper_ID, r_analyst, r_original) %>% 
-  group_by(Paper_ID) %>%
-  mutate(
-    tolarence_region_lower = r_original - 0.05,
-    tolarence_region_upper = r_original + 0.05,
-    is_within_region = case_when(
-      r_analyst <= tolarence_region_lower | r_analyst >= tolarence_region_upper ~ "No",
-      r_analyst >= tolarence_region_lower | r_analyst <= tolarence_region_upper ~ "Yes"
-      )
-    ) %>% 
-  count(Paper_ID, is_within_region) %>% 
-  ungroup() %>% 
-  tidyr::complete(Paper_ID, is_within_region, fill = list(n = 0)) %>% 
-  group_by(Paper_ID) %>% 
-  mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = relative_frequency * 100
-  ) %>% 
-  ungroup() %>% 
-  mutate(
-    # TODO: Check if there is a more tidy solution
-    Paper_ID = fct_reorder(Paper_ID, ifelse(is_within_region == "Yes", percentage, NA), .desc = TRUE, .na_rm = TRUE)
-    )
-
-effect_region_all_plot <-
-  effect_region_all_data %>% 
-  ggplot() +
-  aes(
-    x = percentage,
-    y = Paper_ID,
-    fill = is_within_region
-  ) +
-  geom_bar(stat = "identity") +
-  scale_x_continuous(
-    expand = c(0, 0),
-    labels = scales::percent_format(scale = 1)) +
-  labs(
-    x = "Percentage",
-    fill = "Within region?"
-  ) +
-  theme(
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank(),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
-    )
+effect_region_all_data <- calculate_tolerance_region(processed, Paper_ID)
+  
+effect_region_all_plot <- plot_tolarence_region(effect_region_all_data, Paper_ID)
 
 ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
+
+effect_region_all_plot
 ```
 
 ### By discipline
@@ -380,64 +237,17 @@ processed %>%
   count(Paper_Discipline) %>% 
   arrange(n)
 
-effect_region_discipline_data <-
+effect_region_discipline_data <- 
   processed %>% 
-  # TODO: Simulating effect size variable replace it later
-  # Also filter needs to be added as not all the studies have effect sizes?
-  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
-  group_by(Paper_ID) %>% 
-  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
-  ungroup() %>% 
-  select(Paper_Discipline, r_analyst, r_original) %>% 
   filter(Paper_Discipline %in% c("psychology", "economics", "political science")) %>% 
-  mutate(
-    tolarence_region_lower = r_original - 0.05,
-    tolarence_region_upper = r_original + 0.05
-  ) %>% 
-  group_by(Paper_Discipline) %>%
-  mutate(
-    is_within_region = case_when(
-      r_analyst <= tolarence_region_lower | r_analyst >= tolarence_region_upper ~ "No",
-      r_analyst >= tolarence_region_lower | r_analyst <= tolarence_region_upper ~ "Yes"
-      )
-    ) %>% 
-  count(Paper_Discipline, is_within_region) %>% 
-  group_by(Paper_Discipline) %>% 
-  mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = relative_frequency * 100
-  ) %>% 
-  ungroup()
+  mutate(Paper_Discipline = str_to_title(Paper_Discipline)) %>% 
+  calculate_tolerance_region(., Paper_Discipline)
 
-effect_region_discipline_plot <-
-  effect_region_discipline_data %>% 
-  ggplot() +
-  aes(
-    x = percentage,
-    y = Paper_Discipline,
-    fill = is_within_region
-  ) +
-  geom_bar(stat = "identity") +
-  scale_x_continuous(
-    expand = c(0, 0),
-    labels = scales::percent_format(scale = 1)) +
-  labs(
-    x = "Percentage",
-    fill = "Within region?"
-  ) +
-  theme(
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank(),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
-    )
+effect_region_discipline_plot <- plot_tolarence_region(effect_region_discipline_data, Paper_Discipline)
 
 ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
+
+effect_region_discipline_plot
 ```
 
 ```{r}
@@ -448,43 +258,16 @@ processed %>%
 
 effect_robustness_discipline_data <-
   processed %>% 
-  # TODO: Simulating effect size variable replace it later
-  # Also filter needs to be added as not all the studies have effect sizes?
-  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
-  group_by(Paper_ID) %>% 
-  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
-  ungroup() %>% 
-  select(Paper_ID, Paper_Discipline, r_analyst) %>% 
   filter(Paper_Discipline %in% c("psychology", "economics", "political science")) %>% 
-  group_by(Paper_ID, Paper_Discipline) %>% 
-  filter(r_analyst == min(r_analyst) | r_analyst == max(r_analyst)) %>% 
-  summarise(
-    robustness = max(r_analyst) - min(r_analyst)
-  ) %>% 
-  ungroup()
+  mutate(Paper_Discipline = str_to_title(Paper_Discipline)) %>% 
+  calculate_robustness(Paper_Discipline)
 
 
-effect_robustness_discipline_plot <-
-  effect_robustness_discipline_data %>% 
-  ggplot() +
-  aes(
-    x = Paper_Discipline,
-    y = robustness
-  ) +
-  geom_jitter(width = 0.1) +
-  labs(
-    x = "Discipline",
-    y = "Robustness",
-  ) +
-  theme(
-    axis.ticks = element_blank(),
-    plot.margin = margin(t = 20, r = 20, b = 20, l = 20, "pt"),
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
-    )
+effect_robustness_discipline_plot <- plot_robustness(effect_robustness_discipline_data, Paper_Discipline)
 
 ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
+
+effect_robustness_discipline_plot 
 ```
 
 ### By expertise
@@ -495,64 +278,13 @@ There are `r processed %>% filter(is.na(Expertise_Self_Rating)) %>% nrow()` miss
 processed %>% 
   distinct(Expertise_Self_Rating)
 
-effect_region_expertise_data <-
-  processed %>% 
-  # TODO: Simulating effect size variable replace it later
-  # Also filter needs to be added as not all the studies have effect sizes?
-  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
-  group_by(Paper_ID) %>% 
-  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
-  ungroup() %>% 
-  select(Expertise_Self_Rating, r_analyst, r_original) %>% 
-  mutate(
-    tolarence_region_lower = r_original - 0.05,
-    tolarence_region_upper = r_original + 0.05,
-    Expertise_Self_Rating = as.factor(Expertise_Self_Rating)
-  ) %>% 
-  group_by(Expertise_Self_Rating) %>%
-  mutate(
-    is_within_region = case_when(
-      r_analyst <= tolarence_region_lower | r_analyst >= tolarence_region_upper ~ "No",
-      r_analyst >= tolarence_region_lower | r_analyst <= tolarence_region_upper ~ "Yes"
-      )
-    ) %>% 
-  count(Expertise_Self_Rating, is_within_region) %>% 
-  group_by(Expertise_Self_Rating) %>% 
-  mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = relative_frequency * 100
-  ) %>% 
-  ungroup()
+effect_region_expertise_data <- calculate_tolerance_region(processed, Expertise_Self_Rating)
 
-effect_region_expertise_plot <-
-  effect_region_expertise_data %>% 
-  ggplot() +
-  aes(
-    x = percentage,
-    y = Expertise_Self_Rating,
-    fill = is_within_region
-  ) +
-  geom_bar(stat = "identity") +
-  scale_x_continuous(
-    expand = c(0, 0),
-    labels = scales::percent_format(scale = 1)) +
-  labs(
-    x = "Percentage",
-    fill = "Within region?"
-  ) +
-  theme(
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank(),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
-    )
+effect_region_expertise_plot <- plot_tolarence_region(effect_region_expertise_data, Expertise_Self_Rating)
 
 ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300)
+
+effect_region_expertise_plot
 ```
 
 ### By suitability of their self-judged analysis
@@ -563,64 +295,13 @@ There are `r processed %>% filter(is.na(Confidence_in_Approach)) %>% nrow()` mis
 processed %>% 
   distinct(Confidence_in_Approach)
 
-effect_region_suitability_data <-
-  processed %>% 
-  # TODO: Simulating effect size variable replace it later
-  # Also filter needs to be added as not all the studies have effect sizes?
-  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
-  group_by(Paper_ID) %>% 
-  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
-  ungroup() %>% 
-  select(Confidence_in_Approach, r_analyst, r_original) %>% 
-  mutate(
-    tolarence_region_lower = r_original - 0.05,
-    tolarence_region_upper = r_original + 0.05,
-    Confidence_in_Approach = as.factor(Confidence_in_Approach)
-  ) %>% 
-  group_by(Confidence_in_Approach) %>%
-  mutate(
-    is_within_region = case_when(
-      r_analyst <= tolarence_region_lower | r_analyst >= tolarence_region_upper ~ "No",
-      r_analyst >= tolarence_region_lower | r_analyst <= tolarence_region_upper ~ "Yes"
-      )
-    ) %>% 
-  count(Confidence_in_Approach, is_within_region) %>% 
-  group_by(Confidence_in_Approach) %>% 
-  mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = relative_frequency * 100
-  ) %>% 
-  ungroup()
+effect_region_suitability_data <- calculate_tolerance_region(processed, Confidence_in_Approach)
 
-effect_region_suitability_plot <- 
-  effect_region_suitability_data %>% 
-  ggplot() +
-  aes(
-    x = percentage,
-    y = Confidence_in_Approach,
-    fill = is_within_region
-  ) +
-  geom_bar(stat = "identity") +
-  scale_x_continuous(
-    expand = c(0, 0),
-    labels = scales::percent_format(scale = 1)) +
-  labs(
-    x = "Percentage",
-    fill = "Within region?"
-  ) +
-  theme(
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank(),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
-    )
+effect_region_suitability_plot <- plot_tolarence_region(effect_region_suitability_data, Confidence_in_Approach)
 
 ggsave(here::here("figures/effect_region_suitability_plot.jpg"), effect_region_suitability_plot, dpi = 300)
+
+effect_region_suitability_plot
 ```
 
 ### By sample size
@@ -628,6 +309,7 @@ ggsave(here::here("figures/effect_region_suitability_plot.jpg"), effect_region_s
 There are `r processed %>% filter(is.na(Model_Sample_Size)) %>% nrow()` missing values for the sample size survey question.
 
 ```{r}
+
 
 ```
 
