@@ -1,0 +1,351 @@
+---
+title: "Multi100: Source to raw data cleaning"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+### Loading packages
+
+```{r}
+library(tidyverse)
+library(here)
+```
+
+### Load custom functions
+
+```{r}
+source(here::here("R/utils.R"))
+```
+
+### Read data
+
+```{r}
+# Task1 form
+task1 <- readr::read_csv(here::here("data/source/Task1.csv")) %>%
+  # This column contained a random comment by one of the team members which is not part of the dataset
+  select(-`...24`)
+
+# Sign up form to be an analyst
+all_people <- readr::read_csv(here::here("data/source/all_people.csv"))
+
+# Original papers
+all_paper <- readr::read_csv(here::here("data/source/all_paper.csv"))
+
+# Task2 form
+task2 <- readr::read_csv("data/source/Task2.csv")
+
+# Master spreadsheet
+master <- readr::read_csv(here::here("data/source/+MasterSpreadsheet.csv")) %>% 
+  # TODO: Either have to delete not important columns in the spreadsheet or add descriptions to them
+  # This is a bandaid solution
+  select(
+    paper_id,
+    `reproduction_type (OSF)\n\nUpdated, based on Andrew's info (08.11.Livi)`,
+    `reproduction result (OSF)`,
+    `categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;\n\nLivi/Zoli (Livi)`,
+    `original statistical result`,
+    `Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns`,
+    Location_of_result_in_paper
+  )
+
+effect_sizes <- readr::read_csv(here::here("data/source/Multi-100_EffectSizes.csv")) %>% 
+  # TODO: Same as before
+  select(
+    paper_id,
+    `familiy (z, t, F, or x2)`,
+    `test statistic`,
+    df_1,
+    df_2,
+    `sample size`,
+    Comment_on_any_materials
+  )
+
+# Peer evaluation data
+peer_eval <- readr::read_csv(here::here("data/source/Peer_Evals.csv"))
+```
+
+## Creating a codebook
+
+```{r}
+# Task1
+task1_codebook <-
+  tibble::tibble(
+    variable_names = colnames(task1),
+    new_names = case_when(
+      variable_names == "Időbélyeg" ~ "task1_timestamp",
+      variable_names == "E-mail-cím" ~ "email",
+      variable_names == "1.1. Please provide your analyst ID." ~ "analyst_id",
+      variable_names == "1.2. Please provide the ID of your paper." ~ "paper_id",
+      variable_names == "1.3. Which title best describes your current position?" ~ "current_position",
+      variable_names == "1.4. What is your gender identity?" ~ "gender",
+      variable_names == "1.5. What is your age? (in years)" ~ "age",
+      variable_names == "1.6. What is the highest level of education that you have completed?" ~ "education_level",
+      variable_names == "1.7 Country of residence" ~ "country_of_residence",
+      variable_names == "1.8. Which discipline is the closest to your research area?" ~ "analyst_discipline",
+      variable_names == "1.9. What keywords would best describe the topics of your own research?" ~ "keywords",
+      variable_names == "1.10. How many years of experience do you have in data analysis?" ~ "years_of_experience",
+      variable_names == "1.11. How regularly do you perform data analysis?" ~ "analysis_frequency",
+      variable_names == "1.12. How do you rate your level of expertise in the ﬁeld of data analysis?" ~ "expertise_self_rating",
+      variable_names == "2.1. Were you familiar with the paper that this dataset belongs to before beginning your work on this project?" ~ "familiar_with_paper",
+      variable_names == "2.2. Did you communicate about the details of your analysis with co-analysts of the same dataset?" ~ "communication_check",
+      variable_names == "2.3. What language/software/tools did you use in your data analysis?" ~ "task1_software",
+      variable_names == "2.4. Please report the most important steps of the analysis to the level of detail that you would provide in a methods/analysis section of a typical research article. Include any preprocessing steps that you conducted on the dataset. Describe the exact statistical hypothesis you tested and explain the reason for choosing the statistical procedure you applied. Finally, please report the result of your statistical test(s)." ~ "task1_analysis_report",
+      variable_names == "2.5. What is the conclusion of your analysis in words?" ~ "task1_conclusion",
+      variable_names == "2.6. How would you categorize your result?" ~ "task1_categorisation",
+      variable_names == "2.7. How confident are you that your statistical approach is suitable for analyzing the selected claim?" ~ "confidence_in_approach",
+      variable_names == "2.8. How suitable did you find the dataset of the study for analysing the selected claim?" ~ "data_suitability",
+      variable_names == "Do you have a further comment to share?" ~ "task1_comments"
+    )
+  )
+
+# Task 2
+task2_codebook <-
+  tibble::tibble(
+    variable_names = colnames(task2),
+    new_names = case_when(
+      variable_names == "Időbélyeg" ~ "task2_timestamp",
+      variable_names == "E-mail-cím" ~ "email",
+      variable_names == "1. Please provide your analyst ID." ~ "analyst_id",
+      variable_names == "2. Please provide the ID of your paper." ~ "paper_id",
+      variable_names == "3. What language/software/tools did you use in your data analysis?" ~ "task2_software",
+      variable_names == "4. Please report the most important steps of the analysis to the level of detail that you would provide in a methods/analysis section of a typical research article. Include any preprocessing steps that you might have conducted on the dataset. Describe the exact hypothesis you tested and explain the reason for choosing the statistical procedure you applied. Finally, please report the result of your statistical test. Please also describe the steps you took in order to satisfy the specific instructions of Task 2." ~ "task2_analysis_report",
+      variable_names == "5. What type of test statistics did you calculate?" ~ "type_of_statistic",
+      variable_names == "6. Please report the numeric value of your test statistic with three decimals precision. Please use “.” as the decimal separator." ~ "statistic_report",
+      variable_names == "7. What is the sample size of your model?" ~ "model_sample_size",
+      variable_names == "8. What is the degrees of freedom of your model (if applicable, i.e., in case your result is based on a Chi²-, t-, or F-statistic)? (separate them by ; )" ~ "model_degrees_of_freedom",
+      variable_names == "9. Did you base your conclusion on a p-value or on a Bayes factor?" ~ "p_value_or_bayes",
+      variable_names == "10. What is the p-value or Bayes factor of your main result? (report only the values here)" ~ "p_value_report",
+      variable_names == "11. What is the conclusion of your analysis in words?" ~ "task2_conclusion",
+      variable_names == "12.  Please indicate the direction to which your result points disregarding whether it is conclusive/significant or not?" ~ "direction_of_result",
+      variable_names == "13. Did you arrive at the same statistical result in Task 2 as in Task 1?" ~ "same_conclusion_as_task1",
+      variable_names == "14. Did you have to make additional calculations to complete the Task 2?" ~ "additional_calculations",
+      variable_names == "15. Approximately how many hours did it require from you to perform Task 1 and Task 2 together?" ~ "total_hours",
+      variable_names == "16. We are very interested to know any thoughts and comments you have about the survey you just completed or about the Multi100 project more generally. We would be grateful for any feedback you could provide here:" ~ "task2_comments"
+    )
+  )
+
+# Signup form
+all_people_codebook <-
+  tibble::tibble(
+    variable_names = colnames(all_people),
+    new_names = case_when(
+      variable_names == "Időbélyeg" ~ "signup_timestamp",
+      variable_names == "E-mail-cím" ~ "signup_email",
+      variable_names == "First name" ~ "first_name",
+      variable_names == "Surname" ~ "last_name",
+      variable_names == "Title" ~ "title",
+      variable_names == "To prevent our messages going to spam, please send a short email confirming your interest in the project to multi100@cos.io (using the email address you previously entered). If you do not see a reply in a few days, check your “junk mail” folder or “spam” folder and add multi100@cos.io to your White List or Safe Sender List. If you still do not receive an email, then write to multi100@cos.io explaining the problem. We will make every effort to ensure that emails are delivered." ~ "email_to_cos_sent",
+      variable_names == "University/Research Institute." ~ "university_research_institute",
+      variable_names == "I have experience conducting statistical analyses, reporting results, and documenting my work in code." ~ "experience_conducting_analyses",
+      variable_names == "Analysts in this project should not disclose any information to any other researcher until all analysts have submitted their analyses. This means analysts are not allowed to share or discuss the methodology and results of their analyses with other re-analysts of the given dataset. Researchers and peer evaluators agree to refrain from posting anything about the project via social media or in the public domain until the project is completed." ~ "disclosure_agreement",
+      variable_names == "After submitting your analysis, your name will be linked to the submitted analysis and you will remain responsible for its content. Your email address will be used exclusively to communicate during the project. By filling out this form, you agree to the use of your email address to communicate during the project." ~ "name_attached_to_analysis",
+      variable_names == "In addition to co-analysts, we are looking for researchers to serve as evaluators of the submitted analyses. An evaluator’s job is to check the plausibility and sensibility of an analysis based on the summary of the analysis submitted by the analyst. Our expectation is that evaluators complete evaluations of 20 different analyses, and evaluators are eligible for a payment if they complete their task in time. Are you interested in serving as an evaluator for this project?" ~ "willing_to_peer_eval",
+      variable_names == "analyst_id" ~ "analyst_id",
+      variable_names == "comment about email" ~ "signup_comment",
+      variable_names == "removed" ~ "removed"
+    )
+  )
+
+# All paper
+all_paper_codebook <-
+  tibble::tibble(
+    variable_names = colnames(all_paper),
+    new_names = case_when(
+      variable_names == "title" ~ "original_title",
+      variable_names == "paper_id" ~ "paper_id",
+      variable_names == "COS_pub_category" ~ "paper_discipline",
+      variable_names == "OSF_link" ~ "general_osf_link",
+      variable_names == "instructions" ~ "instructions_given",
+      variable_names == "the_claim" ~ "original_claim",
+      variable_names == "original_materials" ~ "original_materials",
+      variable_names == "paper_link" ~ "paper_link"
+    )
+  )
+
+# Master spreadsheet
+master_codebook <-
+  tibble::tibble(
+    variable_names = colnames(master),
+    new_names = case_when(
+      variable_names == "paper_id" ~ "paper_id",
+      variable_names == "reproduction_type (OSF)\n\nUpdated, based on Andrew's info (08.11.Livi)" ~ "reproduction_type_osf",
+      variable_names == "reproduction result (OSF)" ~ "reproduction_result_osf",
+      variable_names == "categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;\n\nLivi/Zoli (Livi)" ~ "categorisation_of_claim",
+      variable_names == "original statistical result" ~ "in_text_original_statistical_result",
+      variable_names == "Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns" ~ "related_original_statistical_result",
+      variable_names == "Location_of_result_in_paper" ~ "original_result_page_number"
+    )
+  )
+
+# Effect size data
+effect_sizes_codebook <-
+  tibble::tibble(
+    variable_names = colnames(effect_sizes),
+    new_names = case_when(
+      variable_names == "paper_id" ~ "paper_id",
+      variable_names == "familiy (z, t, F, or x2)" ~ "original_type_of_statistic",
+      variable_names == "test statistic" ~ "original_statistic_report",
+      variable_names == "df_1" ~ "degrees_of_freedom_1",
+      variable_names == "df_2" ~ "degrees_of_freedom_2",
+      variable_names == "sample size" ~ "original_model_sample_size",
+      variable_names == "Comment_on_any_materials" ~ "comment_on_reproduction_materials"
+    )
+  )
+
+# Peer evaluation data
+peer_eval_codebook <-
+  tibble::tibble(
+    variable_names = colnames(peer_eval),
+    new_names = case_when(
+      variable_names == "Időbélyeg" ~ "peereval_timestamp",
+      variable_names == "E-mail-cím" ~ "evaluator_email",
+      variable_names == "your ID in the project:" ~ "evaluator_id",
+      variable_names == "ID of the re-analyzed paper you evaluated:" ~ "paper_id",
+      variable_names == "ID of co-analyst (whose analysis you chose to evaluate):" ~ "analyst_id",
+      variable_names == "Please indicate whether you judge the pipeline of the given re-analysis to be acceptable, meaning that it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Please rate its quality by the following options:" ~ "task1_pipeline_acceptable",
+      variable_names == "Please explain why you deemed the pipeline of the re-analysis unacceptable:" ~ "why_is_task1_pipeline_unacceptable",
+      variable_names == "Please indicate whether the provided conclusion adequately follows from the results of the analysis:" ~ "task1_conclusion_follows_results",
+      variable_names == "Please explain why you think that the conclusion did not follow adequately from the results:" ~ "why_does_conclusion_not_follow_results",
+      variable_names == "Please indicate whether the co-analyst’s self-categorization of the result is adequate:" ~ "task1_categorisation_is_accurate",
+      variable_names == "Please indicate whether you judge the present analysis pipeline to be acceptable, meaning that it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Please rate its quality by the following options:" ~ "task2_pipeline_acceptable",
+      variable_names == "Please explain why you deemed the present pipeline of the re-analysis unacceptable:" ~ "why_is_task2_pipeline_unacceptable",
+      variable_names == "Code reproducibility check: You are not required to execute the analysis code or follow the description of the analysis script, but if you nevertheless managed to do so, did you find any mismatch between the results of the analysis and the reported results?" ~ "any_code_mismatches",
+      variable_names == "Please describe the mismatches you found:" ~ "description_of_mismatches",
+      variable_names == "Comment to the organizers:" ~ "evaluator_comments"
+    )
+  )
+```
+
+Saving the codebook for the raw data.
+
+```{r}
+task1_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_task1_raw_codebook.csv"))
+
+task2_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_task2_raw_codebook.csv"))
+
+all_people_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_all-people_raw_codebook.csv"))
+
+all_paper_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_all-paper_raw_codebook.csv"))
+
+master_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_master_raw_codebook.csv"))
+
+effect_sizes_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_effect-sizes_raw_codebook.csv"))
+
+peer_eval_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_peer-eval_raw_codebook.csv"))
+```
+
+## Renaming variables
+
+```{r}
+colnames(task1) <- dplyr::recode(
+  colnames(task1), 
+  !!!setNames(as.character(task1_codebook$new_names), task1_codebook$variable_names)
+)
+
+colnames(task2) <- dplyr::recode(
+  colnames(task2), 
+  !!!setNames(as.character(task2_codebook$new_names), task2_codebook$variable_names)
+)
+
+colnames(all_people) <- dplyr::recode(
+  colnames(all_people), 
+  !!!setNames(as.character(all_people_codebook$new_names), all_people_codebook$variable_names)
+)
+
+colnames(all_paper) <- dplyr::recode(
+  colnames(all_paper), 
+  !!!setNames(as.character(all_paper_codebook$new_names), all_paper_codebook$variable_names)
+)
+
+colnames(master) <- dplyr::recode(
+  colnames(master), 
+  !!!setNames(as.character(master_codebook$new_names), master_codebook$variable_names)
+)
+
+colnames(effect_sizes) <- dplyr::recode(
+  colnames(effect_sizes), 
+  !!!setNames(as.character(effect_sizes_codebook$new_names), effect_sizes_codebook$variable_names)
+)
+
+colnames(peer_eval) <- dplyr::recode(
+  colnames(peer_eval), 
+  !!!setNames(as.character(peer_eval_codebook$new_names), peer_eval_codebook$variable_names)
+)
+```
+
+## Dropping variables that contain personal information
+
+Some variables contain personal information that we cannot share openly. We will drop these variables here for the further analysis.
+
+```{r}
+task1 <- 
+  task1 %>% 
+  select(-email)
+
+task2 <- 
+  task2 %>% 
+  select(-email)
+
+all_people <- 
+  all_people %>% 
+  select(-signup_email)
+
+peer_eval <- 
+  peer_eval %>% 
+  select(-evaluator_email)
+```
+
+## Save raw dataset
+
+```{r}
+readr::write_csv(task1, here("data/raw/multi100_task1_raw_data.csv"))
+
+readr::write_csv(task2, here("data/raw/multi100_task2_raw_data.csv"))
+
+readr::write_csv(all_people, here("data/raw/multi100_all-people_raw_data.csv"))
+
+readr::write_csv(all_paper, here("data/raw/multi100_all-paper_raw_data.csv"))
+
+readr::write_csv(master, here("data/raw/multi100_master_raw_data.csv"))
+
+readr::write_csv(effect_sizes, here("data/raw/multi100_effect-sizes_raw_data.csv"))
+
+readr::write_csv(peer_eval, here("data/raw/multi100_peer-eval_raw_data.csv"))
+```

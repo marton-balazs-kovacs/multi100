@@ -1,0 +1,625 @@
+---
+title: "Multi100: Raw to processed data cleaning"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setup
+### Loading packages
+
+```{r}
+library(tidyverse)
+```
+
+### Load custom functions
+
+```{r}
+source(here::here("R/utils.R"))
+```
+
+## Read data
+
+```{r}
+# Task1 form responses
+task1 <- readr::read_csv(here::here("data/raw/multi100_task1_raw_data.csv"))
+
+# Task2 form responses
+task2 <- readr::read_csv(here::here("data/raw/multi100_task2_raw_data.csv"))
+
+# 'all_people' data (to be used for checking that ID's match)
+# TODO: ADD source CODE
+all_people <- readr::read_csv(here::here("data/raw/multi100_all-people_raw_data.csv"))
+
+# 'all_paper' meta-information on all papers analyzed
+all_paper <- readr::read_csv(here::here("data/raw/multi100_all-paper_raw_data.csv"))
+
+# Master spreadsheet
+master <- readr::read_csv(here::here("data/raw/multi100_master_raw_data.csv"))
+
+# Effect sizes
+effect_sizes <- readr::read_csv(here::here("data/raw/multi100_effect-sizes_raw_data.csv"))
+
+# Peer evaluation data
+peer_eval <- readr::read_csv(here::here("data/raw/multi100_peer-eval_raw_data.csv"))
+```
+
+## all_paper
+
+```{r}
+all_paper <-
+  all_paper %>% 
+  janitor::clean_names() %>% 
+  # Excluding empty rows
+  filter(if_all(everything(), ~!is.na(.x))) %>% 
+  # Remove leading and trailing spaces from paper_id
+  mutate(paper_id = trimws(paper_id, "both"))
+```
+
+## task1
+
+```{r}
+task1 <- 
+  task1 %>% 
+  mutate(
+    # add 'task1_submission_number' as a reference variable
+    task1_submission_number = 1:nrow(.),
+    # remove leading and trailing spaces from Analyst_ID and Paper_ID variables
+    analyst_id = trimws(analyst_id, "both"),
+    paper_id = trimws(paper_id, "both"),
+    combined_id = paste(analyst_id, paper_id, sep = "_")
+  )
+```
+
+We are excluding the pilot responses. Analysts with analyst_id "8nJioy5V5B" and "z2u1wLLVu1" are test runs (pilot data).
+
+```{r}
+task1 <-
+  task1 %>% 
+  filter(analyst_id %ni% c("8nJioy5V5B", "z2u1wLLVu1"))
+```
+
+Check whether the paper_id provided by the analyst matches the correct id.
+Check if all paper_id's in 'task1' are present in 'all_paper', if 'FALSE' then ID's match.
+
+```{r}
+any(!(task1$paper_id %in% all_paper$paper_id))
+```
+
+Found non-matching paper_id's. Print paper_id values in 'task1' that are not present in 'all_paper'.
+
+```{r}
+task1$paper_id[!task1$paper_id %in% all_paper$paper_id]
+```
+
+Correcting the erroneous paper_id's:
+* 'XAS95 Raley_JournMarFam_2012_D2LY' should be 'Raley_JournMarFam_2012_D2LY'
+* 'Rjp9' should be 'Jiang_AmJourPoliSci_2018_Rjp9'
+
+```{r}
+task1 <-
+  task1 %>% 
+  mutate(paper_id = case_when(
+    paper_id == "XAS95 Raley_JournMarFam_2012_D2LY" ~ "Raley_JournMarFam_2012_D2LY",
+    paper_id == "Rjp9" ~ "Jiang_AmJourPoliSci_2018_Rjp9",
+    TRUE ~ paper_id
+  ))
+```
+
+Verify that all paper_ids are now present.
+
+```{r}
+any(!(task1$paper_id %in% all_paper$paper_id))
+```
+
+Check how many analyses were submitted with '_2' ID's. Some analyst submitted multiple analyses. We assigned '_2' to the analyst_ids of these analyst for the second and possibly third analyses.
+
+```{r}
+task1_multiple_analyses <- 
+  task1 %>% 
+  filter(str_detect(analyst_id, "_")) %>% 
+  select(analyst_id, paper_id) %>% 
+  arrange(analyst_id) %>% 
+  group_by(analyst_id) %>% 
+  mutate(n = n())
+```
+
+There are no analysts who did more than 2 analysis.
+
+We are removing '_2' from the end of analyst_id's in both Task 1 and Task 2. They are not needed for further analysis because paper_id and analyst_id together can identify an analysis perfectly.
+
+```{r}
+task1 <-
+  task1 %>% 
+  mutate(analyst_id = str_replace(analyst_id, "_2$", ""))
+```
+
+Check whether each analyst_id matches with the ID they were assigned in the signup form ('all_people').
+Check if all analyst_id in task1 are present in all_people, if 'FALSE' then all ID's match.
+
+```{r}
+any(!(task1$analyst_id %in% all_people$analyst_id)) 
+```
+
+Check for duplicate responses.
+
+```{r}
+task1_duplicates <-
+  task1 %>% 
+  group_by(paper_id, analyst_id) %>% 
+  mutate(n = n()) %>% 
+  filter(n > 1) %>% 
+  arrange(desc(n))
+
+task1_duplicates %>% 
+  distinct(paper_id, analyst_id, n)
+```
+
+Attend to each of these cases manually. We will only keep the correct responses for further analysis.
+
+```{r}
+task1 <-
+  task1 %>% 
+  filter(
+   # GNUQA_GROSSMAN
+    # SN. 23 to be removed... responses largely identical, but the comments of the analyst indicate that SN. 24 is their preferred version
+    task1_submission_number != 23,
+    # KZGB8_Ku
+    # SN. 25 to be removed... analyst forgot to include something in original
+    task1_submission_number != 25,
+    # AJIUW_Angrist
+    # SN. 64 to be removed... submission is identical apart from conclusion... consider duplicate response a replacement of the original
+    task1_submission_number != 64,
+    # 419LV_Bursztyn
+    # SN. 110 to be removed... submission is identical apart from 'years of experience'... 
+    # SN. 110 states that the analyst is 30 years old and has 30 years of experience. SN. 108 reports 6 years of experience...
+    # consider SN. 110 an error
+    task1_submission_number != 110,
+    # T6S8L_Robertson
+    # SN. 193 to be removed... original submission states the claim cannot be tested, but the duplicate SN. 235 corrects this
+    task1_submission_number != 193,
+    # YMESM_Cohen
+    # SN. 91 to be removed... SN. 237 is stated as an updated entry
+    task1_submission_number != 91,
+    # IFVKR_Robertson
+    # SN. 52 to be removed... SN. 250 is an updated entry
+    task1_submission_number != 52,
+    # 5GT7K_Wlezien
+    # SN. 49 to be removed... SN. 282 is an updated entry
+    task1_submission_number != 49,
+    # XF5GJ_Wlezien
+    # SN. 146 to be removed... SN. 283 is an updated entry
+    task1_submission_number != 146,
+    # KNXVJ_Wlezien
+    # SN. 216 to be removed... SN. 284 is an updated entry
+    task1_submission_number != 216,
+    # YEJO9_Andreoni
+    # SN. 316 to be removed... SN. 324 is stated as an updated entry
+    task1_submission_number != 316,
+    # J5BBA_Caldero
+    # SN. 337 to be removed... SN. 345 is an updated entry
+    task1_submission_number != 337,
+    # 8AYYN_Menaldo
+    # SN. 378 + 379 to be removed... three identical submissions
+    task1_submission_number != 378,
+    task1_submission_number != 379,
+    # K0XHI_Platt
+    # SN. 386 + 387 to be removed... SN. 388 states that this is their third and final submission with minor changes made from the previous
+    task1_submission_number != 386,
+    task1_submission_number != 387,
+    # HDP26_Cleave
+    # SN. 498 to be removed... SN. 497 is stated as an updated entry
+    task1_submission_number != 498,
+    # K9J6C_Hendricks
+    # SN. 415 to be removed... SN. 536 is an updated entry
+    task1_submission_number != 415 
+  )
+```
+
+Verify that there are no longer any duplicates.
+
+```{r}
+task1 %>% 
+  count(paper_id, analyst_id) %>% 
+  filter(n > 1)
+```
+
+## Task 2
+
+```{r}
+task2 <- 
+  task2 %>% 
+  mutate(
+    # add 'task2_submission_number' as a reference variable
+    task2_submission_number = 1:nrow(.),
+    # remove leading and trailing spaces from Analyst_ID and Paper_ID variables
+    analyst_id = trimws(analyst_id, "both"),
+    # Remove '_2' from the 'analyst_id' variable
+    analyst_id = str_replace(analyst_id, "_2$", ""),
+    paper_id = trimws(paper_id, "both"),
+    combined_id = paste(analyst_id, paper_id, sep = "_")
+  )
+```
+
+Check whether each analyst_id matches with the ID they were assigned in the signup form ('all_people').
+Check if all analyst_id in task2 are present in all_people, if 'FALSE' then all ID's match.
+
+```{r}
+any(!(task2$analyst_id %in% all_people$analyst_id)) 
+```
+
+Find non-matching analyst_ids in task2 that are not present in the submission form
+
+```{r}
+anti_join(task2, all_people, by = "analyst_id")
+```
+
+Replacing non-matching analyst_ids.
+
+```{r}
+task2 <- 
+  task2 %>% 
+  mutate(analyst_id = case_when(
+    # PGT48 should be PTG48
+    analyst_id == "PGT48" ~ "PTG48",
+    # h46k4 should be H46K4
+    analyst_id == "h46k4" ~ "H46K4",
+    # CO9RR should be C09RR (zero rather than capital o)
+    analyst_id == "CO9RR" ~ "C09RR",
+    TRUE ~ analyst_id
+  ))
+```
+
+Verify that there are no missing analyst_ids.
+
+```{r}
+anti_join(task2, all_people, by = "analyst_id")
+```
+
+Both Task1 and Task2 analyst_ids's now match with the ID they were assigned to.
+
+Check whether the paper_id provided by the analyst matches the correct paper_id in the meta-information sheet provided by OSF.
+
+```{r}
+any(!(task2$paper_id %in% all_paper$paper_id))
+```
+
+Find non-matching paper_ids. Find paper_id values in 'task2' that are not present in 'all_paper'.
+
+```{r}
+task2$paper_id[!task2$paper_id %in% all_paper$paper_id]
+```
+
+Correcting the erroneous paper_id's:
+* 'Tenye_EurSocioRev_2016_qXX2' should be 'Teney_EurSocioRev_2016_qXX2'
+* 'qQ9Z' should be 'Desmond_Demography_2015_qQ9Z'
+* 'RJP9' should be 'Jiang_AmJourPoliSci_2018_Rjp9'
+
+```{r}
+task2 <-
+  task2 %>% 
+  mutate(paper_id = case_when(
+    paper_id == "Tenye_EurSocioRev_2016_qXX2" ~ "Teney_EurSocioRev_2016_qXX2",
+    paper_id == "qQ9Z" ~ "Desmond_Demography_2015_qQ9Z",
+    paper_id == "RJP9" ~ "Jiang_AmJourPoliSci_2018_Rjp9",
+    TRUE ~ paper_id
+  ))
+```
+
+Verify that all paper_ids are now present.
+
+```{r}
+any(!(task2$paper_id %in% all_paper$paper_id))
+```
+
+Check for duplicate responses.
+
+```{r}
+task2_duplicates <-
+  task2 %>% 
+  group_by(paper_id, analyst_id) %>% 
+  mutate(n = n()) %>% 
+  filter(n > 1) %>% 
+  arrange(desc(n))
+
+task2_duplicates %>% 
+  distinct(paper_id, analyst_id, n)
+```
+
+There are `r nrow(distinct(task2_duplicates, paper_id, analyst_id, n))` analyses where there are duplicate responses out of the `r nrow(task2)` responses. Since in some cases there are more than 2 responses, after deleting the duplicates `r nrow(task2) - (nrow(task2_duplicates) - nrow(distinct(task2_duplicates, paper_id, analyst_id, n)))` responses should remain task2.
+
+Attend to each of these cases manually. Manual inspection of the duplicate responses confirms that the last instance of each analysis is the analysis that should remain in the dataset.
+
+```{r}
+task2 <-
+  task2 %>% 
+  mutate(task2_timestamp = ymd_hms(task2_timestamp)) %>% 
+  group_by(analyst_id, paper_id) %>%
+  filter(task2_timestamp == max(task2_timestamp)) %>% 
+  ungroup()
+```
+
+After deleting the duplicates there are `r nrow(task2)` responses remained. The deletion of the duplicates was successful.
+
+Check how many Analyst ID's are present in Task1 data but NOT Task2 data. Then, verify that there are no analyst_ids in Task2 that do not appear in Task1.
+
+```{r}
+# It is possible to have analyst_ids in task1 that are not present in task2, since not all of the analysts completed task2 who completed task2
+setdiff(task1$analyst_id, task2$analyst_id) 
+# But there should be no analyst who completed task2 but did not submit a task1 response
+setdiff(task2$analyst_id, task1$analyst_id)
+```
+
+Check which combined_ids appear in Task 1 but not Task 2 and vice versa.
+
+```{r}
+setdiff(task1$combined_id, task2$combined_id) 
+setdiff(task2$combined_id, task1$combined_id) 
+```
+
+"JX7YO" wrongly submitted Task 2 paper_id as McLaren... should be Christensen... We rectify that now.
+
+```{r}
+task2 <-
+  task2 %>% 
+  mutate(paper_id = case_when(
+    paper_id == "McLaren_WorldPolitics_2012_wRvv" ~ "Christensen_EurJournPersonality_2018_8R9d",
+    TRUE ~ paper_id
+  ))
+```
+
+## Combining Task 1 and Task 2
+
+Join task 1 and task 2 data based on both analyst_id and paper_id.
+
+```{r}
+multi100_data <- inner_join(task1, task2, by = c("analyst_id", "paper_id", "combined_id"))
+```
+
+Check number of analyses based on paper_id.
+
+```{r}
+multi100_data %>% 
+  count(paper_id)
+```
+
+## Combining signup form
+
+Merge all_people with multi100_data based on analyst_id.
+
+```{r}
+multi100_data <- inner_join(multi100_data, all_people, by = "analyst_id")
+```
+
+## Merge original paper info
+
+Merge with multi100_data based on paper_id
+
+```{r}
+multi100_data <- inner_join(multi100_data, all_paper, by = "paper_id")
+```
+
+## Merge master spreadsheet
+
+```{r}
+multi100_data <- inner_join(multi100_data, master, by = "paper_id")
+```
+
+## Merge effect size info
+
+```{r}
+multi100_data <- inner_join(multi100_data, effect_sizes, by = "paper_id")
+```
+
+## Select and re-order variables
+
+```{r}
+multi100_data <-
+  multi100_data %>% 
+  select(
+    analyst_id, paper_id, combined_id,
+    first_name, last_name,
+    signup_timestamp, task1_timestamp, task2_timestamp, 
+    current_position, age, gender, education_level, country_of_residence, experience_conducting_analyses,
+    disclosure_agreement, name_attached_to_analysis, willing_to_peer_eval,
+    analyst_discipline, keywords, years_of_experience, analysis_frequency,
+    expertise_self_rating, familiar_with_paper, communication_check,
+    paper_discipline, reproduction_type_osf, reproduction_result_osf, categorisation_of_claim,
+    original_title, original_claim, original_materials,
+    in_text_original_statistical_result, related_original_statistical_result,
+    original_type_of_statistic, original_statistic_report, degrees_of_freedom_1,
+    degrees_of_freedom_2, original_model_sample_size, original_result_page_number,
+    comment_on_reproduction_materials, paper_link, general_osf_link,
+    task1_software, task1_analysis_report, task1_conclusion, task1_categorisation, confidence_in_approach,
+    data_suitability, task1_comments, instructions_given, task2_software, task2_analysis_report, type_of_statistic,
+    statistic_report, model_sample_size, model_degrees_of_freedom, p_value_or_bayes,
+    p_value_report, task2_conclusion, direction_of_result, same_conclusion_as_task1,
+    additional_calculations, total_hours, task2_comments
+    )
+```
+
+Export processed dataframe.
+
+```{r}
+write_csv(multi100_data, here::here("data/processed/multi100_processed_data.csv"))
+```
+
+## Peer evaluation data
+
+Add peereval_submission_number.
+
+```{r}
+peer_eval <-
+  peer_eval %>% 
+  mutate(
+    peereval_submission_number = 1:nrow(peer_eval),
+    combined_id = paste(analyst_id, paper_id, sep = "_"),
+    # create eval_id which concatenates combined_id and evaluator_id
+    eval_id = paste(combined_id, evaluator_id, sep = "_")
+    )
+```
+
+We pay attention to the first 500 peer evaluations only.
+
+```{r}
+peer_eval <- 
+  peer_eval %>% 
+  slice(1:500)
+```
+
+Remove 'OTHER' submission - evaluator did not provide the ID of the co-analyst and so should be removed for now.
+This is submission number 459.
+
+```{r}
+peer_eval <- 
+  peer_eval %>% 
+  # TODO: change it to concrete id
+  filter(peereval_submission_number != 459)
+```
+
+Check that all evaluator_id's appear in multi100_data$analyst_id. If 'FALSE' then all ID's match.
+# TODO: I do not get this.
+
+```{r}
+any(!peer_eval$evaluator_id %in% multi100_data$analyst_id)
+```
+
+Check that all analyst_id's appear in multi100_data$analyst_id. If 'FALSE' then all ID's match.
+
+```{r}
+any(!peer_eval$analyst_id %in% multi100_data$analyst_id)
+```
+
+Check that all paper_id's appear in multi100_data$paper_id. If 'FALSE' then all ID's match.
+
+```{r}
+any(!peer_eval$paper_id %in% multi100_data$paper_id)
+```
+
+Check with setdiff that all of the combined_id's in PeerEvals appear in multi100_data.
+
+```{r}
+setdiff(peer_eval$combined_id, multi100_data$combined_id)
+```
+
+Fixing erroneous ids:
+* AUX74_Bursztyn_JournPoliEco_2012_jaK4 (SN. 141): should be AUX74_Bursztyn_AmEcoRev_2017_VB9K
+* UNX4S_Bursztyn_AmEcoRev_2017_VB9K (SN. 208): should be UNX4S_Bursztyn_JournPoliEco_2012_jaK4
+* CCU09_Baillon_Econometrica_2018_QYNq (SN. 284): should be CC3UD_Baillon_Econometrica_2018_QYNq - analyst describes that the analyst does not provide their code. This is the case for CC3UD (similar to CCU09) on the Baillon paper.
+* 8GS2H_Hurst_EvoHumanBehavior_2017_yypJ (SN. 333): should be 8GS27_Hurst_EvoHumanBehavior_2017_yypJ
+* QPS9D_Bigoni_Econometrica_2015_VBx1 (two cases) (SN. 343, 352): should be QPSID_Bigoni_Econometrica_2015_VBx1 - both QPS9D and QPSID exist as separate analysts
+* J3ODA_Sliwka_JournLabEco_2017_VDJV (SN. 350): should be JE3RS_Sliwka_JournLabEco_2017_VDJV - similar ID exists on sliwka OSF page... two other analysts evaluated J3ODA, both for a different paper (Nyhan)... evaluator here states that they found evidence for the null hypothesis, which is the case in the submission of JE3RS_Sliwka (and this is different to the two other evaluations)
+* 0XXWZ_Kucik_BritJournPoliSci_2016_L22B (SN. 406): should be 0XXW0_Kucik_BritJournPoliSci_2016_L22B - there exists a 0XXWZ_BATESON, but on the Kucik page the ID is 0XXW0
+* DAIUV_Jiang_AmJourPoliSci_2018_Rjp9 (two cases) (SN. 446, 451): should be DAILV_Jiang_AmJourPoliSci_2018_Rjp9 - DAIUV_Baillon exists, DAILV_Rovny exists and DAILV_2_Jiang exists (mislabelled on OSF)
+* SN. 446 submitted the co-analysts ID as their own ID - it should be NSDML (based on the email address they provided)
+
+Alter either the analyst_id or paper_id as appropriate.
+#TODO: change the ids to actual text for safety
+```{r}
+peer_eval <-
+  peer_eval %>% 
+  mutate(
+    paper_id = case_when(
+      peereval_submission_number == 141 ~ "Bursztyn_AmEcoRev_2017_VB9K",
+      peereval_submission_number == 208 ~ "Bursztyn_JournPoliEco_2012_jaK4",
+      TRUE ~ paper_id
+    ),
+    analyst_id = case_when(
+      peereval_submission_number == 284 ~ "CC3UD",
+      peereval_submission_number == 333 ~ "8GS27",
+      peereval_submission_number == 343 ~ "QPSID",
+      peereval_submission_number == 352 ~ "QPSID",
+      peereval_submission_number == 350 ~ "JE3RS",
+      peereval_submission_number == 406 ~ "0XXW0",
+      peereval_submission_number == 446 ~ "DAILV",
+      peereval_submission_number == 451 ~ "DAILV",
+      TRUE ~ analyst_id
+    ),
+    evaluator_id = case_when(
+      peereval_submission_number == 446 ~ "NSDML",
+      TRUE ~ evaluator_id
+    )
+  )
+```
+
+Re-run code to produce combined_id and eval_id
+
+```{r}
+peer_eval <-
+  peer_eval %>% 
+  mutate(
+    combined_id = paste(analyst_id, paper_id, sep = "_"),
+    eval_id = paste(combined_id, evaluator_id, sep = "_")
+    )
+```
+
+Verify that all combined_id's now appear in multi100_data.
+
+```{r}
+setdiff(peer_eval$combined_id, multi100_data$combined_id)
+```
+
+Check and remove duplicate responses.
+
+```{r}
+peer_eval_duplicates <-
+  peer_eval %>% 
+  group_by(eval_id) %>% 
+  mutate(n = n()) %>% 
+  filter(n > 1) %>% 
+  arrange(desc(n))
+
+peer_eval_duplicates %>% 
+  distinct(eval_id, n)
+```
+
+Duplicated peer evals are the following:
+* WCZJU_Luttrell_JournExpSocPsych_2016_rjb_EZI7J: !SN. 17
+* MOYDE_Axt_JournExpSocPsych_2018_zK2_EZI7J: !SN. 45
+* PFQSU_Miller_JournConflictRes_2011_zV1O_AMDFX: !SN. 103
+* CC3UD_Baillon_Econometrica_2018_QYNq_AHW5W: !SN. 284
+* 67DKH_Ihme_JournExpPoliSci_2018_xYbO_R08MV: !SN. 298
+* 9U4RV_Hou_ChildDev_2017_YOXl_EZI7J: !SN. 355
+* Q5U26_Wang_AmEcoJourn_2013_7d4J_SJAS8: !SN. 375
+* GHN4R_Menaldo_AmJourPoliSci_2016_Vx4e_WANJC: !SN. 465, 466
+
+Deleting duplicates.
+#TODO: DELTE by text id not by submission number.
+
+```{r}
+peer_eval <-
+  peer_eval %>% 
+  filter(
+    peereval_submission_number != 17,
+    peereval_submission_number != 45,
+    peereval_submission_number != 103,
+    peereval_submission_number != 284,
+    peereval_submission_number != 298,
+    peereval_submission_number != 355,
+    peereval_submission_number != 375,
+    peereval_submission_number != 465,
+    peereval_submission_number != 466
+  )
+```
+
+Remove case where evaluator is also co-analyst (!SN. 462: WJVLO_Pastötter_Cognition_2013_EQxa_WJVLO).
+
+```{r}
+peer_eval <-
+  peer_eval %>% 
+  filter(peereval_submission_number != 462)
+```
+
+Count the number of times each combined_id appears in peer_eval.
+
+```{r}
+peer_eval %>%
+  count(combined_id)
+```
+
+Save processed peer evaluation data separately.
+
+```{r}
+write_csv(peer_eval, here::here("data/processed/multi100_peer-eval_processed_data.csv"))
+```
+

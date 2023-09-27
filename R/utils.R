@@ -1,6 +1,4 @@
 #' Prepare dataset for tolerance region plot
-library(dplyr)
-
 calculate_tolerance_region <- function(data, grouping_var) {
   data %>%
     select({{ grouping_var }}, r_analyst, r_original) %>% 
@@ -25,6 +23,9 @@ calculate_tolerance_region <- function(data, grouping_var) {
     ) %>% 
     ungroup()
 }
+
+#' Function to NOT include a vector in another vector
+`%ni%` <- Negate(`%in%`)
 
 #' Create tolarence region plot
 plot_tolarence_region <- function(data, grouping_var) {
@@ -90,14 +91,14 @@ plot_robustness <- function(data, grouping_var) {
 }
 
 #' Prepare dataset for plotting the proportion of conclusions
-calculate_conclusion <- function(data, grouping_variable) {
+calculate_conclusion <- function(data, grouping_variable, categorization_variable) {
   data %>% 
-    select({{ grouping_variable }}, Direction_of_Result) %>% 
-    count({{ grouping_variable }}, Direction_of_Result) %>% 
-    ungroup() %>% 
-    mutate(
-      Direction_of_Result = forcats::fct_relevel(Direction_of_Result, c("Same as claimed by the original study", "Opposite as claimed by the original study")),
-    ) %>%
+    select({{ grouping_variable }}, {{ categorization_variable }}) %>% 
+    count({{ grouping_variable }}, {{ categorization_variable }}) %>% 
+    # ungroup() %>%
+    # mutate(
+    #   Direction_of_Result = forcats::fct_relevel(Direction_of_Result, c("Same as claimed by the original study", "Opposite as claimed by the original study")),
+    # ) %>%
     group_by({{ grouping_variable }}) %>% 
     mutate(
       N = sum(n),
@@ -108,13 +109,13 @@ calculate_conclusion <- function(data, grouping_variable) {
 }
 
 #' Plot conclusions
-plot_conclusion <- function(data, grouping_variable) {
+plot_conclusion <- function(data, grouping_variable, categorization_variable) {
   data %>% 
     ggplot() +
     aes(
       y = {{ grouping_variable }},
       x = percentage,
-      fill = Direction_of_Result
+      fill = {{ categorization_variable }}
     ) +
     geom_bar(
       stat = "identity",
@@ -125,7 +126,7 @@ plot_conclusion <- function(data, grouping_variable) {
       labels = scales::percent_format(scale = 1)) +
     scale_y_discrete(expand = c(0, 0)) +
     labs(
-      fill = "Direction of\nthe results",
+      # fill = "Direction of\nthe results",
       x = "Percentage"
     ) +
     theme(

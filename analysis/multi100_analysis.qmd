@@ -24,16 +24,7 @@ source(here::here("R/utils.R"))
 # Read data
 
 ```{r}
-processed <- readr::read_csv(here::here("data/source/Multi100_Big_Dataset.csv"))
-
-# TODO: this simulation will be replaced if the effect sizes are calculated
-# variable names might change!
-processed <- 
-  processed %>% 
-  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
-  group_by(Paper_ID) %>% 
-  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
-  ungroup()
+processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
 ```
 
 # Exploratory data analysis
@@ -61,10 +52,24 @@ distinct(processed, Direction_of_Result)
 
 conclusions_main_data <- 
   processed %>% 
-  calculate_conclusion(., Paper_ID) %>% 
-  mutate(
+  # TODO: Put this in the preprocessing file
+  mutate(categorisation = case_when(
+    Task1_Categorisation == "The results show evidence for the relationship/effect as described in the claim provided in your task" ~ "Same conclusion",
+    Task1_Categorisation %in% c(
+      "The results do not show evidence for or against the relationship/effect as described in the claim provided in your task",
+      "The results show evidence for the null-hypothesis"
+      ) ~ "No effect/inconclusive",
+    Task1_Categorisation == "The results show evidence for opposite relationship/effect as described in the claim provided in your task" ~ "Opposite effect",
+    TRUE ~ NA_character_)
+    ) %>% 
+  calculate_conclusion(., Paper_ID, categorisation) %>% 
+  # mutate(
+  #   # TODO: Check if there is a more tidy solution
+  #   Paper_ID = fct_reorder(Paper_ID, ifelse(categorisation == "Effect", percentage, NA), .desc = TRUE, .na_rm = TRUE)
+  #   ) %>%
+    mutate(
     # TODO: Check if there is a more tidy solution
-    Paper_ID = fct_reorder(Paper_ID, ifelse(Direction_of_Result == "Same as claimed by the original study", percentage, NA), .desc = TRUE, .na_rm = TRUE)
+    Paper_ID = fct_reorder(Paper_ID, percentage, .desc = TRUE, .na_rm = TRUE)
     )
 ```
 
@@ -72,7 +77,7 @@ Creating the figure.
 
 ```{r}
 conclusion_main_plot <-
-  plot_conclusion(conclusions_main_data, Paper_ID) +
+  plot_conclusion(conclusions_main_data, Paper_ID, categorisation) +
   theme(
     axis.text.y = element_text(size = 8),
     axis.text.x = element_text(size = 10),
@@ -94,9 +99,18 @@ conclusions_discipline_data <-
   processed %>% 
   filter(Paper_Discipline %in% c("psychology", "economics", "political science")) %>% 
   mutate(Paper_Discipline = str_to_title(Paper_Discipline)) %>% 
-  calculate_conclusion(., Paper_Discipline)
+    mutate(categorisation = case_when(
+    Task1_Categorisation == "The results show evidence for the relationship/effect as described in the claim provided in your task" ~ "Same conclusion",
+    Task1_Categorisation %in% c(
+      "The results do not show evidence for or against the relationship/effect as described in the claim provided in your task",
+      "The results show evidence for the null-hypothesis"
+      ) ~ "No effect/inconclusive",
+    Task1_Categorisation == "The results show evidence for opposite relationship/effect as described in the claim provided in your task" ~ "Opposite effect",
+    TRUE ~ NA_character_)
+    ) %>% 
+  calculate_conclusion(., Paper_Discipline, categorisation)
 
-conclusions_discipline_plot <- plot_conclusion(conclusions_discipline_data, Paper_Discipline) + theme(legend.text = element_text(size = 6))
+conclusions_discipline_plot <- plot_conclusion(conclusions_discipline_data, Paper_Discipline, categorisation) + theme(legend.text = element_text(size = 6))
 
 ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
 
@@ -202,9 +216,7 @@ effect_main_plot <-
     axis.ticks = element_blank(),
     legend.title = element_blank(),
     axis.title.y = element_blank(),
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    legend.justification = "left",
+    legend = element_blank(), # TODO
     plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
     panel.grid = element_blank(),
     panel.background = element_blank(),
