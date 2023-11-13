@@ -10,7 +10,15 @@ editor_options:
 
 ```{r}
 library(tidyverse)
+library(googlesheets4)
 library(here)
+```
+
+## Auth googlesheets
+
+```{r}
+# Uncomment this line if you would like to run the code and you need to connect R to your Drive
+# gs4_auth()
 ```
 
 ### Load custom functions
@@ -23,47 +31,75 @@ source(here::here("R/utils.R"))
 
 ```{r}
 # Task1 form
-task1 <- readr::read_csv(here::here("data/source/Task1.csv")) %>%
+task1 <- read_sheet("https://docs.google.com/spreadsheets/d/19h6Vn9kIy0ZJ3FY6drq-z9TzDzYCe5cbLcGAs57nSy4/edit?resourcekey#gid=1095105474", col_types = "c") %>%
   # This column contained a random comment by one of the team members which is not part of the dataset
-  select(-`...24`)
+  select(-`...26`)
 
 # Sign up form to be an analyst
-all_people <- readr::read_csv(here::here("data/source/all_people.csv"))
+all_people <- read_sheet("https://docs.google.com/spreadsheets/d/1lLr9eoD6uvUDYhaQgKjMYLxUkWOD9ALNcsuPhrXupF0/edit?usp=sharing", col_types = "c")
 
 # Original papers
-all_paper <- readr::read_csv(here::here("data/source/all_paper.csv"))
+all_paper <- read_sheet("https://docs.google.com/spreadsheets/d/1dNNmGjVZbqjlpVAClF5tiW7qraFERh2zVbl2yFhG1zA/edit?usp=sharing", col_types = "c") %>% 
+  select(
+    title,
+    paper_id,
+    COS_pub_category,
+    OSF_link,
+    instructions,
+    the_claim,
+    original_materials,
+    paper_link,
+    `FINAL for experimental vs. observational`,
+    `short ref`
+  )
 
 # Task2 form
-task2 <- readr::read_csv("data/source/Task2.csv")
+task2 <- read_sheet("https://docs.google.com/spreadsheets/d/18qvwVXXmPwnFiM_v4knt-VgeOBZ5YiPxp1pmiL4NLgw/edit?resourcekey#gid=478133863", col_types = "c")
 
 # Master spreadsheet
-master <- readr::read_csv(here::here("data/source/+MasterSpreadsheet.csv")) %>% 
-  # TODO: Either have to delete not important columns in the spreadsheet or add descriptions to them
+master <- read_sheet("https://docs.google.com/spreadsheets/d/1Er7k0INJJQ0Y6gqs0Y9ZC60nWwWzDUucnnXjx_MOlKk/edit#gid=23825094", col_types = "c") %>% 
+  # TODO: Either have to delete not important columns in the spreadsheet or add descriptions to them. we have to make a decision and be systematic throughout
   # This is a bandaid solution
   select(
     paper_id,
-    `reproduction_type (OSF)\n\nUpdated, based on Andrew's info (08.11.Livi)`,
+    `reproduction_type (OSF)`,
     `reproduction result (OSF)`,
-    `categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;\n\nLivi/Zoli (Livi)`,
+    `categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;`,
     `original statistical result`,
     `Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns`,
     Location_of_result_in_paper
   )
 
-effect_sizes <- readr::read_csv(here::here("data/source/Multi-100_EffectSizes.csv")) %>% 
-  # TODO: Same as before
+original_effect_sizes <- read_sheet("https://docs.google.com/spreadsheets/d/1WDMCrv3ysmOw_vVX_2DD9HIpqGKRHFH0krDGjA5XkNE/edit?usp=sharing", col_types = "c") %>% 
   select(
     paper_id,
+    VOL_original_materials,
     `familiy (z, t, F, or x2)`,
     `test statistic`,
     df_1,
     df_2,
     `sample size`,
-    Comment_on_any_materials
+    `std. corr. coef.`,
+    `Cohen's d`,
+    -Screenshot,
+    -Comment_on_any_materials,
+    -Comment_on_any_materials_for_column_F,
+    Original_Effect_Size_Available,
+    Original_Reproduction_Outcome,
+    -Harry_Comment,
+    -Felix_Comment
   )
 
+reanalyzed_effect_sizes <- read_sheet("https://docs.google.com/spreadsheets/d/1TLwxmQ6FQfPG1CZZQkfWt3HNE_LNsrs3IKSEK1D6mkk/edit?usp=sharing", col_types = "c")
+
 # Peer evaluation data
-peer_eval <- readr::read_csv(here::here("data/source/Peer_Evals.csv"))
+peer_eval <- read_sheet("https://docs.google.com/spreadsheets/d/16JIiLHCyruAP7SEbNThaHczMJIBDnwXS2kbjzYOboNc/edit?usp=sharing", col_types = "c")
+
+# Peer evaluation review data
+peer_eval_review <- read_sheet("https://docs.google.com/spreadsheets/d/1oYGeIQcZOOjf0QOLep4XSkCOs0B2nOn668Y3rrEKZMs/edit?usp=sharing", col_types = "c")
+
+# Analyst payments
+analyst_payments <- read_sheet("https://docs.google.com/spreadsheets/d/1OCtUSitKuZ81u4bHTJqctfYDQDn0K87_P71qL-7B8i8/edit?usp=sharing", col_types = "c")
 ```
 
 ## Creating a codebook
@@ -79,11 +115,13 @@ task1_codebook <-
       variable_names == "1.1. Please provide your analyst ID." ~ "analyst_id",
       variable_names == "1.2. Please provide the ID of your paper." ~ "paper_id",
       variable_names == "1.3. Which title best describes your current position?" ~ "current_position",
+      variable_names == "current_position_grouped" ~ "current_position_grouped",
       variable_names == "1.4. What is your gender identity?" ~ "gender",
       variable_names == "1.5. What is your age? (in years)" ~ "age",
       variable_names == "1.6. What is the highest level of education that you have completed?" ~ "education_level",
       variable_names == "1.7 Country of residence" ~ "country_of_residence",
       variable_names == "1.8. Which discipline is the closest to your research area?" ~ "analyst_discipline",
+      variable_names == "primary_discipline" ~ "primary_discipline", 
       variable_names == "1.9. What keywords would best describe the topics of your own research?" ~ "keywords",
       variable_names == "1.10. How many years of experience do you have in data analysis?" ~ "years_of_experience",
       variable_names == "1.11. How regularly do you perform data analysis?" ~ "analysis_frequency",
@@ -160,7 +198,9 @@ all_paper_codebook <-
       variable_names == "instructions" ~ "instructions_given",
       variable_names == "the_claim" ~ "original_claim",
       variable_names == "original_materials" ~ "original_materials",
-      variable_names == "paper_link" ~ "paper_link"
+      variable_names == "paper_link" ~ "paper_link",
+      variable_names == "FINAL for experimental vs. observational" ~ "experimental_or_observational",
+      variable_names == "short ref" ~ "original_paper_reference"
     )
   )
 
@@ -170,27 +210,64 @@ master_codebook <-
     variable_names = colnames(master),
     new_names = case_when(
       variable_names == "paper_id" ~ "paper_id",
-      variable_names == "reproduction_type (OSF)\n\nUpdated, based on Andrew's info (08.11.Livi)" ~ "reproduction_type_osf",
+      variable_names == "reproduction_type (OSF)" ~ "reproduction_type_osf",
       variable_names == "reproduction result (OSF)" ~ "reproduction_result_osf",
-      variable_names == "categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;\n\nLivi/Zoli (Livi)" ~ "categorisation_of_claim",
+      variable_names == "categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;" ~ "categorisation_of_claim",
       variable_names == "original statistical result" ~ "in_text_original_statistical_result",
       variable_names == "Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns" ~ "related_original_statistical_result",
       variable_names == "Location_of_result_in_paper" ~ "original_result_page_number"
     )
   )
 
-# Effect size data
-effect_sizes_codebook <-
+# Original effect size data
+original_effect_sizes_codebook <-
   tibble::tibble(
-    variable_names = colnames(effect_sizes),
+    variable_names = colnames(original_effect_sizes),
     new_names = case_when(
       variable_names == "paper_id" ~ "paper_id",
+      variable_names == "VOL_original_materials" ~ "original_materials",
       variable_names == "familiy (z, t, F, or x2)" ~ "original_type_of_statistic",
       variable_names == "test statistic" ~ "original_statistic_report",
-      variable_names == "df_1" ~ "degrees_of_freedom_1",
-      variable_names == "df_2" ~ "degrees_of_freedom_2",
+      variable_names == "df_1" ~ "original_degrees_of_freedom_1",
+      variable_names == "df_2" ~ "original_degrees_of_freedom_2",
       variable_names == "sample size" ~ "original_model_sample_size",
-      variable_names == "Comment_on_any_materials" ~ "comment_on_reproduction_materials"
+      variable_names == "std. corr. coef." ~ "original_correlation_coef",
+      variable_names == "Cohen's d" ~ "original_cohens_d",
+      # variable_names == "Screenshot" ~ "screenshot",
+      # variable_names == "Comment_on_any_materials" ~ "comment_on_reproduction_materials",
+      # variable_names == "Comment_on_any_materials_for_column_F" ~ "comment_on_any_materials_for_column_f",
+      variable_names == "Original_Effect_Size_Available" ~ "original_effect_size_available",
+      variable_names == "Original_Reproduction_Outcome" ~ "original_reproduction_outcome"
+    )
+  )
+
+# Reanalyzed effect size data
+reanalyzed_effect_sizes_codebook <-
+  tibble::tibble(
+    variable_names = colnames(reanalyzed_effect_sizes),
+    new_names = case_when(
+      variable_names == "Analyst_ID" ~ "analyst_id",
+      variable_names == "Paper_ID" ~ "paper_id",
+      variable_names == "Analysis_Number" ~ "analysis_number",
+      variable_names == "Task1_Analysis_Report" ~ "task1_analysis_report",
+      variable_names == "Task2_Analysis_Report" ~ "task2_analysis_report",
+      # TODO: consider using table name prefix for all variables
+      variable_names == "Type_of_Statistic" ~ "type_of_statistic",
+      variable_names == "Statistic_Report" ~ "statistic_report",
+      variable_names == "Model_Degrees_of_Freedom" ~ "model_degrees_of_freedom",
+      variable_names == "Model_Sample_Size" ~ "model_sample_size",
+      variable_names == "N/A" ~ "reanalysis_es_missing",
+      variable_names == "Problem" ~ "reanalysis_es_missing_reason",
+      variable_names == "Type of Statistic" ~ "reanalysis_type_of_statistic",
+      variable_names == "Test Statistic" ~ "reanalysis_statistic_report",
+      variable_names == "df_1" ~ "reanalysis_degrees_of_freedom_1",
+      variable_names == "df_2" ~ "reanalysis_degrees_of_freedom_2",
+      variable_names == "Sample Size" ~ "reanalysis_model_sample_size",
+      variable_names == "Cleaned By" ~ "cleaned_by",
+      variable_names == "Notes" ~ "cleaning_notes",
+      variable_names == "Action" ~ "cleaning_action",
+      variable_names == "Status" ~ "cleaning_status",
+      variable_names == "Non-Detailed" ~ "non_detailed"
     )
   )
 
@@ -214,6 +291,37 @@ peer_eval_codebook <-
       variable_names == "Code reproducibility check: You are not required to execute the analysis code or follow the description of the analysis script, but if you nevertheless managed to do so, did you find any mismatch between the results of the analysis and the reported results?" ~ "any_code_mismatches",
       variable_names == "Please describe the mismatches you found:" ~ "description_of_mismatches",
       variable_names == "Comment to the organizers:" ~ "evaluator_comments"
+    )
+  )
+
+# Peer evaluation review codebook
+peer_eval_review_codebook <-
+  tibble::tibble(
+    variable_names = colnames(peer_eval_review),
+    new_names = case_when(
+      variable_names == "Analyst_ID" ~ "analyst_id",
+      variable_names == "Paper_ID" ~ "paper_id",
+      variable_names == "Issue_Identified_In" ~ "variable_name",
+      variable_names == "Evaluator_Categorisation" ~ "evaluator_categorization",
+      variable_names == "Issues_Raised" ~ "evaluator_categorization_explanation",
+      variable_names == "Decision" ~ "expert_panel_decision",
+      variable_names == "Expert_Panel_Reasoning" ~ "expert_panel_reasoning",
+      variable_names == "Change_To" ~ "change_to"
+    )
+  )
+
+analyst_payments_codebook <-
+    tibble::tibble(
+    variable_names = colnames(analyst_payments),
+    new_names = case_when(
+      variable_names == "first_name" ~ "first_name",
+      variable_names == "analyst_id" ~ "analyst_id",
+      variable_names == "signup_email" ~ "signup_email",
+      variable_names == "n_analyses" ~ "n_analyses",
+      variable_names == "n_peer_evals" ~ "n_peer_evals",
+      variable_names == "Analysis $" ~ "analyses_payment",
+      variable_names == "Review $" ~ "peer_eval_payment",
+      variable_names == "sum $" ~ "sum_payment"
     )
   )
 ```
@@ -256,12 +364,19 @@ master_codebook %>%
   ) %>% 
   readr::write_csv(., here::here("data/raw/multi100_master_raw_codebook.csv"))
 
-effect_sizes_codebook %>% 
+original_effect_sizes_codebook %>% 
   rename(
     variable_name = new_names,
     description = variable_names
   ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_effect-sizes_raw_codebook.csv"))
+  readr::write_csv(., here::here("data/raw/multi100_original-effect-sizes_raw_codebook.csv"))
+
+reanalyzed_effect_sizes_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
 
 peer_eval_codebook %>% 
   rename(
@@ -269,6 +384,20 @@ peer_eval_codebook %>%
     description = variable_names
   ) %>% 
   readr::write_csv(., here::here("data/raw/multi100_peer-eval_raw_codebook.csv"))
+
+peer_eval_review_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_peer-eval-review_raw_codebook.csv"))
+
+analyst_payments_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_analyst-payments_raw_codebook.csv"))
 ```
 
 ## Renaming variables
@@ -299,14 +428,29 @@ colnames(master) <- dplyr::recode(
   !!!setNames(as.character(master_codebook$new_names), master_codebook$variable_names)
 )
 
-colnames(effect_sizes) <- dplyr::recode(
-  colnames(effect_sizes), 
-  !!!setNames(as.character(effect_sizes_codebook$new_names), effect_sizes_codebook$variable_names)
+colnames(original_effect_sizes) <- dplyr::recode(
+  colnames(original_effect_sizes), 
+  !!!setNames(as.character(original_effect_sizes_codebook$new_names), original_effect_sizes_codebook$variable_names)
+)
+
+colnames(reanalyzed_effect_sizes) <- dplyr::recode(
+  colnames(reanalyzed_effect_sizes), 
+  !!!setNames(as.character(reanalyzed_effect_sizes_codebook$new_names), reanalyzed_effect_sizes_codebook$variable_names)
 )
 
 colnames(peer_eval) <- dplyr::recode(
   colnames(peer_eval), 
   !!!setNames(as.character(peer_eval_codebook$new_names), peer_eval_codebook$variable_names)
+)
+
+colnames(peer_eval_review) <- dplyr::recode(
+  colnames(peer_eval_review), 
+  !!!setNames(as.character(peer_eval_review_codebook$new_names), peer_eval_review_codebook$variable_names)
+)
+
+colnames(analyst_payments) <- dplyr::recode(
+  colnames(analyst_payments), 
+  !!!setNames(as.character(analyst_payments_codebook$new_names), analyst_payments_codebook$variable_names)
 )
 ```
 
@@ -325,11 +469,20 @@ task2 <-
 
 all_people <- 
   all_people %>% 
-  select(-signup_email)
+  select(
+    -signup_email,
+    -signup_comment
+    )
 
 peer_eval <- 
   peer_eval %>% 
   select(-evaluator_email)
+
+analyst_payments <-
+  analyst_payments %>% 
+  select(
+    -signup_email
+  )
 ```
 
 ## Save raw dataset
@@ -345,7 +498,13 @@ readr::write_csv(all_paper, here("data/raw/multi100_all-paper_raw_data.csv"))
 
 readr::write_csv(master, here("data/raw/multi100_master_raw_data.csv"))
 
-readr::write_csv(effect_sizes, here("data/raw/multi100_effect-sizes_raw_data.csv"))
+readr::write_csv(original_effect_sizes, here("data/raw/multi100_original-effect-sizes_raw_data.csv"))
+
+readr::write_csv(reanalyzed_effect_sizes, here("data/raw/multi100_reanalyzed-effect-sizes_raw_data.csv"))
 
 readr::write_csv(peer_eval, here("data/raw/multi100_peer-eval_raw_data.csv"))
+
+readr::write_csv(peer_eval_review, here("data/raw/multi100_peer-eval-review_raw_data.csv"))
+
+readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
 ```

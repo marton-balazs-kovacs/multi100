@@ -37,11 +37,20 @@ all_paper <- readr::read_csv(here::here("data/raw/multi100_all-paper_raw_data.cs
 # Master spreadsheet
 master <- readr::read_csv(here::here("data/raw/multi100_master_raw_data.csv"))
 
-# Effect sizes
-effect_sizes <- readr::read_csv(here::here("data/raw/multi100_effect-sizes_raw_data.csv"))
+# Original effect sizes
+original_effect_sizes <- readr::read_csv(here::here("data/raw/multi100_original-effect-sizes_raw_data.csv"))
+
+# Reanalyzes effect sizes
+reanalyzed_effect_sizes <- readr::read_csv(here::here("data/raw/multi100_reanalyzed-effect-sizes_raw_data.csv"))
 
 # Peer evaluation data
 peer_eval <- readr::read_csv(here::here("data/raw/multi100_peer-eval_raw_data.csv"))
+
+# Peer evaluation review data
+peer_eval_review <- readr::read_csv(here::here("data/raw/multi100_peer-eval-review_raw_data.csv"))
+
+# Analyst payments data
+analyst_payments <- readr::read_csv(here::here("data/raw/multi100_analyst-payments_raw_data.csv"))
 ```
 
 ## all_paper
@@ -51,9 +60,155 @@ all_paper <-
   all_paper %>% 
   janitor::clean_names() %>% 
   # Excluding empty rows
-  filter(if_all(everything(), ~!is.na(.x))) %>% 
-  # Remove leading and trailing spaces from paper_id
-  mutate(paper_id = trimws(paper_id, "both"))
+  filter(if_any(everything(), ~!is.na(.x))) %>% 
+  mutate(
+     # Remove leading and trailing spaces from paper_id
+    paper_id = trimws(paper_id, "both"),
+    # Reformatting short references for the papers
+    original_paper_reference = str_replace(original_paper_reference, "_(?=[^_]*$)", ", "),
+    original_paper_reference = str_replace(original_paper_reference, "_etal", " et al."),
+    original_paper_reference = str_replace(original_paper_reference, "&", " & ")
+    )
+```
+
+Check if all paper_id has a corresponding original_paper_reference.
+
+```{r}
+all_paper %>% 
+  filter(is.na(original_paper_reference)) %>% 
+  nrow()
+```
+
+Number of papers in all_paper based on paper_id, it should be a 100.
+
+```{r}
+all_paper %>% 
+  distinct(paper_id) %>% 
+  nrow()
+```
+
+## all_people
+
+Check if analyst_id is unique to the person.
+
+```{r}
+all_people %>% 
+  distinct(first_name, last_name, analyst_id) %>%  
+  group_by(first_name, last_name) %>% 
+  mutate(n_analyst_id = n()) %>% 
+  arrange(desc(n_analyst_id), last_name)
+```
+
+Check who agreed to have their name attached to the analysis.
+
+```{r}
+all_people %>% 
+  count(name_attached_to_analysis)
+```
+
+## original_effect_sizes
+
+Select needed variables.
+
+```{r}
+original_effect_sizes <-
+  original_effect_sizes %>% 
+  select(-original_materials)
+```
+
+## reanalyzed_effect_sizes
+
+Select variables needed.
+
+```{r}
+reanalyzed_effect_sizes <-
+  reanalyzed_effect_sizes %>% 
+  select(
+    analyst_id,
+    paper_id,
+    reanalysis_es_missing,
+    reanalysis_es_missing_reason,
+    reanalysis_type_of_statistic,
+    reanalysis_statistic_report,
+    reanalysis_degrees_of_freedom_1,
+    reanalysis_degrees_of_freedom_2,
+    reanalysis_model_sample_size
+  ) %>%
+  # Filling in variables with NAs to make values explicit
+  mutate(
+    reanalysis_es_missing = case_when(
+      is.na(reanalysis_es_missing) ~ 0L,
+      !is.na(reanalysis_es_missing) ~ 1L
+    )
+  )
+
+# TODO: Check if reanalysis_es_missing is always flagging empty reanalyzed statistics
+```
+
+Check if there are duplicate responses in the reanalyzed effect sizes.
+
+```{r}
+reanalyzed_effect_sizes %>% 
+  count(paper_id, analyst_id) %>% 
+  filter(n > 1) %>% 
+  arrange(desc(n))
+```
+
+Delete the duplicate response.
+
+```{r}
+reanalyzed_effect_sizes <-
+  reanalyzed_effect_sizes %>% 
+  filter(!(analyst_id == "JX7YO" & paper_id == "Christensen_EurJournPersonality_2018_8R9d" & reanalysis_statistic_report == "0.132"))
+```
+
+Calculate the Cohen's ds for the reanalyses.
+
+```{r}
+reanalysis_vars <- c("reanalysis_type_of_statistic", "reanalysis_statistic_report", "reanalysis_model_sample_size", "reanalysis_degrees_of_freedom_1", "reanalysis_degrees_of_freedom_2")
+
+# TODO: fix warnings
+reanalyzed_effect_sizes <-
+  reanalyzed_effect_sizes %>% 
+  mutate(reanalysis_type_of_statistic = str_replace_all(reanalysis_type_of_statistic, "²", "2")) %>% 
+  mutate(
+    across(
+      all_of(reanalysis_vars),
+      ~ if_else(reanalysis_es_missing == 1L, NA, .)
+      )
+    ) %>% 
+  mutate(
+    across(
+      all_of(c("reanalysis_statistic_report", "reanalysis_model_sample_size", "reanalysis_degrees_of_freedom_1", "reanalysis_degrees_of_freedom_2")),
+      ~ as.numeric(.)
+      )
+  ) %>% 
+  # rowwise() %>%
+  mutate(
+    reanalysis_correlation_coef =
+      standard_correlation_coefficient(
+        type_of_statistic = reanalysis_type_of_statistic,
+        test_statistic = reanalysis_statistic_report,
+        sample_size = reanalysis_model_sample_size,
+        df1 = reanalysis_degrees_of_freedom_1,
+        df2 = reanalysis_degrees_of_freedom_2
+        ),
+    reanalysis_cohens_d = cohens_d(r = reanalysis_correlation_coef)
+  )
+```
+
+## analyst_payments
+
+Select variables needed.
+
+```{r}
+analyst_payments <-
+  analyst_payments %>% 
+  select(
+    -first_name
+  ) %>% 
+  # drop the last row since that is a summary
+  slice(1:(n() - 1))
 ```
 
 ## task1
@@ -67,7 +222,14 @@ task1 <-
     # remove leading and trailing spaces from Analyst_ID and Paper_ID variables
     analyst_id = trimws(analyst_id, "both"),
     paper_id = trimws(paper_id, "both"),
-    combined_id = paste(analyst_id, paper_id, sep = "_")
+    task1_categorisation_plotting = case_when(
+      task1_categorisation == "The results show evidence for the relationship/effect as described in the claim provided in your task" ~ "Same conclusion",
+      task1_categorisation %in% c(
+        "The results do not show evidence for or against the relationship/effect as described in the claim provided in your task",
+        "The results show evidence for the null-hypothesis"
+        ) ~ "No effect/inconclusive",
+      task1_categorisation == "The results show evidence for opposite relationship/effect as described in the claim provided in your task" ~ "Opposite effect",
+      TRUE ~ NA_character_)
   )
 ```
 
@@ -236,8 +398,7 @@ task2 <-
     analyst_id = trimws(analyst_id, "both"),
     # Remove '_2' from the 'analyst_id' variable
     analyst_id = str_replace(analyst_id, "_2$", ""),
-    paper_id = trimws(paper_id, "both"),
-    combined_id = paste(analyst_id, paper_id, sep = "_")
+    paper_id = trimws(paper_id, "both")
   )
 ```
 
@@ -248,7 +409,7 @@ Check if all analyst_id in task2 are present in all_people, if 'FALSE' then all 
 any(!(task2$analyst_id %in% all_people$analyst_id)) 
 ```
 
-Find non-matching analyst_ids in task2 that are not present in the submission form
+Find non-matching analyst_ids in task2 that are not present in the submission form.
 
 ```{r}
 anti_join(task2, all_people, by = "analyst_id")
@@ -312,6 +473,17 @@ Verify that all paper_ids are now present.
 any(!(task2$paper_id %in% all_paper$paper_id))
 ```
 
+"JX7YO" wrongly submitted Task 2 paper_id as McLaren... should be Christensen... We rectify that now.
+
+```{r}
+task2 <-
+  task2 %>% 
+  mutate(paper_id = case_when(
+    analyst_id == "JX7YO" & paper_id == "McLaren_WorldPolitics_2012_wRvv" ~ "Christensen_EurJournPersonality_2018_8R9d",
+    TRUE ~ paper_id
+  ))
+```
+
 Check for duplicate responses.
 
 ```{r}
@@ -339,6 +511,16 @@ task2 <-
   ungroup()
 ```
 
+Ensure that all the duplicates are gone.
+
+```{r}
+task2 %>% 
+  group_by(paper_id, analyst_id) %>% 
+  mutate(n = n()) %>% 
+  filter(n > 1) %>% 
+  arrange(desc(n))
+```
+
 After deleting the duplicates there are `r nrow(task2)` responses remained. The deletion of the duplicates was successful.
 
 Check how many Analyst ID's are present in Task1 data but NOT Task2 data. Then, verify that there are no analyst_ids in Task2 that do not appear in Task1.
@@ -350,22 +532,12 @@ setdiff(task1$analyst_id, task2$analyst_id)
 setdiff(task2$analyst_id, task1$analyst_id)
 ```
 
-Check which combined_ids appear in Task 1 but not Task 2 and vice versa.
+Check the number of distinct papers in task2.
 
 ```{r}
-setdiff(task1$combined_id, task2$combined_id) 
-setdiff(task2$combined_id, task1$combined_id) 
-```
-
-"JX7YO" wrongly submitted Task 2 paper_id as McLaren... should be Christensen... We rectify that now.
-
-```{r}
-task2 <-
-  task2 %>% 
-  mutate(paper_id = case_when(
-    paper_id == "McLaren_WorldPolitics_2012_wRvv" ~ "Christensen_EurJournPersonality_2018_8R9d",
-    TRUE ~ paper_id
-  ))
+task2 %>% 
+  distinct(paper_id) %>% 
+  nrow()
 ```
 
 ## Combining Task 1 and Task 2
@@ -373,14 +545,31 @@ task2 <-
 Join task 1 and task 2 data based on both analyst_id and paper_id.
 
 ```{r}
-multi100_data <- inner_join(task1, task2, by = c("analyst_id", "paper_id", "combined_id"))
+multi100_data <- inner_join(task1, task2, by = c("analyst_id", "paper_id"))
+```
+
+Check the number of distinct papers based on paper_id after joining task1 and task2 responses. There should be a 100 distinct papers in the dataset.
+
+```{r}
+multi100_data %>% 
+  distinct(paper_id) %>% 
+  nrow()
 ```
 
 Check number of analyses based on paper_id.
 
 ```{r}
 multi100_data %>% 
-  count(paper_id)
+  count(paper_id) %>% 
+  arrange(desc(n))
+```
+
+Check if every analyses are unique.
+
+```{r}
+multi100_data %>% 
+  count(paper_id, analyst_id) %>% 
+  filter(n > 1)
 ```
 
 ## Combining signup form
@@ -405,10 +594,22 @@ multi100_data <- inner_join(multi100_data, all_paper, by = "paper_id")
 multi100_data <- inner_join(multi100_data, master, by = "paper_id")
 ```
 
-## Merge effect size info
+## Merge original effect size info
 
 ```{r}
-multi100_data <- inner_join(multi100_data, effect_sizes, by = "paper_id")
+multi100_data <- inner_join(multi100_data, original_effect_sizes, by = "paper_id")
+```
+
+## Merge reanalyzes effect size info
+
+```{r}
+multi100_data <- inner_join(multi100_data, reanalyzed_effect_sizes, by = c("paper_id", "analyst_id"))
+```
+
+## Merge analyst payments
+
+```{r}
+multi100_data <- left_join(multi100_data, analyst_payments, by = "analyst_id")
 ```
 
 ## Select and re-order variables
@@ -417,31 +618,125 @@ multi100_data <- inner_join(multi100_data, effect_sizes, by = "paper_id")
 multi100_data <-
   multi100_data %>% 
   select(
-    analyst_id, paper_id, combined_id,
-    first_name, last_name,
+    # id variables
+    analyst_id, paper_id,
+    # personal information
+    first_name, last_name, 
+    # operational information for the project
+    name_attached_to_analysis, disclosure_agreement, willing_to_peer_eval,
+    # timestamps
     signup_timestamp, task1_timestamp, task2_timestamp, 
-    current_position, age, gender, education_level, country_of_residence, experience_conducting_analyses,
-    disclosure_agreement, name_attached_to_analysis, willing_to_peer_eval,
-    analyst_discipline, keywords, years_of_experience, analysis_frequency,
-    expertise_self_rating, familiar_with_paper, communication_check,
-    paper_discipline, reproduction_type_osf, reproduction_result_osf, categorisation_of_claim,
-    original_title, original_claim, original_materials,
-    in_text_original_statistical_result, related_original_statistical_result,
-    original_type_of_statistic, original_statistic_report, degrees_of_freedom_1,
-    degrees_of_freedom_2, original_model_sample_size, original_result_page_number,
-    comment_on_reproduction_materials, paper_link, general_osf_link,
-    task1_software, task1_analysis_report, task1_conclusion, task1_categorisation, confidence_in_approach,
-    data_suitability, task1_comments, instructions_given, task2_software, task2_analysis_report, type_of_statistic,
-    statistic_report, model_sample_size, model_degrees_of_freedom, p_value_or_bayes,
+    # demographic information
+    current_position_grouped, age, gender, education_level, country_of_residence, primary_discipline, keywords,
+    # experience with analysis
+    experience_conducting_analyses, years_of_experience, analysis_frequency, expertise_self_rating, total_hours,
+    # familiarity and discussion of the paper
+    familiar_with_paper, communication_check,
+    # paper level information
+    paper_discipline, reproduction_type_osf, reproduction_result_osf, categorisation_of_claim, original_title, original_materials, original_paper_reference, experimental_or_observational, paper_link, general_osf_link,
+    # original paper statistical results
+    original_claim, in_text_original_statistical_result, related_original_statistical_result,
+    original_type_of_statistic, original_statistic_report, original_degrees_of_freedom_1,
+    original_degrees_of_freedom_2, original_model_sample_size, original_result_page_number,
+    original_correlation_coef, original_cohens_d, original_effect_size_available, original_reproduction_outcome,
+    # task1 responses (some of the variables were included before)
+    task1_software, task1_analysis_report, task1_conclusion, task1_categorisation, task1_categorisation_plotting, confidence_in_approach,
+    data_suitability, task1_comments, instructions_given,
+    # task2 responses (some of the variables were included before)
+    task2_software, task2_analysis_report,
+    # the cleaned versions of these variables are included with reanalaysis_ suffix
+    # type_of_statistic,
+    # statistic_report,
+    # model_sample_size,
+    # model_degrees_of_freedom,
+    p_value_or_bayes,
     p_value_report, task2_conclusion, direction_of_result, same_conclusion_as_task1,
-    additional_calculations, total_hours, task2_comments
+    additional_calculations, task2_comments,
+    # reproduced effect sizes
+    reanalysis_es_missing, reanalysis_es_missing_reason, reanalysis_type_of_statistic, reanalysis_statistic_report, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2, reanalysis_model_sample_size, reanalysis_correlation_coef, reanalysis_cohens_d,
+    # analysis payment
+    n_analyses, n_peer_evals, analyses_payment, peer_eval_payment, sum_payment
     )
+```
+
+Add id_number to each analysis.
+
+```{r}
+multi100_data <-
+  multi100_data %>% 
+  group_by(paper_id, analyst_id) %>% 
+  mutate(analysis_id = cur_group_id()) %>% 
+  ungroup()
+```
+
+Flag analyses that we will exclude because they did not pass the peer evaluation.
+
+```{r}
+multi100_data <-
+  multi100_data %>% 
+  dplyr::mutate(
+    peer_eval_pass = case_when(
+      analyst_id == "NSDML" & paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
+      analyst_id == "8P2J2" & paper_id == "Dahl_AmEcoRev_2012_VRKK" ~ FALSE,
+      analyst_id == "8PTRZ" & paper_id == "Baccara_AmEcoJourn_2014_RqVE" ~ FALSE,
+      TRUE ~ TRUE
+      )
+    )
+```
+
+Recoding free-text responses to gender.
+
+```{r}
+multi100_data <-
+  multi100_data %>% 
+  mutate(
+    gender = case_when(
+      analyst_id == "EZI7J" ~ "Non-binary",
+      TRUE ~ gender
+    )
+  )
+```
+
+Some analyst_ids are not unique to the person. We correct this error now before saving the processed dataset.
+
+The id that we will use for these analysts are:
+* Mahmoud Elsherif: EZI7J
+* Chris Aberson: N8P2J
+
+```{r}
+multi100_data <-
+  multi100_data %>%
+  mutate(analyst_id = case_when(
+    analyst_id == "MX02W" ~ "EZI7J",
+    analyst_id == "NFTMG" ~ "N8P2J",
+    TRUE ~ analyst_id
+  ))
 ```
 
 Export processed dataframe.
 
 ```{r}
 write_csv(multi100_data, here::here("data/processed/multi100_processed_data.csv"))
+```
+
+Export the rest of the datasets.
+
+```{r}
+readr::write_csv(task1, here::here("data/processed/multi100_task1_processed_data.csv"))
+
+readr::write_csv(task2, here::here("data/processed/multi100_task2_processed_data.csv"))
+
+readr::write_csv(all_people, here::here("data/processed/multi100_all-people_processed_data.csv"))
+
+readr::write_csv(all_paper, here::here("data/processed/multi100_all-paper_processed_data.csv"))
+
+readr::write_csv(master, here::here("data/processed/multi100_master_processed_data.csv"))
+
+readr::write_csv(original_effect_sizes, here::here("data/processed/multi100_original_effect-sizes_processed_data.csv"))
+
+readr::write_csv(reanalyzed_effect_sizes, here::here("data/processed/multi100_reanalyzed_effect-sizes_processed_data.csv"))
+
+readr::write_csv(analyst_payments, here::here("data/processed/multi100_analyst-payments_processed_data.csv"))
 ```
 
 ## Peer evaluation data
@@ -453,9 +748,8 @@ peer_eval <-
   peer_eval %>% 
   mutate(
     peereval_submission_number = 1:nrow(peer_eval),
-    combined_id = paste(analyst_id, paper_id, sep = "_"),
-    # create eval_id which concatenates combined_id and evaluator_id
-    eval_id = paste(combined_id, evaluator_id, sep = "_")
+    # create eval_id which concatenates analyst_id, paper_id, and evaluator_id
+    eval_id = paste(analyst_id, paper_id, evaluator_id, sep = "_")
     )
 ```
 
@@ -477,8 +771,18 @@ peer_eval <-
   filter(peereval_submission_number != 459)
 ```
 
+We changed non-unique analyst_ids in the main dataset (multi100_data), now we change the corresponding ids in the peer_eval data as well.
+
+```{r}
+peer_eval <-
+  peer_eval %>% 
+  mutate(analyst_id = case_when(
+    analyst_id == "MX02W" ~ "EZI7J",
+    TRUE ~ analyst_id
+  ))
+```
+
 Check that all evaluator_id's appear in multi100_data$analyst_id. If 'FALSE' then all ID's match.
-# TODO: I do not get this.
 
 ```{r}
 any(!peer_eval$evaluator_id %in% multi100_data$analyst_id)
@@ -488,6 +792,9 @@ Check that all analyst_id's appear in multi100_data$analyst_id. If 'FALSE' then 
 
 ```{r}
 any(!peer_eval$analyst_id %in% multi100_data$analyst_id)
+
+peer_eval %>% 
+  filter(!analyst_id %in% multi100_data$analyst_id)
 ```
 
 Check that all paper_id's appear in multi100_data$paper_id. If 'FALSE' then all ID's match.
@@ -496,10 +803,13 @@ Check that all paper_id's appear in multi100_data$paper_id. If 'FALSE' then all 
 any(!peer_eval$paper_id %in% multi100_data$paper_id)
 ```
 
-Check with setdiff that all of the combined_id's in PeerEvals appear in multi100_data.
+Check with setdiff that all of the analyst_id and paper_id pairs in PeerEvals appear in multi100_data.
 
 ```{r}
-setdiff(peer_eval$combined_id, multi100_data$combined_id)
+setdiff(
+  select(peer_eval, analyst_id, paper_id),
+  select(multi100_data, analyst_id, paper_id)
+  )
 ```
 
 Fixing erroneous ids:
@@ -542,21 +852,23 @@ peer_eval <-
   )
 ```
 
-Re-run code to produce combined_id and eval_id
+Re-run code to produce eval_id.
 
 ```{r}
 peer_eval <-
   peer_eval %>% 
   mutate(
-    combined_id = paste(analyst_id, paper_id, sep = "_"),
-    eval_id = paste(combined_id, evaluator_id, sep = "_")
+    eval_id = paste(analyst_id, paper_id, evaluator_id, sep = "_")
     )
 ```
 
-Verify that all combined_id's now appear in multi100_data.
+Verify that all paper_id and analyst_id combinations now appear in multi100_data.
 
 ```{r}
-setdiff(peer_eval$combined_id, multi100_data$combined_id)
+setdiff(
+  select(peer_eval, paper_id, analyst_id),
+  select(multi100_data, paper_id, analyst_id)
+  )
 ```
 
 Check and remove duplicate responses.
@@ -610,11 +922,30 @@ peer_eval <-
   filter(peereval_submission_number != 462)
 ```
 
-Count the number of times each combined_id appears in peer_eval.
+Count the number of times each paper_id and analyst_id appears in peer_eval.
 
 ```{r}
 peer_eval %>%
-  count(combined_id)
+  count(paper_id, analyst_id) %>% 
+  arrange(desc(n))
+```
+
+Transforming peer evaluation responses based on the review by the expert panel.
+
+```{r}
+# TODO: finish
+test <- 
+  peer_eval %>% 
+  pivot_longer(cols = c(-analyst_id, -paper_id, -evaluator_id, -peereval_timestamp, -peereval_submission_number, -eval_id, -evaluator_comments), names_to = "variable_name") %>% 
+  # TODO: Join by evaluator_id
+  left_join(., peer_eval_review, by = c("paper_id", "analyst_id", "variable_name")) %>% 
+  mutate(value = if_else(!is.na(change_to), change_to, value))
+```
+
+Select variables.
+
+```{r}
+
 ```
 
 Save processed peer evaluation data separately.

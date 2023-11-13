@@ -5,14 +5,12 @@ editor_options:
   chunk_output_type: console
 ---
 
-TODO:
-years of experience integer!
-
 # Setup
 ## Loading packages
 
 ```{r}
 library(tidyverse)
+library(ggrain)
 ```
 
 ## Load custom functions
@@ -25,21 +23,28 @@ source(here::here("R/utils.R"))
 
 ```{r}
 processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
+
+processed <- 
+  processed %>% 
+    mutate(cohen_analyst = runif(509, min = 0.01, max = 0.99)) %>%
+  group_by(paper_id) %>% 
+  mutate(cohen_original = runif(1, min = 0.01, max = 0.99)) %>% 
+  ungroup()
 ```
 
 # Exploratory data analysis
 
-There are `r processed %>% distinct(Paper_ID) %>% nrow()` unique papers in the dataset. The analyst id is missing in `r processed %>% filter(is.na(Analyst_ID)) %>% nrow()` cases.
+There are `r processed %>% distinct(paper_id) %>% nrow()` unique papers in the dataset. The analyst id is missing in `r processed %>% filter(is.na(analyst_id)) %>% nrow()` cases.
 
 The number of analyses per paper.
 
 ```{r}
 processed %>% 
-  count(Paper_ID) %>% 
+  count(paper_id) %>% 
   arrange(desc(n))
 ```
 
-There are `r processed %>% filter(is.na(Direction_of_Result)) %>% nrow()` responses for the survey question regarding the direction of the results.
+There are `r processed %>% filter(is.na(task1_categorisation)) %>% nrow()` responses for the survey question regarding the conclusions of the study.
 
 # Do different analysts arrive at the same conclusions as the analyst of the original study?
 ## Main figure
@@ -47,47 +52,42 @@ There are `r processed %>% filter(is.na(Direction_of_Result)) %>% nrow()` respon
 Preparing the figure data.
 
 ```{r}
-# Distinct values of Direction_of_Result
-distinct(processed, Direction_of_Result)
-
+# Distinct values of task1_categorisation
+distinct(processed, task1_categorisation)
+# TODO: use original_paper_reference instead of paper_id
 conclusions_main_data <- 
   processed %>% 
-  # TODO: Put this in the preprocessing file
-  mutate(categorisation = case_when(
-    Task1_Categorisation == "The results show evidence for the relationship/effect as described in the claim provided in your task" ~ "Same conclusion",
-    Task1_Categorisation %in% c(
-      "The results do not show evidence for or against the relationship/effect as described in the claim provided in your task",
-      "The results show evidence for the null-hypothesis"
-      ) ~ "No effect/inconclusive",
-    Task1_Categorisation == "The results show evidence for opposite relationship/effect as described in the claim provided in your task" ~ "Opposite effect",
-    TRUE ~ NA_character_)
+  rename(categorisation = task1_categorisation_plotting) %>% 
+  mutate(
+    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
     ) %>% 
-  calculate_conclusion(., Paper_ID, categorisation) %>% 
-  # mutate(
-  #   # TODO: Check if there is a more tidy solution
-  #   Paper_ID = fct_reorder(Paper_ID, ifelse(categorisation == "Effect", percentage, NA), .desc = TRUE, .na_rm = TRUE)
-  #   ) %>%
-    mutate(
-    # TODO: Check if there is a more tidy solution
-    Paper_ID = fct_reorder(Paper_ID, percentage, .desc = TRUE, .na_rm = TRUE)
-    )
+  calculate_conclusion(., paper_id, categorisation) %>% 
+  mutate(
+    paper_id = fct_reorder(paper_id, ifelse(categorisation == "Same conclusion", percentage, NA), .desc = FALSE, .na_rm = TRUE)
+  )
 ```
 
 Creating the figure.
 
 ```{r}
 conclusion_main_plot <-
-  plot_conclusion(conclusions_main_data, Paper_ID, categorisation) +
+  plot_conclusion(conclusions_main_data, paper_id, categorisation) +
   theme(
     axis.text.y = element_text(size = 8),
     axis.text.x = element_text(size = 10),
     axis.title.x = element_text(size = 15),
-    legend.justification = "right",
+    legend.justification = "left",
     legend.box = "horizontal",
+    legend.position = "bottom",
     legend.text = element_text(size = 10)
     )
 
-ggsave(here::here("figures/conclusion_main_plot.jpg"), conclusion_main_plot, width = 8.27, height = 11.69, dpi = 300)
+# Using a hacky solution to move legend under the Y axis
+# conclusion_main_plot_wo_legend <- conclusion_main_plot + theme(legend.position = "none")
+# legend <- cowplot::get_legend(conclusion_main_plot)
+# conclusion_main_plot_w_legend <- cowplot::plot_grid(conclusion_main_plot_wo_legend, legend, nrow = 2, rel_heights = c(1, 0.05), rel_widths = c(1, 5))
+
+ggsave(here::here("figures/conclusion_main_plot.jpg"), conclusion_main_plot, width = 9, height = 11.69, dpi = 300)
 
 conclusion_main_plot
 ```
@@ -97,20 +97,20 @@ conclusion_main_plot
 ```{r}
 conclusions_discipline_data <- 
   processed %>% 
-  filter(Paper_Discipline %in% c("psychology", "economics", "political science")) %>% 
-  mutate(Paper_Discipline = str_to_title(Paper_Discipline)) %>% 
-    mutate(categorisation = case_when(
-    Task1_Categorisation == "The results show evidence for the relationship/effect as described in the claim provided in your task" ~ "Same conclusion",
-    Task1_Categorisation %in% c(
-      "The results do not show evidence for or against the relationship/effect as described in the claim provided in your task",
-      "The results show evidence for the null-hypothesis"
-      ) ~ "No effect/inconclusive",
-    Task1_Categorisation == "The results show evidence for opposite relationship/effect as described in the claim provided in your task" ~ "Opposite effect",
-    TRUE ~ NA_character_)
+  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>% 
+  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
+  rename(categorisation = task1_categorisation_plotting) %>%
+  mutate(
+    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
     ) %>% 
-  calculate_conclusion(., Paper_Discipline, categorisation)
+  calculate_conclusion(., paper_discipline, categorisation)
 
-conclusions_discipline_plot <- plot_conclusion(conclusions_discipline_data, Paper_Discipline, categorisation) + theme(legend.text = element_text(size = 6))
+conclusions_discipline_plot <- plot_conclusion(conclusions_discipline_data, paper_discipline, categorisation, with_labels = TRUE) + 
+  theme(
+    legend.text = element_text(size = 8),
+    legend.position = "bottom",
+    legend.box = "horizontal"
+    )
 
 ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
 
@@ -120,9 +120,21 @@ conclusions_discipline_plot
 ## By expertise
 
 ```{r}
-conclusions_expertise_data <- calculate_conclusion(processed, Expertise_Self_Rating)
+conclusions_expertise_data <- 
+  processed %>% 
+  rename(categorisation = task1_categorisation_plotting) %>%
+  mutate(
+    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
+    expertise_self_rating = as.factor(expertise_self_rating)
+    ) %>% 
+  calculate_conclusion(., expertise_self_rating, categorisation)
 
-conclusions_expertise_plot <- plot_conclusion(conclusions_expertise_data, Expertise_Self_Rating) + theme(legend.text = element_text(size = 6))
+conclusions_expertise_plot <- plot_conclusion(conclusions_expertise_data, expertise_self_rating, categorisation, with_labels = TRUE) + 
+  theme(
+    legend.text = element_text(size = 8),
+    legend.position = "bottom",
+    legend.box = "horizontal"
+    )
 
 ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, dpi = 300)
 
@@ -132,9 +144,21 @@ conclusions_expertise_plot
 ## By suitability of their self-judged analysis
 
 ```{r}
-conclusions_suitability_data <- calculate_conclusion(processed, Confidence_in_Approach)
+conclusions_suitability_data <- 
+  processed %>% 
+  rename(categorisation = task1_categorisation_plotting) %>%
+  mutate(
+    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
+    confidence_in_approach = as.factor(confidence_in_approach)
+    ) %>% 
+  calculate_conclusion(., confidence_in_approach, categorisation)
 
-conclusions_suitability_plot <- plot_conclusion(conclusions_suitability_data, Confidence_in_Approach) + theme(legend.text = element_text(size = 6))
+conclusions_suitability_plot <- plot_conclusion(conclusions_suitability_data, confidence_in_approach, categorisation, with_labels = TRUE) + 
+  theme(
+    legend.text = element_text(size = 8),
+    legend.position = "bottom",
+    legend.box = "horizontal"
+    )
 
 ggsave(here::here("figures/conclusions_suitability_plot.jpg"), conclusions_suitability_plot, dpi = 300)
 
@@ -143,8 +167,36 @@ conclusions_suitability_plot
 
 ## By sample size
 
-```{r}
+Histogram for the sample sizes.
 
+```{r}
+processed %>% 
+  ggplot() + 
+  # Converting to natlog because of extreme outlier
+  aes(x = log(model_sample_size)) + 
+  geom_histogram()
+```
+
+```{r}
+processed %>% 
+  rename(categorisation = task1_categorisation_plotting) %>%
+  mutate(
+    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
+    log_model_sample_size = log(model_sample_size)
+    ) %>% 
+  # filter(model_sample_size != max(model_sample_size)) %>% 
+  ggplot() +
+  aes(x = categorisation, y = log_model_sample_size) +
+	geom_rain(rain.side = 'l') +
+  labs(
+    y = "Log sample size"
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line()
+  )
 ```
 
 # Do different analysts arrive at the same effect estimates as the analyst of the original study?
@@ -158,23 +210,23 @@ effect_main_data <-
   processed %>% 
   # TODO: Simulating effect size variable replace it later
   # Also filter needs to be added as not all the studies have effect sizes?
-  mutate(r_analyst = runif(508, min = 0.01, max = 0.99)) %>%
-  group_by(Paper_ID) %>% 
-  mutate(r_original = runif(1, min = 0.01, max = 0.99)) %>% 
+  mutate(cohen_analyst = runif(509, min = 0.01, max = 0.99)) %>%
+  group_by(paper_id) %>% 
+  mutate(cohen_original = runif(1, min = 0.01, max = 0.99)) %>% 
   ungroup() %>% 
-  select(Paper_ID, r_analyst, r_original) %>% 
-  group_by(Paper_ID) %>%
+  select(paper_id, cohen_analyst, cohen_original) %>% 
+  group_by(paper_id) %>%
   mutate(
     effect_size_type = paste0("re-analysis_0", row_number()),
-    tolarence_region_lower = r_original - 0.05,
-    tolarence_region_upper = r_original + 0.05
+    tolarence_region_lower = cohen_original - 0.05,
+    tolarence_region_upper = cohen_original + 0.05
     ) %>% 
   # TODO: Look for a more tidy way to do this
-  pivot_longer(cols = c(r_analyst, r_original),
+  pivot_longer(cols = c(cohen_analyst, cohen_original),
                names_to = "name",
                values_to = "effect_size") %>%
   mutate(effect_size_type = case_when(
-    name == "r_original" ~ "original",
+    name == "cohen_original" ~ "original",
     TRUE ~ effect_size_type)) %>% 
   distinct(effect_size_type, .keep_all = TRUE) %>% 
   select(-name) %>% 
@@ -199,7 +251,7 @@ effect_main_plot <-
   effect_main_data %>% 
   ggplot() +
   aes(
-    y = Paper_ID,
+    y = paper_id,
     x = effect_size,
     color = effect_size_type,
     shape = effect_size_type
@@ -210,13 +262,13 @@ effect_main_plot <-
   scale_shape_manual(values = shape_vector) +
   scale_color_manual(values = color_vector) +
   labs(
-    x = "Effect size in r"
+    x = "Effect size in Cohen's d"
   ) +
+  guides(color = "none", shape = "none") +
   theme(
     axis.ticks = element_blank(),
     legend.title = element_blank(),
     axis.title.y = element_blank(),
-    legend = element_blank(), # TODO
     plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
     panel.grid = element_blank(),
     panel.background = element_blank(),
@@ -245,17 +297,17 @@ effect_region_all_plot
 
 ```{r}
 processed %>% 
-  distinct(Paper_ID, .keep_all = T) %>% 
-  count(Paper_Discipline) %>% 
+  distinct(paper_id, .keep_all = T) %>% 
+  count(paper_discipline) %>% 
   arrange(n)
 
 effect_region_discipline_data <- 
   processed %>% 
-  filter(Paper_Discipline %in% c("psychology", "economics", "political science")) %>% 
-  mutate(Paper_Discipline = str_to_title(Paper_Discipline)) %>% 
-  calculate_tolerance_region(., Paper_Discipline)
+  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>% 
+  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
+  calculate_tolerance_region(., paper_discipline)
 
-effect_region_discipline_plot <- plot_tolarence_region(effect_region_discipline_data, Paper_Discipline)
+effect_region_discipline_plot <- plot_tolarence_region(effect_region_discipline_data, paper_discipline, with_labels = TRUE)
 
 ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
 
@@ -263,23 +315,63 @@ effect_region_discipline_plot
 ```
 
 ```{r}
+effect_standard_discipline_plot <-
+  processed %>% 
+  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>% 
+  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
+  ggplot() +
+  aes(x = paper_discipline, y = cohen_analyst) +
+	geom_rain(rain.side = 'l') +
+  geom_point(aes(x = paper_discipline, y = cohen_original), color = "red") +
+  labs(
+    y = "Cohen's d"
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line()
+  )
+
+ggsave(here::here("figures/effect_standard_discipline_plot.jpg"), effect_standard_discipline_plot, dpi = 300)
+
+effect_standard_discipline_plot
+```
+
+```{r}
 processed %>% 
-  distinct(Paper_ID, .keep_all = T) %>% 
-  count(Paper_Discipline) %>% 
+  distinct(paper_id, .keep_all = T) %>% 
+  count(paper_discipline) %>% 
   arrange(n)
 
 effect_robustness_discipline_data <-
   processed %>% 
-  filter(Paper_Discipline %in% c("psychology", "economics", "political science")) %>% 
-  mutate(Paper_Discipline = str_to_title(Paper_Discipline)) %>% 
-  calculate_robustness(Paper_Discipline)
+  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>% 
+  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
+  calculate_robustness(paper_discipline)
 
-
-effect_robustness_discipline_plot <- plot_robustness(effect_robustness_discipline_data, Paper_Discipline)
+effect_robustness_discipline_plot <- plot_robustness(effect_robustness_discipline_data, paper_discipline)
 
 ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
 
 effect_robustness_discipline_plot 
+```
+
+```{r}
+effect_robustness_discipline_data %>% 
+  ggplot() +
+  aes(x = paper_discipline, y = robustness) +
+	geom_rain(rain.side = 'l') +
+  # geom_point(aes(x = paper_discipline, y = cohen_original), color = "red") +
+  labs(
+    y = "Robustness"
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line()
+  )
 ```
 
 ### By expertise
@@ -288,15 +380,30 @@ There are `r processed %>% filter(is.na(Expertise_Self_Rating)) %>% nrow()` miss
 
 ```{r}
 processed %>% 
-  distinct(Expertise_Self_Rating)
+  distinct(expertise_self_rating)
 
-effect_region_expertise_data <- calculate_tolerance_region(processed, Expertise_Self_Rating)
+effect_region_expertise_data <- calculate_tolerance_region(processed, expertise_self_rating)
 
-effect_region_expertise_plot <- plot_tolarence_region(effect_region_expertise_data, Expertise_Self_Rating)
+effect_region_expertise_plot <- plot_tolarence_region(effect_region_expertise_data, expertise_self_rating)
 
 ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300)
 
 effect_region_expertise_plot
+```
+
+Robustness.
+
+```{r}
+effect_robustness_expertise_data <-
+  processed %>% 
+  mutate(expertise_self_rating = as.factor(expertise_self_rating)) %>% 
+  calculate_robustness(expertise_self_rating)
+
+effect_robustness_expertise_plot <- plot_robustness(effect_robustness_expertise_data, expertise_self_rating, xlab = "Expertise rating")
+
+ggsave(here::here("figures/effect_robustness_expertise_plot.jpg"), effect_robustness_expertise_plot, dpi = 300)
+
+effect_robustness_expertise_plot 
 ```
 
 ### By suitability of their self-judged analysis
@@ -305,15 +412,55 @@ There are `r processed %>% filter(is.na(Confidence_in_Approach)) %>% nrow()` mis
 
 ```{r}
 processed %>% 
-  distinct(Confidence_in_Approach)
+  distinct(confidence_in_approach)
 
-effect_region_suitability_data <- calculate_tolerance_region(processed, Confidence_in_Approach)
+effect_region_suitability_data <- calculate_tolerance_region(processed, confidence_in_approach)
 
-effect_region_suitability_plot <- plot_tolarence_region(effect_region_suitability_data, Confidence_in_Approach)
+effect_region_suitability_plot <- plot_tolarence_region(effect_region_suitability_data, confidence_in_approach)
 
 ggsave(here::here("figures/effect_region_suitability_plot.jpg"), effect_region_suitability_plot, dpi = 300)
 
 effect_region_suitability_plot
+```
+
+Robustness.
+
+```{r}
+effect_robustness_suitability_data <-
+  processed %>% 
+  mutate(confidence_in_approach = as.factor(confidence_in_approach)) %>% 
+  calculate_robustness(confidence_in_approach)
+
+effect_robustness_suitability_plot <- plot_robustness(effect_robustness_suitability_data, confidence_in_approach, xlab = "Confidence in analysis approach")
+
+ggsave(here::here("figures/effect_robustness_suitability_plot.jpg"), effect_robustness_suitability_plot, dpi = 300)
+
+effect_robustness_suitability_plot 
+```
+
+### Experimental vs observational
+
+```{r}
+# experimental_or_observational
+processed %>% 
+  distinct(experimental_or_observational)
+
+effect_region_studytype_data <- 
+  processed %>% 
+  # empty rows are filtered
+  filter(!is.na(experimental_or_observational)) %>% 
+  # TODO: add this to preprocessing
+  mutate(experimental_or_observational = case_when(
+    experimental_or_observational == 1L ~ "Experimental", 
+    experimental_or_observational == 0L ~ "Observational", 
+  )) %>% 
+  calculate_tolerance_region(., experimental_or_observational)
+
+effect_region_studytype_plot <- plot_tolarence_region(effect_region_studytype_data, experimental_or_observational)
+
+ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
+
+effect_region_studytype_plot
 ```
 
 ### By sample size
@@ -321,7 +468,8 @@ effect_region_suitability_plot
 There are `r processed %>% filter(is.na(Model_Sample_Size)) %>% nrow()` missing values for the sample size survey question.
 
 ```{r}
-
-
+effect_region_samplesize_data <-
+  processed %>% 
+  select(model_sample_size)
 ```
 
