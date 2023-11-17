@@ -119,13 +119,13 @@ calculate_conclusion <- function(data, grouping_variable, categorization_variabl
     mutate(
       N = sum(n),
       relative_frequency = n / N,
-      percentage = relative_frequency * 100,
+      percentage = round(relative_frequency * 100),
     ) %>%
     ungroup()
 }
 
 #' Plot conclusions
-plot_conclusion <- function(data, grouping_variable, categorization_variable, with_labels = FALSE) {
+plot_conclusion <- function(data, grouping_variable, categorization_variable, with_labels = FALSE, y_lab = NULL) {
   plot <- 
     data %>% 
     ggplot() +
@@ -145,11 +145,12 @@ plot_conclusion <- function(data, grouping_variable, categorization_variable, wi
     viridis::scale_fill_viridis(discrete = TRUE) + 
     labs(
       fill = str_to_sentence(quo_name(enquo(categorization_variable))),
-      x = "Percentage"
+      x = "Percentage",
+      y = y_lab
     ) +
     theme(
       axis.ticks = element_blank(),
-      axis.title.y = element_blank(),
+      # axis.title.y = element_blank(),
       # legend.box = "horizontal",
       plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
       # legend.position = "bottom",
@@ -170,6 +171,77 @@ plot_conclusion <- function(data, grouping_variable, categorization_variable, wi
   }
     
     return(plot)
+}
+#' for now input must be calculate_conclusion() result data
+calculate_conclusion_robustness <- function(data, grouping_variable, categorization_variable) {
+  if (missing(grouping_variable)) {
+    data %>%
+      group_by(paper_id) %>% 
+      summarise(
+        robust = if_else(all({{categorization_variable}} == "Same conclusion"), "Robust", "Not Robust")
+      ) %>%
+      ungroup() %>% 
+      count(robust) %>%
+      mutate(
+        N = sum(n),
+        relative_frequency = n / N,
+        percentage = round(relative_frequency * 100, 2)
+      )
+  } else {
+    data %>% 
+      group_by(paper_id, {{grouping_variable}}) %>%
+      summarise(
+        robust = if_else(all({{categorization_variable}} == "Same conclusion"), "Robust", "Not Robust")
+      ) %>% 
+      ungroup() %>% 
+      count({{grouping_variable}}, robust) %>% 
+      group_by({{grouping_variable}}) %>% 
+      mutate(
+        N = sum(n),
+        relative_frequency = n / N,
+        percentage = round(relative_frequency * 100, 2)
+      )
+  }
+}
+
+plot_conclusion_robustness <- function(data, response_variable, grouping_variable = NULL) {
+  plot <-
+    data %>% 
+    ggplot() +
+    aes(
+      x = {{response_variable}},
+      y = percentage,
+      fill = {{grouping_variable}}
+        ) +
+    geom_bar(stat = "identity", position = "dodge") +
+    scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+    viridis::scale_fill_viridis(discrete = TRUE) +
+    labs(
+      x = "Robustness of the Conclusions",
+      y = "Percentage"
+    ) +
+    theme(
+      axis.ticks = element_blank(),
+      axis.line = element_line(color = "black"),
+      # legend.box = "horizontal",
+      plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
+      # legend.position = "bottom",
+      panel.background = element_blank(),
+      panel.grid = element_blank()
+    )
+  
+  if (!rlang::quo_is_missing(rlang::enquo(grouping_variable))) {
+    legend_label <- str_to_sentence(str_replace_all(quo_name(enquo(grouping_variable)), "_", " "))
+    
+    plot <-
+      plot +
+      labs(fill = legend_label) +
+      theme(
+        legend.position = "bottom"
+      )
+  }
+  
+  plot
 }
 
 #' Function to check different response to a question in case of multiple analysis

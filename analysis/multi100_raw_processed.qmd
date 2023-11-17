@@ -116,6 +116,20 @@ original_effect_sizes <-
   select(-original_materials)
 ```
 
+Effect sizes were calculated in excel for this table. The decimal place is denoted with a comma instead of a dot. We change that now.
+
+We also convert all the original effect sizes positive.
+
+```{r}
+original_effect_sizes <-
+  original_effect_sizes %>% 
+  mutate(
+    original_correlation_coef = as.numeric(sub(",", ".", original_correlation_coef)),
+    original_cohens_d = as.numeric(sub(",", ".", original_cohens_d)),
+    original_cohens_d = abs(original_cohens_d)
+  )
+```
+
 ## reanalyzed_effect_sizes
 
 Select variables needed.
@@ -134,8 +148,8 @@ reanalyzed_effect_sizes <-
     reanalysis_degrees_of_freedom_2,
     reanalysis_model_sample_size
   ) %>%
-  # Filling in variables with NAs to make values explicit
   mutate(
+    # Filling in variables with NAs to make values explicit
     reanalysis_es_missing = case_when(
       is.na(reanalysis_es_missing) ~ 0L,
       !is.na(reanalysis_es_missing) ~ 1L
@@ -193,7 +207,9 @@ reanalyzed_effect_sizes <-
         df1 = reanalysis_degrees_of_freedom_1,
         df2 = reanalysis_degrees_of_freedom_2
         ),
-    reanalysis_cohens_d = cohens_d(r = reanalysis_correlation_coef)
+    reanalysis_cohens_d = cohens_d(r = reanalysis_correlation_coef),
+    # Taking the absolute value of every effect size
+    reanalysis_cohens_d = abs(reanalysis_cohens_d)
   )
 ```
 
@@ -602,8 +618,16 @@ multi100_data <- inner_join(multi100_data, original_effect_sizes, by = "paper_id
 
 ## Merge reanalyzes effect size info
 
+Check which multi100 analyses is not in the reanalyzed_effect_sizes table.
+
 ```{r}
-multi100_data <- inner_join(multi100_data, reanalyzed_effect_sizes, by = c("paper_id", "analyst_id"))
+anti_join(multi100_data, reanalyzed_effect_sizes, by = c("paper_id", "analyst_id"))
+# These analyst will be excluded from the main analysis
+# We flag them later in the code
+```
+
+```{r}
+multi100_data <- left_join(multi100_data, reanalyzed_effect_sizes, by = c("paper_id", "analyst_id"))
 ```
 
 ## Merge analyst payments
@@ -669,6 +693,29 @@ multi100_data <-
   ungroup()
 ```
 
+Change _experimental_or_observational_ values to explicit character type.
+
+```{r}
+multi100_data <-
+  multi100_data %>% 
+  dplyr::mutate(
+    experimental_or_observational = case_when(
+      experimental_or_observational == 1L ~ "experimental",
+      experimental_or_observational == 0L ~ "observational",
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+See the analyses we have to remove based on the expert review of the peer evaluation.
+
+```{r}
+# TODO: ask harry and make sure this is right
+peer_eval_review %>% 
+  filter(expert_panel_decision == "Remove") %>% 
+  select(analyst_id, paper_id, expert_panel_decision)
+```
+
 Flag analyses that we will exclude because they did not pass the peer evaluation.
 
 ```{r}
@@ -679,6 +726,9 @@ multi100_data <-
       analyst_id == "NSDML" & paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
       analyst_id == "8P2J2" & paper_id == "Dahl_AmEcoRev_2012_VRKK" ~ FALSE,
       analyst_id == "8PTRZ" & paper_id == "Baccara_AmEcoJourn_2014_RqVE" ~ FALSE,
+      analyst_id == "93K4P" & paper_id == "TERTYTCHNAYA_AmPoliSciRev_2018_9wya" ~ FALSE,
+      # Based on expert panel decision
+      analyst_id == "NSDML" & paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
       TRUE ~ TRUE
       )
     )
@@ -711,6 +761,31 @@ multi100_data <-
     analyst_id == "NFTMG" ~ "N8P2J",
     TRUE ~ analyst_id
   ))
+```
+
+Create a simplified paper_id for the figures.
+
+```{r}
+multi100_data <-
+  multi100_data %>% 
+  group_by(paper_id) %>% 
+  mutate(
+    # TODO: solve trailing 0s
+    simplified_paper_id = paste0("0", cur_group_id())
+  ) %>% 
+  ungroup()
+```
+
+Change the direction of task2 effect sizes based on the direction of the reanalysis conclusion compared to the original conclusion.
+
+```{r}
+multi100_data <-
+  multi100_data %>% 
+  mutate(   
+    # All the reanalysed effect sizes are negative where the reanalysed conclusion goes the opposite direction than the original
+    reanalysis_cohens_d = if_else(direction_of_result == "Opposite as claimed by the original study",
+                                  reanalysis_cohens_d * -1,
+                                  reanalysis_cohens_d))
 ```
 
 Export processed dataframe.
@@ -938,19 +1013,23 @@ test <-
   peer_eval %>% 
   pivot_longer(cols = c(-analyst_id, -paper_id, -evaluator_id, -peereval_timestamp, -peereval_submission_number, -eval_id, -evaluator_comments), names_to = "variable_name") %>% 
   # TODO: Join by evaluator_id
-  left_join(., peer_eval_review, by = c("paper_id", "analyst_id", "variable_name")) %>% 
-  mutate(value = if_else(!is.na(change_to), change_to, value))
+  left_join(
+    .,
+    select(peer_eval_review, evaluator_id, paper_id, analyst_id, variable_name, change_to, expert_panel_decision),
+    by = c("evaluator_id", "paper_id", "analyst_id", "variable_name")
+    ) %>% 
+  mutate(value = if_else(!is.na(change_to), change_to, value)) %>% 
+  select(-change_to) %>%
+  pivot_wider(names_from = variable_name, values_from = value)
+
+anti_join(test, peer_eval, by = c("analyst_id", "evaluator_id", "paper_id"))
 ```
 
-Select variables.
-
-```{r}
-
-```
-
-Save processed peer evaluation data separately.
+Save processed peer evaluation and peer evaluation review data separately.
 
 ```{r}
 write_csv(peer_eval, here::here("data/processed/multi100_peer-eval_processed_data.csv"))
+
+write_csv(peer_eval_review, here::here("data/processed/multi100_peer-eval-review_processed_data.csv"))
 ```
 

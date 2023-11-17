@@ -299,6 +299,7 @@ peer_eval_review_codebook <-
   tibble::tibble(
     variable_names = colnames(peer_eval_review),
     new_names = case_when(
+      variable_names == "Evaluator_ID" ~ "evaluator_id",
       variable_names == "Analyst_ID" ~ "analyst_id",
       variable_names == "Paper_ID" ~ "paper_id",
       variable_names == "Issue_Identified_In" ~ "variable_name",
