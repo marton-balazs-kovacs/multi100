@@ -1,20 +1,36 @@
 #' Prepare dataset for tolerance region plot
-calculate_tolerance_region <- function(data, grouping_var) {
-  data %>%
-    select({{ grouping_var }}, cohen_analyst, cohen_original) %>% 
+calculate_tolerance_region <- function(data, grouping_var, drop_missing = FALSE) {
+  res <-
+    data %>%
+    # Drop missing original_cohens_d
+    filter(!is.na(original_cohens_d)) %>% 
+    dplyr::select({{ grouping_var }}, reanalysis_cohens_d, original_cohens_d) %>% 
     mutate(
-      tolarence_region_lower = cohen_original - 0.05,
-      tolarence_region_upper = cohen_original + 0.05,
+      tolarence_region_lower = original_cohens_d - 0.05,
+      tolarence_region_upper = original_cohens_d + 0.05,
       {{ grouping_var }} := as.factor({{ grouping_var }})
     ) %>% 
     group_by({{ grouping_var }}) %>%
     mutate(
       is_within_region = case_when(
-        cohen_analyst <= tolarence_region_lower | cohen_analyst >= tolarence_region_upper ~ "No",
-        cohen_analyst >= tolarence_region_lower | cohen_analyst <= tolarence_region_upper ~ "Yes"
-      )
+        reanalysis_cohens_d <= tolarence_region_lower | reanalysis_cohens_d >= tolarence_region_upper ~ "No",
+        reanalysis_cohens_d >= tolarence_region_lower | reanalysis_cohens_d <= tolarence_region_upper ~ "Yes",
+        is.na(reanalysis_cohens_d) ~ "Missing"
+      ),
+      is_within_region = as.factor(is_within_region)
     ) %>% 
     count({{ grouping_var }}, is_within_region) %>% 
+    group_by({{ grouping_var }}) %>%
+    complete(is_within_region, fill = list(n = 0))
+    
+    if (drop_missing) {
+      res <-
+        res %>% 
+        dplyr::filter(is_within_region != "Missing")
+    }
+  
+  res <-
+    res %>% 
     group_by({{ grouping_var }}) %>% 
     mutate(
       N = sum(n),
@@ -22,15 +38,21 @@ calculate_tolerance_region <- function(data, grouping_var) {
       percentage = relative_frequency * 100
     ) %>% 
     ungroup()
+  
+  res
 }
 
 #' Function to NOT include a vector in another vector
 `%ni%` <- Negate(`%in%`)
 
 #' Create tolarence region plot
-plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE) {
+plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE, ylab = NULL) {
   plot <-
     data %>% 
+    # mutate(
+    #   {{grouping_var}} := as.factor({{grouping_var}}),
+    #   {{grouping_var}} := fct_reorder({{grouping_var}}, percentage)
+    # ) %>% 
     ggplot() +
     aes(
       x = percentage,
@@ -47,11 +69,12 @@ plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE) {
     viridis::scale_fill_viridis(discrete = TRUE) + 
     labs(
       x = "Percentage",
+      y = ylab,
       fill = "Within region?"
     ) +
     theme(
       axis.ticks = element_blank(),
-      axis.title.y = element_blank(),
+      # axis.title.y = element_blank(),
       legend.position = "bottom",
       legend.box = "horizontal",
       plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
@@ -78,11 +101,11 @@ plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE) {
 #' Prepare dataset for effect size robustness plot
 calculate_robustness <- function(data, grouping_var) {
   data %>% 
-    select(paper_id, {{grouping_var}}, cohen_analyst) %>% 
+    dplyr::select(paper_id, {{grouping_var}}, reanalysis_cohens_d) %>% 
     group_by(paper_id, {{grouping_var}}) %>% 
-    filter(cohen_analyst == min(cohen_analyst) | cohen_analyst == max(cohen_analyst)) %>% 
+    filter(reanalysis_cohens_d == min(reanalysis_cohens_d) | reanalysis_cohens_d == max(reanalysis_cohens_d)) %>% 
     summarise(
-      robustness = max(cohen_analyst) - min(cohen_analyst)
+      robustness = max(reanalysis_cohens_d) - min(reanalysis_cohens_d)
     ) %>% 
     ungroup()
 }
@@ -98,7 +121,7 @@ plot_robustness <- function(data, grouping_var, xlab = "") {
     geom_jitter(width = 0.1) +
     labs(
       x = xlab,
-      y = "Robustness",
+      y = "Robustness in Cohen's d",
     ) +
     theme(
       axis.ticks = element_blank(),
@@ -112,7 +135,7 @@ plot_robustness <- function(data, grouping_var, xlab = "") {
 #' Prepare dataset for plotting the proportion of conclusions
 calculate_conclusion <- function(data, grouping_variable, categorization_variable) {
   data %>% 
-    select({{ grouping_variable }}, {{ categorization_variable }}) %>% 
+    dplyr::select({{ grouping_variable }}, {{ categorization_variable }}) %>% 
     count({{ grouping_variable }}, {{ categorization_variable }}) %>% 
     group_by({{ grouping_variable }}) %>%
     complete({{ categorization_variable }}, fill = list(n = 0)) %>% 
@@ -131,7 +154,7 @@ plot_conclusion <- function(data, grouping_variable, categorization_variable, wi
     ggplot() +
     aes(
       y = {{ grouping_variable }},
-      x = percentage,
+      x = relative_frequency,
       fill = {{ categorization_variable }}
     ) +
     geom_bar(
@@ -140,7 +163,7 @@ plot_conclusion <- function(data, grouping_variable, categorization_variable, wi
       width = 0.8) +
     scale_x_continuous(
       expand = c(0, 0),
-      labels = scales::percent_format(scale = 1)) +
+      labels = scales::percent_format(scale = 100)) +
     scale_y_discrete(expand = c(0, 0)) +
     viridis::scale_fill_viridis(discrete = TRUE) + 
     labs(
@@ -204,17 +227,17 @@ calculate_conclusion_robustness <- function(data, grouping_variable, categorizat
   }
 }
 
-plot_conclusion_robustness <- function(data, response_variable, grouping_variable = NULL) {
+plot_conclusion_robustness <- function(data, response_variable, grouping_variable = NULL, with_labels = TRUE) {
   plot <-
     data %>% 
     ggplot() +
     aes(
       x = {{response_variable}},
-      y = percentage,
+      y = relative_frequency,
       fill = {{grouping_variable}}
         ) +
-    geom_bar(stat = "identity", position = "dodge") +
-    scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.8) +
+    scale_y_continuous(expand = c(0, 0), limits = c(0, 1), labels = scales::percent_format(scale = 100)) +
     viridis::scale_fill_viridis(discrete = TRUE) +
     labs(
       x = "Robustness of the Conclusions",
@@ -238,6 +261,18 @@ plot_conclusion_robustness <- function(data, response_variable, grouping_variabl
       labs(fill = legend_label) +
       theme(
         legend.position = "bottom"
+      )
+  }
+  
+  if (with_labels) {
+    plot <-
+      plot +
+      geom_text(
+        aes(x ={{response_variable}}, y = relative_frequency, label = as.character(paste0(n, "/", N))),
+        position = position_dodge(width = 0.8),
+        vjust = -0.5,
+        color = "black",  
+        size = 5
       )
   }
   
@@ -276,8 +311,8 @@ calculate_percentage <- function(data, response_var) {
     ungroup() %>% 
     mutate(
       N = sum(n),
-      freq = n / N,
-      percentage = round(freq * 100, 2)
+      freq = round(n / N, 4),
+      percentage = freq * 100
     ) 
 }
 

@@ -51,6 +51,9 @@ peer_eval_review <- readr::read_csv(here::here("data/raw/multi100_peer-eval-revi
 
 # Analyst payments data
 analyst_payments <- readr::read_csv(here::here("data/raw/multi100_analyst-payments_raw_data.csv"))
+
+# Reviewing the direction of the claims in task2
+claim_direction_review <- readr::read_csv(here::here("data/raw/multi100_claim-direction-review_raw_data.csv"))
 ```
 
 ## all_paper
@@ -674,7 +677,7 @@ multi100_data <-
     # model_sample_size,
     # model_degrees_of_freedom,
     p_value_or_bayes,
-    p_value_report, task2_conclusion, direction_of_result, same_conclusion_as_task1,
+    p_value_report, task2_conclusion, direction_of_result, same_statistical_result_as_task1,
     additional_calculations, task2_comments,
     # reproduced effect sizes
     reanalysis_es_missing, reanalysis_es_missing_reason, reanalysis_type_of_statistic, reanalysis_statistic_report, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2, reanalysis_model_sample_size, reanalysis_correlation_coef, reanalysis_cohens_d,
@@ -842,7 +845,7 @@ This is submission number 459.
 ```{r}
 peer_eval <- 
   peer_eval %>% 
-  # TODO: change it to concrete id
+  # TODO: change it to concrete id, is this correct?
   filter(peereval_submission_number != 459)
 ```
 
@@ -899,7 +902,7 @@ Fixing erroneous ids:
 * SN. 446 submitted the co-analysts ID as their own ID - it should be NSDML (based on the email address they provided)
 
 Alter either the analyst_id or paper_id as appropriate.
-#TODO: change the ids to actual text for safety
+TODO: change the ids to actual text for safety
 ```{r}
 peer_eval <-
   peer_eval %>% 
@@ -1008,22 +1011,28 @@ peer_eval %>%
 Transforming peer evaluation responses based on the review by the expert panel.
 
 ```{r}
-# TODO: finish
-test <- 
-  peer_eval %>% 
-  pivot_longer(cols = c(-analyst_id, -paper_id, -evaluator_id, -peereval_timestamp, -peereval_submission_number, -eval_id, -evaluator_comments), names_to = "variable_name") %>% 
-  # TODO: Join by evaluator_id
+# Filter values to be changed by the peer evalution review
+# Decision for values to be changed were done by the core team
+# TODO: Maybe this should not be done here?
+peer_eval_change <-
+  peer_eval_review |>
+  select(evaluator_id, paper_id, analyst_id, variable_name, change_to) |>
+  filter(!is.na(change_to))
+
+peer_eval <-
+  peer_eval %>%
+  pivot_longer(cols = c(-analyst_id, -paper_id, -evaluator_id, -peereval_timestamp, -peereval_submission_number, -eval_id, -evaluator_comments), names_to = "variable_name") %>%
   left_join(
     .,
-    select(peer_eval_review, evaluator_id, paper_id, analyst_id, variable_name, change_to, expert_panel_decision),
+    peer_eval_change,
     by = c("evaluator_id", "paper_id", "analyst_id", "variable_name")
-    ) %>% 
-  mutate(value = if_else(!is.na(change_to), change_to, value)) %>% 
+    ) %>%
+  mutate(value = if_else(!is.na(change_to), change_to, value)) %>%
   select(-change_to) %>%
   pivot_wider(names_from = variable_name, values_from = value)
-
-anti_join(test, peer_eval, by = c("analyst_id", "evaluator_id", "paper_id"))
 ```
+
+According to the decision of the expert panel `r nrow(peer_eval_change)` decisions made by the peer evaluators were modified.
 
 Save processed peer evaluation and peer evaluation review data separately.
 

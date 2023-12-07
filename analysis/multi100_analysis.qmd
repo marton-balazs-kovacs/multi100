@@ -394,16 +394,17 @@ effect_region_expertise_plot
 Robustness.
 
 ```{r}
-effect_robustness_expertise_data <-
-  processed %>% 
-  mutate(expertise_self_rating = as.factor(expertise_self_rating)) %>% 
-  calculate_robustness(expertise_self_rating)
-
-effect_robustness_expertise_plot <- plot_robustness(effect_robustness_expertise_data, expertise_self_rating, xlab = "Expertise rating")
-
-ggsave(here::here("figures/effect_robustness_expertise_plot.jpg"), effect_robustness_expertise_plot, dpi = 300)
-
-effect_robustness_expertise_plot 
+# TODO: This does not make sense on this level
+# effect_robustness_expertise_data <-
+#   processed %>% 
+#   mutate(expertise_self_rating = as.factor(expertise_self_rating)) %>% 
+#   calculate_robustness(expertise_self_rating)
+# 
+# effect_robustness_expertise_plot <- plot_robustness(effect_robustness_expertise_data, expertise_self_rating, xlab = "Expertise rating")
+# 
+# ggsave(here::here("figures/effect_robustness_expertise_plot.jpg"), effect_robustness_expertise_plot, dpi = 300)
+# 
+# effect_robustness_expertise_plot 
 ```
 
 ### By suitability of their self-judged analysis
