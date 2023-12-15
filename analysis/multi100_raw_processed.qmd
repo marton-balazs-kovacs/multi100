@@ -750,6 +750,24 @@ multi100_data <-
   )
 ```
 
+Recode the free-text responses to the education question.
+
+```{r}
+multi100_data <- 
+  multi100_data |> 
+  mutate(
+    education_level = case_when(
+      education_level == "ABD in PhD program" ~ "Master's degree or equivalent",
+      education_level == "Doctoral candidate and master's degree" ~ "Master's degree or equivalent",
+      education_level == "Finished PhD school, but hasn't gone through the thesis defence yet" ~ "Master's degree or equivalent",
+      education_level == "high-school diploma" ~ "High-school diploma or equivalent",
+      education_level == "Postdoc" ~ "Doctoral degree or equivalent",
+      education_level == "Habilitation (post- doctoral degree)" ~ "Doctoral degree or equivalent",
+      TRUE ~ education_level
+    )
+  )
+```
+
 Some analyst_ids are not unique to the person. We correct this error now before saving the processed dataset.
 
 The id that we will use for these analysts are:
@@ -905,7 +923,7 @@ Alter either the analyst_id or paper_id as appropriate.
 TODO: change the ids to actual text for safety
 ```{r}
 peer_eval <-
-  peer_eval %>% 
+  peer_eval %>%
   mutate(
     paper_id = case_when(
       peereval_submission_number == 141 ~ "Bursztyn_AmEcoRev_2017_VB9K",
@@ -923,11 +941,27 @@ peer_eval <-
       peereval_submission_number == 451 ~ "DAILV",
       TRUE ~ analyst_id
     ),
-    evaluator_id = case_when(
-      peereval_submission_number == 446 ~ "NSDML",
-      TRUE ~ evaluator_id
-    )
+    evaluator_id = case_when(peereval_submission_number == 446 ~ "NSDML",
+                             TRUE ~ evaluator_id)
   )
+```
+
+We have to change these values in the peer eval review as well.
+
+```{r}
+peer_eval_review <- 
+  peer_eval_review |> 
+  mutate(
+    analyst_id = case_when(
+      analyst_id == "J3ODA" & paper_id == "Sliwka_JournLabEco_2017_VDJV" & evaluator_id == "A1SBQ" ~ "JE3RS",
+      TRUE ~ analyst_id
+    )
+  ) |> 
+  # We also drop some of the values that are duplicates and should not be in the peer evaluation review
+  filter(
+    !(analyst_id == "GHN4R" & paper_id == "Menaldo_AmJourPoliSci_2016_Vx4e" & evaluator_id == "WANJC"),
+    !(analyst_id == "MOYDE" & paper_id == "Axt_JournExpSocPsych_2018_zK2" & evaluator_id == "EZI7J")
+    )
 ```
 
 Re-run code to produce eval_id.
