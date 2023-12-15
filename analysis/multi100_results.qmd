@@ -1,5 +1,5 @@
 ---
-title: "General descriptives"
+title: "Results"
 format: docx
 editor: source
 editor_options: 
@@ -26,54 +26,50 @@ peer_eval_review <- readr::read_csv(here::here("data/processed/multi100_peer-eva
 # Add number of evaluations per analysis
 # TODO: check whether this is implemented in raw processed
 peer_eval <-
-  peer_eval %>% 
-  group_by(paper_id, analyst_id) %>% 
-  mutate(n_evaluations = n()) %>% 
-  ungroup()
+  peer_eval |>
+  dplyr::group_by(paper_id, analyst_id) |>
+  dplyr::mutate(n_evaluations = dplyr::n()) |>
+  dplyr::ungroup()
 
 all_people <- readr::read_csv(here::here("data/processed/multi100_all-people_processed_data.csv"))
 
 processed <-
-  processed %>% 
-  mutate(
-    # Transforming the timestamp to date type from character
-    task1_timestamp = lubridate::ymd_hms(task1_timestamp)
-    )
+  processed |>
+  dplyr::mutate(# Transforming the timestamp to date type from character
+    task1_timestamp = lubridate::ymd_hms(task1_timestamp))
 ```
 
 ```{r include=FALSE}
 # Check if the analyst_id's are always unique to one person.
-processed %>%
-  distinct(first_name, last_name, analyst_id) %>%  
-  group_by(first_name, last_name) %>% 
-  mutate(n_analyst_id = n()) %>% 
-  arrange(desc(n_analyst_id))
+processed |>
+  dplyr::distinct(first_name, last_name, analyst_id) |>
+  dplyr::group_by(first_name, last_name) |>
+  dplyr::mutate(n_analyst_id = dplyr::n()) |>
+  dplyr::arrange(dplyr::desc(n_analyst_id))
 ```
 
-## General
+## General descriptives
 
 ```{r include=FALSE}
 # TODO: somebody check the names for typos that could mess with the count
-analyst_signed_up <- 
-  all_people %>% 
-  mutate(
-    first_name = tolower(first_name),
-    last_name = tolower(last_name)
-  ) %>% 
-  distinct(first_name, last_name, .keep_all = T) %>% 
-  filter(disclosure_agreement == "I agree")
+analyst_signed_up <-
+  all_people |>
+  dplyr::mutate(first_name = tolower(first_name),
+                last_name = tolower(last_name)) |>
+  dplyr::distinct(first_name, last_name, .keep_all = T) |>
+  dplyr::filter(disclosure_agreement == "I agree")
 
 analyst_submitted <-
-  processed %>% 
-  distinct(analyst_id) %>% 
+  processed |>
+  dplyr::distinct(analyst_id) |>
   nrow()
 ```
 
-As a response to our recruitment call, `r nrow(analyst_signed_up)` researchers signed up to participate in our study. Out of these volunteers, `r analyst_submitted` signed up to analyse at least one datasets and submitted their work by the deadline or an extended deadline.
+As a response to our recruitment call, `r nrow(analyst_signed_up)` researchers signed up to participate in our study. Out of these volunteers, `r analyst_submitted` signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
 
 ```{r include=FALSE}
 n_analysis <-
-  processed %>% 
+  processed |> 
   nrow()
 ```
 
@@ -81,215 +77,229 @@ Throughout the project, `r n_analysis` re-analyses have been submitted. This num
 
 ```{r include=FALSE}
 n_failed_peer <-
-  processed %>% 
-  filter(!peer_eval_pass) %>% 
+  processed |>
+  dplyr::filter(!peer_eval_pass) |>
   nrow()
 ```
 
-Out of the submitted analyses, \_\ were withdrawn, and `r nrow(filter(processed, !peer_eval_pass))` were omitted from the summary analysis their analysis failed the peer evaluation.
+Out of the submitted analyses `r nrow(dplyr::filter(processed, !peer_eval_pass))` were omitted from the summary analysis their analysis failed the peer evaluation.
 
 ```{r include=FALSE}
 # Excluding analyst who failed the peer evaluation from the rest of the analysis
 processed <-
   processed |> 
-  filter(peer_eval_pass)
+  dplyr::filter(peer_eval_pass)
 ```
 
 ```{r include=FALSE}
 final_n_analyst <-
-  processed %>% 
-  distinct(analyst_id) %>% 
+  processed |> 
+  dplyr::distinct(analyst_id) |> 
   nrow()
 ```
 
 As a result, we ended up with `r nrow(processed)` re-analyses, submitted by `r final_n_analyst` co-analysts.
 
-## Task 1 Survey results
+Although we invited more than 5 co-analysts to each of the 100 studies, due to drop-outs the final number of completed analyses ranged between `r min(dplyr::count(processed, paper_id)$n)` and `r max(dplyr::count(processed, paper_id)$n)`. Table 1 shows the the distribution of analyses per studies. 
+
+```{r echo=FALSE, message=FALSE}
+processed |>
+  dplyr::count(paper_id) |>
+  dplyr::count(n) |>
+  dplyr::rename(`Number of Completed Analyses` = n,
+                `Number of Studies` = nn) |>
+  gt::gt() |>
+  gt::tab_style(
+    style = gt::cell_text(weight = "bold"),
+    locations = gt::cells_column_labels()
+  )
+```
+
+## Basic demographics of the co-analysts
 
 ```{r include=FALSE}
 # Checking if analysts consistently reported their current position
 check_diff_response(processed, analyst_id, current_position_grouped)
 
 position <-
-  processed %>%
-  dplyr::select(analyst_id, paper_id, current_position_grouped, task1_timestamp) %>% 
+  processed |>
+  dplyr::select(analyst_id, paper_id, current_position_grouped, task1_timestamp) |> 
   # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) %>% 
-  count(current_position_grouped) %>% 
+  keep_first_response(analyst_id, task1_timestamp) |> 
+  count(current_position_grouped) |> 
   rename(position = current_position_grouped)
 ```
 
-Out of all the co-analysts who submitted their work by the deadline, there were `r filter(position, position == "Professor") %>% pull(n)` professors, `r filter(position, position == "Associate Professor") %>% pull(n)` associate professors, `r filter(position, position == "Post-Doc Researcher") %>% pull(n)` post-doctoral researchers, `r filter(position, position == "Doctoral Student") %>% pull(n)` doctoral students, `r filter(position, position == "Other academic/research position") %>% pull(n)` from other academic/research positions, and `r filter(position, position == "Other") %>% pull(n)` from other positions. 
+Out of all the co-analysts who submitted their work by the deadline, there were `r dplyr::filter(position, position == "Professor") |> dplyr::pull(n)` professors, `r dplyr::filter(position, position == "Associate Professor") |> dplyr::pull(n)` associate professors, `r filter(position, position == "Assistant Professor") |> dplyr::pull(n)` assistant professors, `r dplyr::filter(position, position == "Post-Doc Researcher") |> dplyr::pull(n)` post-doctoral researchers, `r dplyr::filter(position, position == "Doctoral Student") |> dplyr::pull(n)` doctoral students, `r dplyr::filter(position, position == "Other academic/research position") |> dplyr::pull(n)` from other academic/research positions, and `r dplyr::filter(position, position == "Other") |> dplyr::pull(n)` from other positions. 
 
 ```{r include=FALSE}
 check_diff_response(processed, analyst_id, gender)
 
 gender <-
-  processed %>%
-  dplyr::select(analyst_id, paper_id, gender, task1_timestamp) %>% 
+  processed |>
+  dplyr::select(analyst_id, paper_id, gender, task1_timestamp) |> 
   # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) %>% 
-  count(gender)
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(gender)
 ```
 
-The gender distribution of the co-analysts is as follows: `r filter(gender, gender == "Female") %>% pull(n)` female, `r filter(gender, gender == "Male") %>% pull(n)` male, `r filter(gender, gender == "Non-binary") %>% pull(n)` other, and `r filter(gender, gender == "Prefer not to say") %>% pull(n)` didn't want to respond to this question.
+The gender distribution of the co-analysts is as follows: `r dplyr::filter(gender, gender == "Female") |> dplyr::pull(n)` female, `r dplyr::filter(gender, gender == "Male") |> dplyr::pull(n)` male, `r dplyr::filter(gender, gender == "Non-binary") |> dplyr::pull(n)` other, and `r dplyr::filter(gender, gender == "Prefer not to say") |> dplyr::pull(n)` didn't want to respond to this question.
 
 ```{r include=FALSE}
-check_diff_response(processed, analyst_id, age)
+check_diff_response(data = processed, id_var = analyst_id, response_var = age)
 
 age <-
-  processed %>%
-  dplyr::select(analyst_id, paper_id, age, task1_timestamp) %>% 
+  processed |>
+  dplyr::select(analyst_id, paper_id, age, task1_timestamp) |> 
   # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) |> 
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
   # Filter erroneous data
-  filter(age != "00") |> 
-  mutate(age = as.numeric(age))
+  dplyr::filter(age != "00") |> 
+  dplyr::mutate(age = as.numeric(age))
   
 age_group <-
-  age %>% 
-  mutate(
-    age_group = case_when(
+  age |> 
+  dplyr::mutate(
+    age_group = dplyr::case_when(
       age <= 39 ~ "young",
       age >= 40 | age <= 59 ~ "middle",
       age >= 60 ~ "old",
       TRUE ~ NA_character_
     ),
     age_group = factor(age_group, levels = c("young", "middle", "old"))
-    ) %>% 
-  count(age_group) |> 
-  complete(age_group, fill = list(n = 0))
+    ) |> 
+  dplyr::count(age_group) |> 
+  tidyr::complete(age_group, fill = list(n = 0))
 ```
 
-The age distribution of the co-analysts is depicted in @fig-age-plot. `r filter(age_group, age_group == "young") %>% pull(n)` Young adults (-39 years); `r filter(age_group, age_group == "middle") %>% pull(n)` middle-ages adults (40-59 years); and no old adults (60- years).
+The age distribution of the co-analysts is depicted in @fig-age-plot. `r dplyr::filter(age_group, age_group == "young") |> dplyr::pull(n)` young adults (-39 years); `r dplyr::filter(age_group, age_group == "middle") |> dplyr::pull(n)` middle-aged adults (40-59 years); and no old adults (60- years).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 #| label: fig-age-plot
 #| fig-cap: "The figure shows the distribution of the analysts' age. When an analyst submitted more than one re-analysis with more than a year apart, we only kept their age at the time of their first submission. Moreover, one analyst was excluded because they did not disclose their age."
 age_plot <- 
-  age %>%
-  ggplot() +
-  aes(x = age) +
-  geom_histogram(binwidth = 1) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 40)) +
-  scale_x_continuous(
+  age |>
+  ggplot2::ggplot() +
+  ggplot2::aes(x = age) +
+  ggplot2::geom_histogram(binwidth = 1) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, 40)) +
+  ggplot2::scale_x_continuous(
     # limits = c(20, 55),
     # breaks = c(20, 30, 40, 50, 60),
     # labels = c("20", "30", "40", "50", "60")
   ) +
-  labs(x = "Age",
-       y = "Count") +
-  theme(
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    axis.line = element_line()
+  ggplot2::labs(x = "Age (years)",
+       y = "Number of Co-analysts") +
+  ggplot2::theme(
+    panel.grid = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line()
   )
 
-ggsave(here::here("figures/demographic_age_plot.jpg"), age_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_age_plot.jpg"), age_plot, dpi = 300)
 
 age_plot
 ```
 
 ```{r include=FALSE}
-check_diff_response(processed, analyst_id, education_level)
+check_diff_response(data = processed, id_var = analyst_id, response_var = education_level)
 
 education <-
-  processed %>%
-  dplyr::select(analyst_id, paper_id, education_level, task1_timestamp) %>% 
+  processed |>
+  dplyr::select(analyst_id, paper_id, education_level, task1_timestamp) |> 
   # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) %>% 
-  count(education_level) %>% 
-  rename(education = education_level)
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(education_level) |> 
+  dplyr::rename(education = education_level)
 ```
 
-Regarding the highest level of education, `r filter(education, education == "") %>% pull(n)` co-analysts had Bachelor's degree or equivalent, `r filter(education, education == "") %>% pull(n)` Master's degree or equivalent, `r filter(education, education == "") %>% pull(n)` had Doctoral degree or equivalent; and `r filter(education, education == "") %>% pull(n)` reported other degree. In case the analysts completed more than one re-analysis and they advanced in their studies by the time of their second analysis, we only kept their first response for this comparison.
+Regarding the highest level of education, `r dplyr::filter(education, education == "High-school diploma or equivalent") |> dplyr::pull(n)` reported High-school diploma or equivalent, `r dplyr::filter(education, education == "Bachelor's degree or equivalent") |> dplyr::pull(n)` co-analysts had Bachelor's degree or equivalent, `r dplyr::filter(education, education == "Master's degree or equivalent") |> dplyr::pull(n)` Master's degree or equivalent, `r dplyr::filter(education, education == "Doctoral degree or equivalent") |> dplyr::pull(n)` had Doctoral degree or equivalent. In case the analysts completed more than one re-analysis and they advanced in their studies by the time of their second analysis, we only kept their first response for this comparison.
 
 ```{r include=FALSE}
-check_diff_response(processed, analyst_id, country_of_residence)
+check_diff_response(data = processed, id_var = analyst_id, response_var = country_of_residence)
 
 country_data <- raster::ccodes()
 
 country <- 
-  processed %>%
-  dplyr::select(analyst_id, paper_id, country_of_residence, task1_timestamp) %>% 
+  processed |>
+  dplyr::select(analyst_id, paper_id, country_of_residence, task1_timestamp) |> 
   # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) %>% 
-  count(country_of_residence) %>% 
-  rename(region = country_of_residence) |> 
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(country_of_residence) |> 
+  dplyr::rename(region = country_of_residence) |> 
   # Modify country names to fit the worldmap data
-  mutate(
-    subregion = case_when(
+  dplyr::mutate(
+    subregion = dplyr::case_when(
       region == "Hong Kong (China)" ~ "Hong Kong",
       TRUE ~ NA_character_
     ),
-    region = case_when(
+    region = dplyr::case_when(
       region == "Hong Kong (China)" ~ "China",
       region == "United States" ~ "USA",
       region == "United Kingdom" ~ "UK",
       TRUE ~ region
     ),
-    continent = countrycode(region, "country.name", "continent"),
-    iso3_code = countrycode(region, "country.name", "iso3c")
+    continent = countrycode::countrycode(region, "country.name", "continent"),
+    iso3_code = countrycode::countrycode(region, "country.name", "iso3c")
   ) |> 
-  left_join(dplyr::select(country_data, ISO3, UNREGION1), by = c("iso3_code" = "ISO3"))
+  dplyr::left_join(dplyr::select(country_data, ISO3, UNREGION1), by = c("iso3_code" = "ISO3"))
 
 continent <-
   country |> 
-  group_by(continent) |> 
-  summarise(N = sum(n))
+  dplyr::group_by(continent) |> 
+  dplyr::summarise(N = sum(n))
 
 region <-
   country |> 
-  group_by(UNREGION1) |> 
-  summarise(N = sum(n))
+  dplyr::group_by(UNREGION1) |> 
+  dplyr::summarise(N = sum(n))
 ```
 
-The country of residence of the co-analysts is shown on the map on @fig-country-plot. Regarding continents, `r filter(continent, continent == "Africa") |> pull(N)` co-analysts were from Africa, `r filter(continent, continent == "Asia") |> pull(N)` from Asia, `r filter(continent, continent == "Oceania") |> pull(N)` from Oceania, `r filter(continent, continent == "Europe") |> pull(N)` from Europe, `r filter(region, UNREGION1 == "Northern America") |> pull(N)` from North America, `r filter(region, UNREGION1 %in% c("Central America", "South America")) |> summarise(sum(N)) |> pull("sum(N)")` from South America.
+The country of residence of the co-analysts is shown on the map on @fig-country-plot. Regarding the continents, `r dplyr::filter(continent, continent == "Africa") |> dplyr::pull(N)` co-analyst was from Africa, `r dplyr::filter(continent, continent == "Asia") |> dplyr::pull(N)` were from Asia, `r dplyr::filter(continent, continent == "Oceania") |> dplyr::pull(N)` from Oceania, `r dplyr::filter(continent, continent == "Europe") |> dplyr::pull(N)` from Europe, `r dplyr::filter(region, UNREGION1 == "Northern America") |> dplyr::pull(N)` from North America, `r dplyr::filter(region, UNREGION1 %in% c("Central America", "South America")) |> dplyr::summarise(sum(N)) |> dplyr::pull("sum(N)")` from South America.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 #| label: fig-country-plot
 #| fig-cap: "The figure shows the analysts' country of residence. When an analyst submitted more than one re-analysis and they moved between the submissions, we only kept their first response."
 
 # TODO: This is an ugly solution ask someone for a better one
-# use coaleace()
 world_map <- 
-  map_data("world") |> 
-  mutate(
-    subregion = case_when(
+  ggplot2::map_data("world") |> 
+  dplyr::mutate(
+    subregion = dplyr::case_when(
       subregion == "Hong Kong" ~ subregion,
       TRUE ~ NA_character_
     )
   )
 
-country_map <- left_join(world_map, country, by = c("region", "subregion"))
+country_map <- dplyr::left_join(world_map, country, by = c("region", "subregion"))
 
 country_map_plot <- 
   country_map |> 
-  ggplot() +
-  aes(x = long, y = lat, group = group, fill = n) +
-  geom_polygon(color = "white", linewidth = 0.2) +
-  scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalyst") +
-  theme_void()
+  ggplot2::ggplot() +
+  ggplot2::aes(x = long, y = lat, group = group, fill = n) +
+  ggplot2::geom_polygon(color = "white", linewidth = 0.2) +
+  ggplot2::scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalyst") +
+  ggplot2::theme_void()
 
-ggsave(here::here("figures/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
 
 country_map_plot
 ```
 
 ```{r include=FALSE}
-check_diff_response(processed, analyst_id, primary_discipline)
+check_diff_response(data = processed, id_var = analyst_id, response_var = primary_discipline)
 
 analyst_discipline <- 
-  processed %>%
-  dplyr::select(analyst_id, paper_id, primary_discipline, task1_timestamp) %>% 
+  processed |>
+  dplyr::select(analyst_id, paper_id, primary_discipline, task1_timestamp) |> 
   # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) %>% 
-  calculate_percentage(primary_discipline) %>%
-  rename(discipline = primary_discipline) |> 
-  dplyr::arrange(desc(percentage))
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  calculate_percentage(response_var = primary_discipline) |>
+  dplyr::rename(discipline = primary_discipline) |> 
+  dplyr::arrange(dplyr::desc(percentage))
 ```
 
-We asked the co-analysts which discipline is the closest to their research area. The following Table summarises the distribution of their disciplinary orientation. Co-analysts from `r slice(analyst_discipline, 1) |> pull(discipline)` and `r slice(analyst_discipline, 2) |> pull(discipline)` disciplines participated in the highest ratio in this study.
+We asked the co-analysts which discipline is the closest to their research area. The following Table summarizes the distribution of their disciplinary orientation. Co-analysts from `r dplyr::slice(analyst_discipline, 1) |> dplyr::pull(discipline)` and `r dplyr::slice(analyst_discipline, 2) |> dplyr::pull(discipline)` disciplines participated in the highest ratio in this study.
 
 ```{r, echo=FALSE}
 # tbl-discipline
@@ -300,74 +310,79 @@ analyst_discipline |>
   dplyr::rename(Discipline = discipline,
                 Count = n,
                 Percentage = percentage) |>
-  gt() |>
-  tab_style(style = cell_text(weight = "bold"),
-            locations = cells_column_labels()) |>
-  tab_footnote(
+  gt::gt() |>
+  tab_style(style = gt::cell_text(weight = "bold"),
+            locations = gt::cells_column_labels()) |>
+  gt::tab_footnote(
     "Note: Whenever the respondents provided more than one field we only kept their first responses."
   )
 ```
 
 ```{r include=FALSE}
-check_diff_response(processed, analyst_id, years_of_experience)
+check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
+
+analyst_experience_years_data <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  # Dropped because of faulty response
+  dplyr::filter(analyst_id != "RTX71")
 ```
+
+The distribution of the years of experience with data analysis is depicted on @fig-experience-years-plot. The median time of experience with data analysis was `r median(analyst_experience_years_data$years_of_experience)` years among our co-analysts.
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-experience-years-plot
 #| fig-cap: "The figure shows the analysts' years of experience with data analysis. When an analyst submitted more than one re-analysis and a year passed between the responses we only kept their first response."
-analyst_experience_years_data <-
-  processed %>%
-  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) %>% 
-  # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) %>% 
-  # Dropped because of faulty response
-  filter(analyst_id != "RTX71")
-
 analyst_experience_years_plot <-
-  analyst_experience_years_data %>% 
-  ggplot() +
-  aes(x = years_of_experience) +
-  geom_histogram() +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Years of experience with data analysis",
-       y = "Count") +
-  theme(
+  analyst_experience_years_data |> 
+  ggplot2::ggplot() +
+  ggplot2::aes(x = years_of_experience) +
+  ggplot2::geom_histogram() +
+  ggplot2::scale_y_continuous(expand = c(0, 0)) +
+  ggplot2::labs(x = "Years of experience with data analysis",
+                y = "Number of Co-analysts") +
+  ggplot2::theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
 
 analyst_experience_years_plot
 ```
 
-The distribution of the years of experience with data analysis is depicted on @fig-experience-years-plot. The median time of experience with data analysis was `r median(analyst_experience_years_data$years_of_experience)` years among our co-analysts.
-
 ```{r include=FALSE}
-check_diff_response(processed, analyst_id, analysis_frequency)
+check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
+
+analysis_frequency_count <-
+  processed |> 
+  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(analysis_frequency)
 ```
+
+We asked our co-analysts how regularly they perform data analysis. @fig-analysis-frequency. shows that the most frequent category was `r dplyr::filter(analysis_frequency_count, n == max(n)) |> dplyr::pull(analysis_frequency)`.
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-analysis-frequency
-#| fig-cap: "The figure shows how regularly the analysts perform data analysis. When an analyst completed multiple re-analyses we kept all their responses for this figure."
-
-analysis_frequency_count <-
-  processed %>% 
-  count(analysis_frequency)
+#| fig-cap: "The figure shows how regularly the analysts perform data analysis."
 
 # For this question we report the responses by analysis and not analyst 
 analysis_frequency_plot <-
-  analysis_frequency_count %>%
-  mutate(
-    analysis_frequency = case_when(
+  analysis_frequency_count |>
+  dplyr::mutate(
+    analysis_frequency = dplyr::case_when(
       analysis_frequency == "2-3 times a week" ~ "2-3 times\na week",
       analysis_frequency == "Once every two weeks" ~ "Once every\ntwo weeks",
       analysis_frequency == "Less than once a month" ~ "Less than\nonce a month",
       TRUE ~ analysis_frequency
     ),
     analysis_frequency = as.factor(analysis_frequency),
-    analysis_frequency = fct_relevel(
+    analysis_frequency = forcats::fct_relevel(
       analysis_frequency,
       c(
         "Daily",
@@ -378,38 +393,40 @@ analysis_frequency_plot <-
         "Less than\nonce a month"
       )
     )
-  ) %>%
-  ggplot() +
-  aes(x = analysis_frequency, y = n) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Frequency of doing data analysis",
-       y = "Count") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
+  ) |>
+  ggplot2::ggplot() +
+  ggplot2::aes(x = analysis_frequency, y = n) +
+  ggplot2::geom_bar(stat = "identity") +
+  ggplot2::scale_y_continuous(expand = c(0, 0)) +
+  ggplot2::labs(x = "Frequency of doing data analysis",
+                y = "Count") +
+  ggplot2::theme(
+    panel.background = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line(color = "black")
   )
 
-ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
 
 analysis_frequency_plot
 ```
 
-We asked our co-analysts of how regularly they perform data analysis. @fig-analysis-frequency. shows that the most frequent category was `r filter(analysis_frequency_count, n == max(n)) %>% pull(analysis_frequency)`.
+```{r include=FALSE}
+expertise_self_rating_data <-
+  processed |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |>
+  dplyr::count(expertise_self_rating)
+```
+
+We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution on @fig-self-rating-plot shows that the most prevalent answer was `r dplyr::filter(expertise_self_rating_data, n == max(n)) |> dplyr::pull(expertise_self_rating)` .
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-self-rating-plot
 #| fig-cap: "The figure shows the analysts' self-rated level of expertise in data analysis. When an analyst submitted more than one re-analysis we only kept their first response."
 
-expertise_self_rating_data <-
-  processed %>% 
-  # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) %>%
-  count(expertise_self_rating)
-
 expertise_self_rating_plot <-
-  expertise_self_rating_data %>%
+  expertise_self_rating_data |>
   mutate(
     expertise_self_rating = case_when(
       expertise_self_rating == 1 ~ "1\n(Beginner)",
@@ -423,7 +440,7 @@ expertise_self_rating_plot <-
         as.character(2:9),
         "10\n(Expert)")
     )
-  ) %>%
+  ) |>
   ggplot() +
   aes(x = expertise_self_rating, y = n) +
   geom_bar(stat = "identity") +
@@ -441,21 +458,19 @@ ggsave(here::here("figures/demographic_expertise_self_rating_plot.jpg"), experti
 expertise_self_rating_plot
 ```
 
-We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution on @fig-self-rating-plot shows that the most prevalent answer was `r filter(expertise_self_rating_data, n == max(n)) %>% pull(expertise_self_rating)` .
-
 ```{r include=FALSE}
 familiar_with_paper_data <-
   calculate_percentage(processed, familiar_with_paper)
 ```
 
-All together, `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") %>% pull(percentage)` % (`r filter(familiar_with_paper_data, familiar_with_paper == "Yes") %>% pull(n)` out of `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") %>% pull(N)`) co-analysts indicated that they were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
+In `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(percentage)` % (`r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(n)` out of `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(N)`) of the cases, the co-analysts were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
 
 ```{r include=FALSE}
-processed %>% 
+processed |> 
   count(communication_check)
 ```
 
-No co-analysts reported that they communicated about the details of their analysis with other co-analysts working with the same dataset.
+All co-analyst reported that they have not communicated about the details of their analysis with other co-analysts working with the same dataset.
 
 ```{r include=FALSE}
 software_data <-
@@ -478,19 +493,24 @@ software_data <-
     )
   ) |> 
   calculate_percentage(software) |> 
-  arrange(desc(n))
+  arrange(desc(n)) |> 
+  mutate(
+    software = case_when(
+      software %in% c("r", "stata", "spss", "jasp") ~ toupper(software),
+      TRUE ~ stringr::str_to_title(software)
+    )
+  )
 ```
 
 We asked the co-analysts what programming language/software/tool they used in their data analysis during Task 1 and Task 2. The following figure indicates that `r slice(software_data, 1) |> pull(software)` (`r slice(software_data, 1) |> pull(percentage)`%), `r slice(software_data, 2) |> pull(software)` (`r slice(software_data, 2) |> pull(percentage)`%), and `r slice(software_data, 3) |> pull(software)` (`r slice(software_data, 3) |> pull(percentage)`%) were the most popular responses. @fig-software shows the distribution of all the responses.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 #| label: fig-software
-#| fig-cap: "The figure shows which software the analysts used for their re-analysis tasks. In case an analyst completed multiple re-analyses or reported the use of multiple software we kept all their responses for this figure. We only included software that was used by more than 1% of the analysts on the figure."
+#| fig-cap: "The figure shows which software the analysts used for their re-analysis tasks. In case an analyst completed multiple re-analyses or reported the use of multiple software we kept all their responses for this figure. The figure shows only software that was used by more than 1% of the analysts."
 
 software_plot <-
   software_data |>
   dplyr::filter(percentage > 1) |>
-  dplyr::mutate(software = str_to_title(software)) |>
   ggplot() +
   aes(y = reorder(software, percentage),
       x = percentage) +
@@ -510,45 +530,51 @@ ggsave(here::here("figures/demographic_software_plot.jpg"), software_plot, dpi =
 software_plot
 ```
 
-## Task 2 Survey results
+## Descriptives of the statistical analyses
+
+A difference in Task 2 compared to Task 1 was that the co-analysts received some constraints for their analysis in order to make them linkable to a single result in the original study (see Methods for more details). 
 
 ```{r include=FALSE}
 p_value_or_bayes_data <-
   calculate_percentage(processed, p_value_or_bayes)
 ```
 
-In Task 2, when we asked the co-analysts to present one main statistical result, `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") %>% pull(percentage)`% of them (`r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") %>% pull(n)` our of `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") %>% pull(N)`) based their conclusion on p-value and `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") %>% pull(percentage)`% of them (`r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") %>% pull(n)` our of `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") %>% pull(N)`) used Bayes Factor.
+In Task 2, when we asked the co-analysts to present one main statistical result, in `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(percentage)`% of the analyses (`r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(N)`), conclusion was based on p-value and Bayes Factor was used in `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(percentage)`% of the cases (`r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(N)`).
 
 ```{r include=FALSE}
 additional_calculations_data <-
   calculate_percentage(processed, additional_calculations)
 ```
 
-A difference in Task 2 compared to Task 1 was that the co-analysts received some constraints for their analysis in order to make them linkable to a single result in the original study. `r filter(additional_calculations_data, additional_calculations == "Yes") %>% pull(percentage)` % (`r filter(additional_calculations_data, additional_calculations == "Yes") %>% pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "Yes") %>% pull(N)`) the co-analysts reported that they had to make additional calculations in the second task. In `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") %>% pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") %>% pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") %>% pull(N)`) the co-analysts indicated that despite the limitations in the instructions, they received the same result in Task 2 and Task 1.
+For `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(percentage)` % (`r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(N)`) of the analyses, the co-analysts reported that they had to make additional calculations in the second task. In the remaining `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(N)`) of the cases, the co-analysts indicated that despite the requirements of the instructions, they could conduct the same analyses as in Task 1.
 
 ```{r include=FALSE}
 direction_of_result_data <- 
   calculate_percentage(processed, direction_of_result)
 ```
 
-In Task 2, `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") %>% pull(percentage)`% of the results (`r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") %>% pull(n)` our of `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") %>% pull(N)`) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
+In Task 2, `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(percentage)`% of the results (`r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(n)` our of `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(N)`) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
+
+```{r include=FALSE}
+total_hours_data <-
+  processed |> 
+  filter(total_hours != 999)
+```
+
+The co-analysts were asked to estimate the time they spent performing Task 1 and Task 2 together. The median value of their response is `r median(total_hours_data$total_hours)` hours (@fig-total-hours).
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 #| label: fig-total-hours
-#| fig-cap: "The figure shows the total hours the analyst spent on Task 1 and Task 2. In case an analyst completed multiple re-analyses we kept all their responses for this figure. One response was excluded due to being an outlier."
-
-total_hours_data <-
-  processed %>% 
-  filter(total_hours != 999)
+#| fig-cap: "The figure shows the total hours the analyst spent on Task 1 and Task 2 together. In case an analyst completed multiple re-analyses, we kept all their responses for this figure. One response was excluded due to being an outlier (999 hours)."
 
 total_hours_plot <-
-  total_hours_data %>%
+  total_hours_data |>
   ggplot() +
   aes(x = total_hours) +
   geom_histogram() +
   scale_y_continuous(expand = c(0, 0)) +
   labs(x = "Total hours spent on the analysis",
-       y = "Count") +
+       y = "Number of co-analysts") +
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
@@ -560,8 +586,6 @@ ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot,
 total_hours_plot
 ```
 
-The co-analysts were asked to estimate the time they spent to perform Task 1 and Task 2 together. The median value of their response is `r median(total_hours_data$total_hours)` hours (Fig @fig-total-hours).
-
 ## Peer evaluation
 ### Peer evaluators
 
@@ -570,13 +594,13 @@ Basic demographic info.
 ```{r include=FALSE}
 # Get peer evaluator demographic info from task1 and task2 survey results
 peer_evaluator_data <-
-  peer_eval %>% 
-  distinct(evaluator_id) %>% 
-  inner_join(., processed, by = c("evaluator_id" = "analyst_id"))
+  peer_eval |> 
+  distinct(evaluator_id) |> 
+  inner_join(processed, by = c("evaluator_id" = "analyst_id"))
 
 # Check if an evaluator has more than one analysis submitted
-peer_evaluator_data %>% 
-  count(evaluator_id) %>% 
+peer_evaluator_data |> 
+  count(evaluator_id) |> 
   arrange(desc(n))
 ```
 
@@ -588,19 +612,19 @@ check_diff_response(peer_evaluator_data, evaluator_id, years_of_experience)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 peer_analyst_experience_years_data <-
-  peer_evaluator_data %>%
-  dplyr::select(evaluator_id, years_of_experience, task1_timestamp) %>% 
+  peer_evaluator_data |>
+  dplyr::select(evaluator_id, years_of_experience, task1_timestamp) |> 
   # Keeping only the first response per analyst
   keep_first_response(evaluator_id, task1_timestamp)
 
 peer_analyst_experience_years_plot <-
-  peer_analyst_experience_years_data %>%
+  peer_analyst_experience_years_data |>
   ggplot() +
   aes(x = years_of_experience) +
   geom_histogram() +
   scale_y_continuous(expand = c(0, 0)) +
   labs(x = "Years of experience",
-       y = "Count") +
+       y = "Number of peer evaluators") +
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
@@ -620,12 +644,15 @@ check_diff_response(peer_evaluator_data, evaluator_id, analysis_frequency)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 peer_analysis_frequency_count <-
-  peer_evaluator_data %>% 
+  peer_evaluator_data |> 
+  dplyr::select(evaluator_id, paper_id, analysis_frequency, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = evaluator_id, time_var = task1_timestamp) |> 
   count(analysis_frequency)
 
 # For this question we report the responses by analysis and not analyst 
 peer_analysis_frequency_plot <-
-  peer_analysis_frequency_count %>%
+  peer_analysis_frequency_count |>
   mutate(
     analysis_frequency = case_when(
       analysis_frequency == "2-3 times a week" ~ "2-3 times\na week",
@@ -645,13 +672,13 @@ peer_analysis_frequency_plot <-
         "Less than\nonce a month"
       )
     )
-  ) %>%
+  ) |>
   ggplot() +
   aes(x = analysis_frequency, y = n) +
   geom_bar(stat = "identity") +
   scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Frequency of analysis",
-       y = "Count") +
+  labs(x = "Frequency of doing data analysis",
+       y = "Number of peer evaluators") +
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
@@ -667,14 +694,14 @@ Self-reported expertise in data-analysis:
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 peer_expertise_self_rating_data <-
-  peer_evaluator_data %>% 
+  peer_evaluator_data |> 
   # Keeping only the first response per analyst
-  keep_first_response(evaluator_id, task1_timestamp) %>%
-  count(expertise_self_rating) %>% 
+  keep_first_response(id_var = evaluator_id, time_var = task1_timestamp) |>
+  count(expertise_self_rating) |> 
   complete(expertise_self_rating, fill = list(n = 0))
 
 peer_expertise_self_rating_plot <-
-  peer_expertise_self_rating_data %>%
+  peer_expertise_self_rating_data |>
   mutate(
     expertise_self_rating = case_when(
       expertise_self_rating == 1 ~ "1\n(Beginner)",
@@ -687,13 +714,13 @@ peer_expertise_self_rating_plot <-
                  as.character(2:9),
                  "10\n(Expert)")
     )
-  ) %>%
+  ) |>
   ggplot() +
   aes(x = expertise_self_rating, y = n) +
   geom_bar(stat = "identity") +
   scale_y_continuous(expand = c(0, 0)) +
   labs(x = "Self-reported expertise rating",
-       y = "Count") +
+       y = "Number of peer evaluators") +
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
@@ -718,22 +745,22 @@ Descriptives of peer evaluations.
 ```{r include=FALSE}
 # TODO: should I group the responses by acceptable and unacceptable first?
 pipeline_acceptable_data <-
-  peer_eval %>% 
+  peer_eval |> 
   # Dropping analyses with less than 1 evaluation
-  filter(n_evaluations > 1) %>% 
-  group_by(paper_id, analyst_id) %>% 
+  filter(n_evaluations > 1) |> 
+  group_by(paper_id, analyst_id) |> 
   summarise(
     disagree_task1 = n_distinct(task1_pipeline_acceptable) > 1,
     disagree_task2 = n_distinct(task2_pipeline_acceptable) > 1,
-  ) %>% 
+  ) |> 
   ungroup()
 
-task1_pipeline_acceptable_data <- calculate_percentage(pipeline_acceptable_data, disagree_task1)
+task1_pipeline_acceptable_data <- calculate_percentage(data = pipeline_acceptable_data, response_var = disagree_task1)
 
-task2_pipeline_acceptable_data <- calculate_percentage(pipeline_acceptable_data, disagree_task2)
+task2_pipeline_acceptable_data <- calculate_percentage(data = pipeline_acceptable_data, response_var = disagree_task2)
 ```
 
-For those analyses where there were more than one peer evaluations, for `r filter(task1_pipeline_acceptable_data, disagree_task1) %>% pull(percentage)`% (`r filter(task1_pipeline_acceptable_data, disagree_task1) %>% pull(n)` out of `r filter(task1_pipeline_acceptable_data, disagree_task1) %>% pull(N)`) of the analysis the evaluators disagreed on the analytical pipeline for task 1, and `r filter(task2_pipeline_acceptable_data, disagree_task2) %>% pull(percentage)`% (`r filter(task2_pipeline_acceptable_data, disagree_task2) %>% pull(n)` out of `r filter(task2_pipeline_acceptable_data, disagree_task2) %>% pull(N)`) for task 2.
+For those analyses where there were more than one peer evaluations, for `r filter(task1_pipeline_acceptable_data, disagree_task1) |> pull(percentage)`% (`r filter(task1_pipeline_acceptable_data, disagree_task1) |> pull(n)` out of `r filter(task1_pipeline_acceptable_data, disagree_task1) |> pull(N)`) of the analysis the evaluators disagreed on the analytical pipeline for task 1, and `r filter(task2_pipeline_acceptable_data, disagree_task2) |> pull(percentage)`% (`r filter(task2_pipeline_acceptable_data, disagree_task2) |> pull(n)` out of `r filter(task2_pipeline_acceptable_data, disagree_task2) |> pull(N)`) for task 2.
 
 ```{r include=FALSE}
 distinct(peer_eval, task1_pipeline_acceptable)
@@ -750,7 +777,7 @@ task1_acceptable_summary <-
       ) ~ TRUE
     )
   ) |>
-  calculate_percentage(is_acceptable)
+  calculate_percentage(response_var = is_acceptable)
 
 # TODO: rewrite this part for safety
 task1_pipline_acceptable_review <-
@@ -780,7 +807,7 @@ task2_acceptable_summary <-
       TRUE ~ NA_character_
     )
   ) |>
-  calculate_percentage(is_acceptable)
+  calculate_percentage(response_var = is_acceptable)
 
 # TODO: rewrite this part for safety
 task2_pipline_acceptable_review <-
@@ -795,33 +822,33 @@ task2_pipline_acceptable_review <-
 
 ```{r include=FALSE}
 task1_categorisation_is_accurate_data <-
-  peer_eval %>% 
+  peer_eval |> 
   # Dropping analyses with less than 1 evaluation
-  filter(n_evaluations > 1) %>% 
-  group_by(paper_id, analyst_id) %>% 
+  filter(n_evaluations > 1) |> 
+  group_by(paper_id, analyst_id) |> 
   summarise(
     disagree_task1 = n_distinct(task1_categorisation_is_accurate) > 1
-  ) %>% 
-  ungroup() %>% 
-  calculate_percentage(disagree_task1)
+  ) |> 
+  ungroup() |> 
+  calculate_percentage(response_var = disagree_task1)
 ```
 
-For those analyses where there were more than one peer evaluator, `r filter(task1_categorisation_is_accurate_data, disagree_task1) %>% pull(percentage)`% (`r filter(task1_categorisation_is_accurate_data, disagree_task1) %>% pull(n)` out of `r filter(task1_categorisation_is_accurate_data, disagree_task1) %>% pull(N)`) of evaluators disagreed on the adequacy of the conclusions.
+For those analyses where there were more than one peer evaluator, `r filter(task1_categorisation_is_accurate_data, disagree_task1) |> pull(percentage)`% (`r filter(task1_categorisation_is_accurate_data, disagree_task1) |> pull(n)` out of `r filter(task1_categorisation_is_accurate_data, disagree_task1) |> pull(N)`) of evaluators disagreed on the adequacy of the conclusions.
 
 ```{r include=FALSE}
 distinct(peer_eval, task1_categorisation_is_accurate)
 
 task1_categorisation_summary <- 
   peer_eval |> 
-  calculate_percentage(task1_categorisation_is_accurate) |> 
-  mutate(
+  calculate_percentage(response_var = task1_categorisation_is_accurate) |> 
+  dplyr::mutate(
     task1_categorisation_is_accurate = stringr::str_remove(task1_categorisation_is_accurate, "\\(\\d+\\)\\s*")
   )
 
 # TODO: rewrite this part for safety
 task1_categorisation_review <-
   peer_eval_review |>
-  filter(variable_name == "task1_categorisation_is_accurate" &
+  dplyr::filter(variable_name == "task1_categorisation_is_accurate" &
            !is.na(change_to))
 ```
 
@@ -853,29 +880,29 @@ Nr. of analytical reproducibility checks:
 
 ```{r include=FALSE}
 reproducibility_checks_data <-
-  peer_eval %>% 
+  peer_eval |> 
   calculate_percentage(any_code_mismatches)
 
-reproducibility_checks_data %>% 
-  filter(any_code_mismatches != "(1) I didn’t try to execute it") %>% 
+reproducibility_checks_data |> 
+  filter(any_code_mismatches != "(1) I didn’t try to execute it") |> 
   summarise(n_reproducibility_checks = sum(n))
 ```
 
 ```{r include=FALSE}
 reproducibility_checks_successful <-
-  peer_eval %>% 
-  filter(any_code_mismatches != "(1) I didn’t try to execute it") %>% 
+  peer_eval |> 
+  filter(any_code_mismatches != "(1) I didn’t try to execute it") |> 
   mutate(successful = case_when(
     any_code_mismatches %in% c("(2) I tried but didn’t manage to execute it", "(4) I executed it and I found mismatches") ~ FALSE,
     any_code_mismatches == "(3) I executed it and I found no mismatches" ~ TRUE,
     )
-  ) %>% 
-  calculate_percentage(successful)
+  ) |> 
+  calculate_percentage(response_var = successful)
 ```
 
-`r filter(reproducibility_checks_successful, successful) %>% pull(percentage)`% (`r filter(reproducibility_checks_successful, successful) %>% pull(n)` out of `r filter(reproducibility_checks_successful, successful) %>% pull(N)` of the analytical reproducibility checks were successful
+`r filter(reproducibility_checks_successful, successful) |> pull(percentage)`% (`r filter(reproducibility_checks_successful, successful) |> pull(n)` out of `r filter(reproducibility_checks_successful, successful) |> pull(N)` of the analytical reproducibility checks were successful
 
-## How robust are conclusions published in social sciences to analytical choices?
+## How robust are the conclusions to analytical choices published in social sciences?
 
 Do different analysts arrive at the same conclusions as the analysts of the original study?
 
@@ -887,31 +914,33 @@ distinct(processed, task1_categorisation)
 distinct(processed, task1_categorisation_plotting)
 
 conclusions_main_data <- 
-  processed %>% 
-  rename(categorisation = task1_categorisation_plotting) %>% 
+  processed |> 
+  rename(categorisation = task1_categorisation_plotting) |> 
   mutate(
     categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) %>% 
-  calculate_conclusion(., simplified_paper_id, categorisation) %>%
+    ) |> 
+  calculate_conclusion(grouping_var = simplified_paper_id, categorization_var = categorisation) |>
   mutate(
     simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(categorisation == "Same conclusion", percentage, NA), .desc = FALSE, .na_rm = TRUE)
   )
 
-conclusions_main_robustness_data <- calculate_conclusion_robustness(processed, categorization_variable = task1_categorisation_plotting)
+conclusions_main_robustness_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting)
 ```
 
-In Task 1, the co-analysts were asked to conduct any statistical analysis to arrive to a single conclusion. Out of `r nrow(conclusions_main_robustness_data)` re-analysed studies, the conclusions of `r filter(conclusions_main_robustness_data, robust == "Robust") %>% pull(n)` (`r filter(conclusions_main_robustness_data, robust == "Robust") %>% pull(n)`%) remained robust to independent re-analysis, so that all assigned co-analysts arrived at the same conclusion as reported in the article of the original study.
+In Task 1, the co-analysts were asked to conduct any statistical analysis to arrive to a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed studies, the conclusions of `r filter(conclusions_main_robustness_data, robust == "Robust") |> pull(n)` (`r filter(conclusions_main_robustness_data, robust == "Robust") |> pull(n)`%) remained robust to independent re-analysis, so that all assigned co-analysts arrived at the same conclusion as reported in the article of the original study.
 
 ```{r echo=FALSE}
 plot_conclusion_robustness(conclusions_main_robustness_data, robust)
 ```
 
+@fig-conclusions-main shows the histotrophic display of the different and identical conclusions resulting from the re-analysis of each of the studies.
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 #| label: fig-conclusions-main
-#| fig-cap: "The figure shows the histrophic display of the conclusion resulting from the re-analysis of each study."
+#| fig-cap: "The figure shows the histrophic display of the type of conclusions resulting from the re-analysis of each study."
 
 conclusion_main_plot <-
-  plot_conclusion(conclusions_main_data, simplified_paper_id, categorisation) +
+  plot_conclusion(data = conclusions_main_data, grouping_var = simplified_paper_id, categorization_var = categorisation) +
   theme(
     axis.text.y = element_text(size = 8),
     axis.text.x = element_text(size = 10),
@@ -932,17 +961,15 @@ ggsave(here::here("figures/conclusion_main_plot.jpg"), conclusion_main_plot, wid
 conclusion_main_plot
 ```
 
-@fig-conclusions-main shows the histotrophic display of the different and identical conclusions resulting from the re-analysis of each of the studies.
-
 ```{r include=FALSE}
 conclusions_analysis_data <- 
-  processed %>% 
-  rename(categorisation = task1_categorisation_plotting) %>% 
+  processed |> 
+  rename(categorisation = task1_categorisation_plotting) |> 
   mutate(
     categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) %>% 
-  count(categorisation) %>% 
-  ungroup() %>% 
+    ) |> 
+  count(categorisation) |> 
+  ungroup() |> 
   mutate(
     N = sum(n),
     freq = n / N,
@@ -950,34 +977,39 @@ conclusions_analysis_data <-
   )
 ```
 
-Across all the studies, `r filter(conclusions_analysis_data, categorisation == "Same conclusion") %>% pull(percentage)` % (`r filter(conclusions_analysis_data, categorisation == "Same conclusion") %>% pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Same conclusion") %>% pull(N)`) of the re-analyses arrived to the same conclusion; `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") %>% pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") %>% pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") %>% pull(N)`) to no effects, and `r filter(conclusions_analysis_data, categorisation == "Opposite effect") %>% pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "Opposite effect") %>% pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Opposite effect") %>% pull(N)`) to opposite effect compared to the original conclusion.
+Across all the re-analyses, `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(percentage)` % (`r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(N)`) of them arrived at the same conclusion; `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(N)`) to no effects, and `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(N)`) to opposite effect compared to the original conclusion.
 
 ### Robustness
-
 #### Robustness by field
 
-We were interested to see whether these results show a different pattern when inspecting them in different fields. The following figure shows that for the major fields (Psychology, Economics, and Political Science) the pattern were...,
+We were interested to see whether these results show a different pattern when inspecting them in different fields. @fig-discipline-robustness shows that for the major fields with more than 10 papers (Economics, Political Science, and Psychology) the pattern was comparably similar. We found no outstanding differences between the fields for the percentage of different and identical conclusions neither (see @fig-conclusions-discipline).
 
 ```{r include=FALSE}
 conclusions_discipline_data <- 
-  processed %>% 
-  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>% 
-  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
-  rename(categorisation = task1_categorisation_plotting) %>%
+  processed |> 
+  filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
+  mutate(paper_discipline = str_to_title(paper_discipline)) |> 
+  rename(categorisation = task1_categorisation_plotting) |>
   mutate(
     categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) %>% 
-  calculate_conclusion(., paper_discipline, categorisation)
+    ) |> 
+  calculate_conclusion(grouping_var = paper_discipline, categorization_var = categorisation)
 
 conclusions_discipline_robustness_data <- 
-  processed %>% 
-  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>% 
-  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
-  calculate_conclusion_robustness(., grouping_variable = paper_discipline, categorization_variable = task1_categorisation_plotting)
+  processed |> 
+  filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
+  mutate(paper_discipline = str_to_title(paper_discipline)) |> 
+  calculate_conclusion_robustness(grouping_var = paper_discipline, categorization_var = task1_categorisation_plotting)
 ```
 
 ```{r echo=FALSE, message=FALSE}
-conclusions_discipline_robustness_plot <- plot_conclusion_robustness(conclusions_discipline_robustness_data, robust, paper_discipline)
+#| label: fig-discipline-robustness
+#| fig-cap: "The figure shows the inferential robustness of the studies by major fields."
+
+conclusions_discipline_robustness_plot <-
+  plot_conclusion_robustness(data = conclusions_discipline_robustness_data,
+                             response_var = robust,
+                             grouping_var = paper_discipline)
 
 ggsave(here::here("figures/conclusions_discipline_robustness_plot.jpg"), conclusions_discipline_robustness_plot, dpi = 300)
 
@@ -985,75 +1017,95 @@ conclusions_discipline_robustness_plot
 ```
 
 ```{r echo=FALSE, message=FALSE}
-conclusions_discipline_plot <- plot_conclusion(conclusions_discipline_data, paper_discipline, categorisation, with_labels = TRUE) + 
-  theme(
-    legend.text = element_text(size = 8),
+#| label: fig-conclusions-discipline
+#| fig-cap: "The figure shows percentage of identical, inconclusive, and different conclusion of the studies by major fields. The figure displays the count of re-analyses next to each field name."
+
+conclusions_discipline_plot <-
+  plot_conclusion(
+    data = conclusions_discipline_data,
+    grouping_var = paper_discipline,
+    categorization_var = categorisation,
+    with_labels = TRUE
+  ) +
+  ggplot2::theme(
+    legend.text = ggplot2::element_text(size = 8),
     legend.position = "bottom",
     legend.box = "horizontal"
-    )
+  )
 
-ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
 
 conclusions_discipline_plot
 ```
 
 #### Robustness by study type (observational, experimental)
 
-Here, we were interested to see whether these results show a different pattern when separating them by study type. The following figure shows that for that...,
+Here, we were interested to see whether these results show a different pattern when separating them by study type. @fig-studytype-robustness illustrates that nearly half of the results from experimental studies remained robust upon independent re-analysis, whereas only one-third of observational studies yielded robust conclusions. Moreover, @fig-conclusions-studytype indicates that, for both study types, the majority of the re-analyses reached the same conclusions as the original study.
 
 ```{r include=FALSE}
 conclusions_studytype_data <-
-  processed %>%
-  rename(categorisation = task1_categorisation_plotting) %>%
-  mutate(categorisation = fct_relevel(
+  processed |>
+  dplyr::rename(categorisation = task1_categorisation_plotting) |>
+  dplyr::mutate(categorisation = fct_relevel(
     categorisation,
     c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-  )) %>%
-  calculate_conclusion(., experimental_or_observational, categorisation) |>
-  mutate(experimental_or_observational = str_to_title(experimental_or_observational))
+  )) |>
+  calculate_conclusion(grouping_var = experimental_or_observational,
+                       categorization_var = categorisation) |>
+  dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational))
 
 conclusions_studytype_robustness_data <-
-  processed %>%
-  calculate_conclusion_robustness(grouping_variable = experimental_or_observational,
-                                  categorization_variable = task1_categorisation_plotting) %>%
-  ungroup()
+  processed |>
+  dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational)) |>
+  calculate_conclusion_robustness(grouping_var = experimental_or_observational,
+                                  categorization_var = task1_categorisation_plotting) |>
+  dplyr::ungroup()
 ```
 
 ```{r echo=FALSE, message=FALSE}
-conclusions_studytype_robustness_plot <- plot_conclusion_robustness(conclusions_studytype_robustness_data, robust, experimental_or_observational)
+#| label: fig-studytype-robustness
+#| fig-cap: "The figure shows the inferential robustness of the studies by study type (experimental or observational). The figure displays the count of re-analyses next to each field name."
 
-ggsave(here::here("figures/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
+conclusions_studytype_robustness_plot <-
+  plot_conclusion_robustness(data = conclusions_studytype_robustness_data,
+                             response_var = robust,
+                             grouping_var = experimental_or_observational)
+
+ggplot2::ggsave(here::here("figures/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
 
 conclusions_studytype_robustness_plot
 ```
 
 ```{r echo=FALSE, message=FALSE}
-conclusions_studytype_plot <- plot_conclusion(conclusions_studytype_data, experimental_or_observational, categorisation, with_labels = TRUE) + 
-  theme(
+#| label: fig-conclusions-studytype
+#| fig-cap: "The figure shows percentage of identical, inconclusive, and different conclusion of the studies by study type (experimental or observational)."
+
+conclusions_studytype_plot <- plot_conclusion(data = conclusions_studytype_data, grouping_var = experimental_or_observational, categorization_var = categorisation, with_labels = TRUE) + 
+  ggplot2::theme(
     legend.text = element_text(size = 8),
     legend.position = "bottom",
     legend.box = "horizontal"
     )
 
-ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
 
 conclusions_studytype_plot
 ```
 
 #### Robustness by expertise (self-reported expertise in data analysis)
 
-Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts. The following figure shows that for that...,
+Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts. The following figure shows these results.
 
 ```{r include=FALSE}
 conclusions_expertise_data <-
-  processed %>%
-  rename(categorisation = task1_categorisation_plotting) %>%
-  mutate(
-    categorisation = fct_relevel(
+  processed |>
+  dplyr::rename(categorisation = task1_categorisation_plotting) |>
+  dplyr::mutate(
+    categorisation = forcats::fct_relevel(
       categorisation,
       c("Same conclusion", "No effect/inconclusive", "Opposite effect")
     ),
-    expertise_self_rating = case_when(
+    expertise_self_rating = dplyr::case_when(
       expertise_self_rating == 1 ~ "1\n(Beginner)",
       expertise_self_rating == 10 ~ "10\n(Expert)",
       TRUE ~ as.character(expertise_self_rating)
@@ -1064,12 +1116,17 @@ conclusions_expertise_data <-
                  as.character(2:9),
                  "10\n(Expert)")
     )
-  ) %>%
-  calculate_conclusion(., expertise_self_rating, categorisation)
+  ) |>
+  calculate_conclusion(grouping_var = expertise_self_rating, categorization_var = categorisation) |> 
+  # Dropping the first two levels because of not enough data points
+  dplyr::filter(N >= 3)
 ```
 
-```{r echo=FALSE}
-conclusions_expertise_plot <- plot_conclusion(conclusions_expertise_data, expertise_self_rating, categorisation, with_labels = TRUE) + 
+```{r echo=FALSE, message=FALSE}
+#| label: fig-conclusions-expertise
+#| fig-cap: "The figure shows ... The figure does not display the bottom two categories where for each less than 3 responses were collected."
+
+conclusions_expertise_plot <- plot_conclusion(data = conclusions_expertise_data, grouping_var = expertise_self_rating, categorization_var = categorisation, with_labels = TRUE) + 
   theme(
     legend.text = element_text(size = 8),
     legend.position = "bottom",
@@ -1083,27 +1140,30 @@ conclusions_expertise_plot
 
 #### Robustness by prior familiarity with the dataset
 
-Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. The following figure shows that for that...,
+Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. The following figure shows that for these results.
 
 ```{r include=FALSE}
 count(processed, familiar_with_paper)
 
 conclusions_familiarity_data <- 
-  processed %>% 
-  rename(categorisation = task1_categorisation_plotting) %>%
+  processed |> 
+  rename(categorisation = task1_categorisation_plotting) |>
   mutate(
-    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
+    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
     familiar_with_paper = as.factor(familiar_with_paper)
-    ) %>% 
-  calculate_conclusion(., familiar_with_paper, categorisation)
+    ) |> 
+  calculate_conclusion(grouping_var = familiar_with_paper, categorization_var = categorisation)
 ```
 
 ```{r echo=FALSE, message=FALSE}
+#| label: fig-conclusions-familiarity
+#| fig-cap: "The figure shows "
+
 conclusions_familiarity_plot <- 
   plot_conclusion(
-    conclusions_familiarity_data,
-    familiar_with_paper,
-    categorisation,
+    data = conclusions_familiarity_data,
+    grouping_var = familiar_with_paper,
+    categorization_var = categorisation,
     with_labels = TRUE,
     y_lab = "Analyst familiarity with the paper") + 
   theme(
@@ -1121,31 +1181,34 @@ conclusions_familiarity_plot
 
 ```{r include=FALSE}
 conclusions_suitability_data <- 
-  processed %>% 
-  rename(categorisation = task1_categorisation_plotting) %>%
-  mutate(
-    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
+  processed |> 
+  dplyr::rename(categorisation = task1_categorisation_plotting) |>
+  dplyr::mutate(
+    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
     confidence_in_approach = as.factor(confidence_in_approach)
-    ) %>% 
-  calculate_conclusion(., confidence_in_approach, categorisation)
+    ) |> 
+  calculate_conclusion(grouping_var = confidence_in_approach, categorization_var = categorisation)
 ```
 
 ```{r echo=FALSE, message=FALSE}
+#| label: fig-conclusions-suitability
+#| fig-cap: "The figure shows "
+
 conclusions_suitability_plot <-
   plot_conclusion(
-    conclusions_suitability_data,
-    confidence_in_approach,
-    categorisation,
+    data = conclusions_suitability_data,
+    grouping_var = confidence_in_approach,
+    categorization_var = categorisation,
     with_labels = TRUE,
     y_lab = "Suitability of the self-judged analysis"
   ) +
-  theme(
-    legend.text = element_text(size = 8),
+  ggplot2::theme(
+    legend.text = ggplot2::element_text(size = 8),
     legend.position = "bottom",
     legend.box = "horizontal"
   )
 
-ggsave(here::here("figures/conclusions_suitability_plot.jpg"), conclusions_suitability_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_suitability_plot.jpg"), conclusions_suitability_plot, dpi = 300)
 
 conclusions_suitability_plot
 ```
@@ -1155,46 +1218,49 @@ conclusions_suitability_plot
 Here, we were interested to see whether these results show a different pattern when considering sample size. The following figure shows that for that...,
 
 ```{r include=FALSE}
-processed %>% 
-  ggplot() + 
+processed |>
+  ggplot2::ggplot() +
   # Converting to natlog because of extreme outlier
-  aes(x = log(reanalysis_model_sample_size)) + 
-  geom_histogram()
+  ggplot2::aes(x = log(reanalysis_model_sample_size)) +
+  ggplot2::geom_histogram()
 
-processed %>% 
-  count(is.na(reanalysis_model_sample_size))
+processed |> 
+  dplyr::count(is.na(reanalysis_model_sample_size))
 ```
 
 ```{r echo=FALSE, message=FALSE}
+#| label: fig-conclusions-samplesize
+#| fig-cap: "The figure shows "
+
 conclusions_samplesize_plot <-
-  processed %>%
-  rename(categorisation = task1_categorisation_plotting) %>%
+  processed |>
+  dplyr::rename(categorisation = task1_categorisation_plotting) |>
   dplyr::select(paper_id,
                 analyst_id,
                 categorisation,
-                reanalysis_model_sample_size) %>%
+                reanalysis_model_sample_size) |>
   # TODO: There are missing sample size values what to do with them?
-  filter(!is.na(reanalysis_model_sample_size)) %>%
-  mutate(
-    categorisation = fct_relevel(
+  dplyr::filter(!is.na(reanalysis_model_sample_size)) |>
+  dplyr::mutate(
+    categorisation = forcats::fct_relevel(
       categorisation,
       c("Same conclusion", "No effect/inconclusive", "Opposite effect")
     ),
     log_model_sample_size = log(reanalysis_model_sample_size)
-  ) %>%
-  # filter(reanalysis_model_sample_size != max(reanalysis_model_sample_size)) %>%
-  ggplot() +
-  aes(x = categorisation, y = log_model_sample_size) +
-  geom_rain(rain.side = 'l') +
-  labs(y = "Log sample size") +
-  theme(
-    axis.title.x = element_blank(),
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line()
+  ) |>
+  # filter(reanalysis_model_sample_size != max(reanalysis_model_sample_size)) |>
+  ggplot2::ggplot() +
+  ggplot2::aes(x = categorisation, y = log_model_sample_size) +
+  ggrain::geom_rain(rain.side = 'l') +
+  ggplot2::labs(y = "Log sample size") +
+  ggplot2::theme(
+    axis.title.x = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    axis.line =ggplot2:: element_line()
   )
 
-ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
 
 conclusions_samplesize_plot
 ```
@@ -1206,103 +1272,107 @@ A main question of our study was whether different analysts arrive at the same e
 ```{r include=FALSE}
 # Number of cases where the original effect size is missing
 missing_original_n <-
-  processed %>% 
-  distinct(paper_id, .keep_all = T) %>% 
-  count(is.na(original_cohens_d)) %>% 
-  filter(`is.na(original_cohens_d)`) %>% 
-  pull(n)
+  processed |> 
+  dplyr::distinct(paper_id, .keep_all = T) |> 
+  dplyr::count(is.na(original_cohens_d)) |> 
+  dplyr::filter(`is.na(original_cohens_d)`) |> 
+  dplyr::pull(n)
 
 # Check if there are cases where there is missing original effect size on the paper level but not for every analysis
 # Would mean that there is a mistake in the merging code
-processed %>% 
-  dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) %>% 
-  group_by(paper_id) %>% 
+processed |> 
+  dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) |> 
+  dplyr::group_by(paper_id) |> 
+  dplyr::mutate(
+    number_of_analysis = dplyr::n() 
+  ) |> 
+  dplyr::filter(is.na(original_cohens_d)) |> 
   mutate(
-    number_of_analysis = n() 
-  ) %>% 
-  filter(is.na(original_cohens_d)) %>% 
-  mutate(
-    number_of_analysis_after_filtering = n()
-  ) %>% 
-  ungroup() %>% 
-  mutate(
-    match = if_else(number_of_analysis == number_of_analysis_after_filtering, TRUE, FALSE)
+    number_of_analysis_after_filtering = dplyr::n()
+  ) |> 
+  dplyr::ungroup() |> 
+  dplyr::mutate(
+    match = dplyr::if_else(number_of_analysis == number_of_analysis_after_filtering, TRUE, FALSE)
   )
 
 # Number of cases where the reanalysed effect size is missing
 missing_reanalysis_n <-
-  processed %>% 
-  count(is.na(reanalysis_cohens_d)) %>% 
-  filter(`is.na(reanalysis_cohens_d)`) %>% 
-  pull(n)
+  processed |> 
+  dplyr::count(is.na(reanalysis_cohens_d)) |> 
+  dplyr::filter(`is.na(reanalysis_cohens_d)`) |> 
+  dplyr::pull(n)
 
 # Are there any cases where the original effect size is present but the reanalyzed is not and vica versa?
-processed %>% 
-  dplyr::select(original_cohens_d, reanalysis_cohens_d) %>% 
-  mutate(
+processed |> 
+  dplyr::select(original_cohens_d, reanalysis_cohens_d) |> 
+  dplyr::mutate(
     both_present_or_missing = is.na(original_cohens_d) == is.na(reanalysis_cohens_d)
-  ) %>% 
-  count(both_present_or_missing)
+  ) |> 
+  dplyr::count(both_present_or_missing)
 
 # Check if there are any cases where everything is missing
-processed %>% 
-  group_by(paper_id) %>%
-  mutate(
+processed |> 
+  dplyr::group_by(paper_id) |>
+  dplyr::mutate(
     both_missing = all(is.na(original_cohens_d) & is.na(reanalysis_cohens_d))
-  ) %>%
-  ungroup() %>% 
-  count(both_missing)
+  ) |>
+  dplyr::ungroup() |> 
+  dplyr::count(both_missing)
   
 # Preparing the data for the plot
 # TODO: use separate datasets to plot
 reanalysis_data <-
-  processed %>% 
-  dplyr::select(simplified_paper_id, analyst_id, reanalysis_cohens_d, original_cohens_d) %>% 
-  group_by(simplified_paper_id) %>% 
-  rename(effect_size = reanalysis_cohens_d) %>% 
-  mutate(
-    effect_size_type = paste0("re-analysis_0", row_number()),
-    ) %>% 
-  ungroup() %>% 
-  mutate(
+  processed |>
+  dplyr::select(simplified_paper_id,
+                analyst_id,
+                reanalysis_cohens_d,
+                original_cohens_d) |>
+  dplyr::group_by(simplified_paper_id) |>
+  dplyr::rename(effect_size = reanalysis_cohens_d) |>
+  dplyr::mutate(effect_size_type = paste0("re-analysis_0", row_number()),) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
     simplified_paper_id = as.factor(simplified_paper_id),
-    simplified_paper_id = fct_reorder(simplified_paper_id,
-                                      original_cohens_d,
-                                      .na_rm = FALSE)
+    simplified_paper_id = forcats::fct_reorder(simplified_paper_id,
+                                               original_cohens_d,
+                                               .na_rm = FALSE)
   )
 
 original_data <-
-  processed %>% 
-  distinct(simplified_paper_id, original_cohens_d) %>%
-    mutate(
+  processed |>
+  dplyr::distinct(simplified_paper_id, original_cohens_d) |>
+  dplyr::mutate(
     tolarence_region_lower = original_cohens_d - 0.05,
     tolarence_region_upper = original_cohens_d + 0.05,
     simplified_paper_id = as.factor(simplified_paper_id),
-    simplified_paper_id = fct_reorder(simplified_paper_id,
-                                      original_cohens_d,
-                                      .na_rm = FALSE)
+    simplified_paper_id = forcats::fct_reorder(simplified_paper_id,
+                                               original_cohens_d,
+                                               .na_rm = FALSE)
   )
 ```
 
 ```{r echo=FALSE, warning=FALSE}
+#| label: fig-effect-main
+#| fig-cap: "The figure shows "
+
 # Colors
 color_vector <- setNames(c("#F8766D", "#CD9600", "#7CAE00", "#00BE67", "#00BFC4", "#00A9FF", "#C77CFF"), paste0("re-analysis_", sprintf("%02d", 1:7)))
 
 effect_main_plot <-
-  reanalysis_data %>% 
+  reanalysis_data |> 
   # TODO: what to do with huge cohens ds?
-  filter(effect_size <= 10 & effect_size >= -10) %>% 
-  ggplot() +
-  aes(
+  dplyr::filter(effect_size <= 10 & effect_size >= -10) |> 
+  ggplot2::ggplot() +
+  ggplot2::aes(
     y = simplified_paper_id,
     x = effect_size,
     color = effect_size_type
   ) +
-  geom_point(shape = 16) +
-  scale_color_manual(values = color_vector) +
-  geom_pointrange(
+  ggplot2::geom_point(shape = 16) +
+  ggplot2::scale_color_manual(values = color_vector) +
+  ggplot2::geom_pointrange(
     data = original_data,
-    aes(
+    ggplot2::aes(
       x = original_cohens_d,
       xmin = tolarence_region_lower,
       xmax = tolarence_region_upper,
@@ -1315,29 +1385,29 @@ effect_main_plot <-
   labs(
     x = "Effect size in Cohen's d"
   ) +
-  guides(color = "none") +
-  theme(
-    axis.ticks = element_blank(),
-    legend.title = element_blank(),
-    axis.line = element_line(),
-    axis.title.y = element_blank(),
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-    panel.grid = element_line(color = "lightgray"),
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor.x = element_blank(),
-    panel.background = element_blank(),
+  ggplot2::guides(color = "none") +
+  ggplot2::theme(
+    axis.ticks = ggplot2::element_blank(),
+    legend.title = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line(),
+    axis.title.y = ggplot2::element_blank(),
+    plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
+    panel.grid = ggplot2::element_line(color = "lightgray"),
+    panel.grid.major.x = ggplot2::element_blank(),
+    panel.grid.minor.x = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank(),
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
 # TODO: for some reason tolerance region is not showing on saved plot... why?
-ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_plot,
+ggplot2::ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_plot,
        width = 13, height = 11.69,
        dpi = 300)
 
 effect_main_plot
 ```
 
-Fig X displays the calculated Cohen's d-s for the re-analyses of each study and the Cohen's d for the original study with a 0.05 tolerance region around it. For `r missing_original_n` papers the Cohen's d for the original analysis cannot be calculated. In these cases, we could not calculate a tolerance region for the given paper, however, we show the available effect sizes for the re-analyses. For `r missing_reanalysis_n` analysis by the re-analyst the Cohen's d cannot be calculated.
+Fig X displays the calculated Cohen's d-s for the re-analyses of each study (colored dots) and the Cohen's d for the original study (black rectangle) with the +/-0.05 Cohen's d tolerance region around it. For `r missing_original_n` papers the Cohen's d for the original analysis cannot be calculated due to insufficient information in the original reports. In these cases, we show only the calculated effect sizes for the re-analyses. For `r missing_reanalysis_n` analyses by the re-analyst the Cohen's d cannot be calculated.
 
 ```{r echo=FALSE}
 # TODO: merge marginal effect sizes and create the plot
@@ -1351,149 +1421,170 @@ Fig X displays the calculated marginal ES-s for the re-analyses of each study (w
 
 Fig X displays the calculated marginal ES-s AND corresponding Cohen's d-s for the re-analyses of each study (where they are available)
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
+#| label: fig-effect-region-all
+#| fig-cap: "The figure shows "
+
 effect_region_all_data <- calculate_tolerance_region(data = processed, grouping_var = simplified_paper_id, drop_missing = T)
   
-effect_region_all_plot <- plot_tolarence_region(effect_region_all_data, simplified_paper_id)
+effect_region_all_plot <- plot_tolarence_region(data = effect_region_all_data, grouping_var = simplified_paper_id)
 
-ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
 
 effect_region_all_plot
 ```
 
 ```{r include=FALSE}
 within_tolerance_region <-
-  effect_region_all_data %>% 
-  group_by(simplified_paper_id) %>% 
-  summarise(
+  effect_region_all_data |> 
+  dplyr::group_by(simplified_paper_id) |> 
+  dplyr::summarise(
     robust = if_else(any(is_within_region == "Yes" & relative_frequency == 1), "Robust", "Not Robust")
-    ) %>% 
-  ungroup() %>% 
-  count(robust) %>% 
-  mutate(
+    ) |> 
+  dplyr::ungroup() |> 
+  dplyr::count(robust) |> 
+  dplyr::mutate(
     N = sum(n),
     relative_frequency = n / N,
     percentage = round(relative_frequency * 100)
     )
 ```
 
-Here, we were interested what percentage of the new effect sizes were beyond the tolerance region (+/- 0.05 Cohen's d). We found that `r filter(within_tolerance_region, robust == "Not robust") %>% pull(percentage)`% (`r filter(within_tolerance_region, robust == "Not robust") %>% pull(n)` out of `r filter(within_tolerance_region, robust == "Not robust") %>% pull(N)`) of the studies contained at least one re-analysis result where the effect size was beyond the tolerance region (+/- 0.05 Cohen's d) of the result of the original study.
+Here, we were interested in what percentage of the new effect sizes were beyond the tolerance region (+/- 0.05 Cohen's d). We found that `r filter(within_tolerance_region, robust == "Not Robust") |> pull(percentage)`% (`r filter(within_tolerance_region, robust == "Not Robust") |> pull(n)` out of `r filter(within_tolerance_region, robust == "Not Robust") |> pull(N)`) of the studies contained at least one re-analysis result where the effect size was beyond the tolerance region (+/- 0.05 Cohen's d) of the result of the original study.
 
 ##### Robustness by field
 
-We were interested to see whether these results show a different pattern when inspecting them in different fields. The following figure shows that for the major fields (\>=10 studies) the pattern were...,
+We were interested to see whether these robustness results show a different pattern when inspecting them in different fields. The following figure shows that for the major fields (\>=10 studies).
 
 ```{r include=FALSE, warning=FALSE}
-processed %>% 
-  distinct(paper_id, .keep_all = T) %>% 
-  count(paper_discipline) %>% 
-  arrange(n)
+processed |> 
+  dplyr::distinct(paper_id, .keep_all = T) |> 
+  dplyr::count(paper_discipline) |> 
+  dplyr::arrange(n)
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
+#| label: fig-effect-region-discipline
+#| fig-cap: "The figure shows "
+
 effect_region_discipline_data <- 
-  processed %>% 
-  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>%
-  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
-  calculate_tolerance_region(., paper_discipline, drop_missing = TRUE)
-# Missing values were excluded
+  processed |> 
+  dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |>
+  dplyr::mutate(paper_discipline = stringr::str_to_title(paper_discipline)) |> 
+  # Exclude missing values
+  calculate_tolerance_region(grouping_var = paper_discipline, drop_missing = TRUE)
 
-effect_region_discipline_plot <- plot_tolarence_region(effect_region_discipline_data, paper_discipline, with_labels = TRUE)
+effect_region_discipline_plot <- plot_tolarence_region(data = effect_region_discipline_data, grouping_var = paper_discipline, with_labels = TRUE)
 
-ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
 
 effect_region_discipline_plot
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
+#| label: fig-effect-robustness-discipline
+#| fig-cap: "The figure shows "
+
 effect_robustness_discipline_data <-
-  processed %>% 
-  filter(paper_discipline %in% c("psychology", "economics", "political science")) %>% 
-  mutate(paper_discipline = str_to_title(paper_discipline)) %>% 
-  calculate_robustness(paper_discipline)
+  processed |> 
+  dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
+  dplyr::mutate(paper_discipline = stringr::str_to_title(paper_discipline)) |> 
+  calculate_robustness(grouping_var = paper_discipline)
 
-effect_robustness_discipline_plot <- plot_robustness(effect_robustness_discipline_data, paper_discipline)
+effect_robustness_discipline_plot <- plot_robustness(data = effect_robustness_discipline_data, grouping_var = paper_discipline)
 
-ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
 
 effect_robustness_discipline_plot 
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE}
+#| label: fig-effect-robustness-discipline-rain
+#| fig-cap: "The figure shows "
+
 effect_robustness_discipline_rain_plot <-
-  effect_robustness_discipline_data %>%
-  ggplot() +
-  aes(x = paper_discipline, y = robustness) +
-  geom_rain(rain.side = 'l') +
+  effect_robustness_discipline_data |>
+  ggplot2::ggplot() +
+  ggplot2::aes(x = paper_discipline, y = robustness) +
+  ggrain::geom_rain(rain.side = 'l') +
   # geom_point(aes(x = paper_discipline, y = cohen_original), color = "red") +
-  labs(y = "Robustness") +
-  theme(
-    axis.title.x = element_blank(),
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line()
+  ggplot2::labs(y = "Robustness") +
+  ggplot2::theme(
+    axis.title.x = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line()
   )
 
-ggsave(here::here("figures/effect_robustness_discipline_rain_plot.jpg"), effect_robustness_discipline_rain_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_robustness_discipline_rain_plot.jpg"), effect_robustness_discipline_rain_plot, dpi = 300)
 
 effect_robustness_discipline_rain_plot
 ```
 
 ##### Robustness by study type (observational, experimental)
 
-Here, we were interested to see whether these results show a different pattern when separating them by study type. The following figure shows that for that...,
+Here, we were interested to see whether these results show a different pattern when separating them by study type.
 
 ```{r include=FALSE}
-processed %>% 
-  distinct(paper_id, .keep_all = T) %>% 
-  count(experimental_or_observational) %>% 
-  arrange(n)
+processed |> 
+  dplyr::distinct(paper_id, .keep_all = T) |> 
+  dplyr::count(experimental_or_observational) |> 
+  dplyr::arrange(n)
 ```
 
 ```{r echo=FALSE, message=FALSE}
+#| label: fig-effect-region-studytype
+#| fig-cap: "The figure shows "
+
 effect_region_studytype_data <- 
-  processed %>% 
-  mutate(experimental_or_observational = str_to_title(experimental_or_observational)) %>% 
-  calculate_tolerance_region(., experimental_or_observational, drop_missing = TRUE)
+  processed |> 
+  dplyr::mutate(experimental_or_observational = stringr::str_to_title(experimental_or_observational)) |> 
+  calculate_tolerance_region(grouping_var = experimental_or_observational, drop_missing = TRUE)
 
 effect_region_studytype_plot <-
   plot_tolarence_region(
-    effect_region_studytype_data,
-    experimental_or_observational,
+    data = effect_region_studytype_data,
+    grouping_var = experimental_or_observational,
     with_labels = TRUE
   )
 
-ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
 
 effect_region_studytype_plot
 ```
 
 ```{r echo=FALSE, message=FALSE}
+#| label: fig-effect-robustness-studytype
+#| fig-cap: "The figure shows "
+
 effect_robustness_studytype_data <-
-  processed %>% 
-  mutate(experimental_or_observational = str_to_title(experimental_or_observational)) %>% 
-  calculate_robustness(experimental_or_observational)
+  processed |> 
+  dplyr::mutate(experimental_or_observational = stringr::str_to_title(experimental_or_observational)) |> 
+  calculate_robustness(grouping_var = experimental_or_observational)
 
-effect_robustness_studytype_plot <- plot_robustness(effect_robustness_studytype_data, experimental_or_observational, xlab = "Study type")
+effect_robustness_studytype_plot <- plot_robustness(data = effect_robustness_studytype_data, grouping_var = experimental_or_observational, xlab = "Study type")
 
-ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
 
 effect_robustness_studytype_plot 
 ```
 
 ##### Robustness by expertise (self-reported expertise in data analysis)
 
-Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts. The following figure shows that for that...,
+Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts.
 
 ```{r include=FALSE}
-processed %>% 
-  distinct(expertise_self_rating)
+processed |> 
+  dplyr::distinct(expertise_self_rating)
 ```
 
 ```{r echo=FALSE, message=FALSE}
+#| label: fig-effect-region-expertise
+#| fig-cap: "The figure shows "
+
 effect_region_expertise_data <- 
-  processed %>% 
-  mutate(
+  processed |> 
+  dplyr::mutate(
     expertise_self_rating = case_when(
       expertise_self_rating == 1 ~ "1\n(Beginner)",
       expertise_self_rating == 10 ~ "10\n(Expert)",
@@ -1504,29 +1595,31 @@ effect_region_expertise_data <-
       as.character(2:9),
       "10\n(Expert)")
     )
-  ) %>% 
-  calculate_tolerance_region(., expertise_self_rating, drop_missing = TRUE)
+  ) |> 
+  calculate_tolerance_region(grouping_var = expertise_self_rating, drop_missing = TRUE) |> 
+  # Dropping the first two levels because of not enough data points
+  dplyr::filter(N >= 3)
 
-effect_region_expertise_plot <- plot_tolarence_region(effect_region_expertise_data, expertise_self_rating)
+effect_region_expertise_plot <- plot_tolarence_region(data = effect_region_expertise_data, grouping_var = expertise_self_rating)
 
-ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300)
 
 effect_region_expertise_plot
 ```
 
 ##### Robustness by prior familiarity with the dataset
 
-Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. @fig-effect-region-familiarity shows that for that...,
+Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. @fig-effect-region-familiarity shows that for these results.
 
 ```{r echo=FALSE, message=FALSE, message=FALSE}
 #| label: fig-effect-region-familiarity
 #| fig-cap: "The figure shows..."
 
-effect_region_familiarity_data <- calculate_tolerance_region(processed, familiar_with_paper, drop_missing = TRUE)
+effect_region_familiarity_data <- calculate_tolerance_region(data = processed, grouping_var = familiar_with_paper, drop_missing = TRUE)
 
-effect_region_familiarity_plot <- plot_tolarence_region(effect_region_familiarity_data, familiar_with_paper, ylab = "Familiar with the paper")
+effect_region_familiarity_plot <- plot_tolarence_region(data = effect_region_familiarity_data, grouping_var = familiar_with_paper, ylab = "Familiar with the paper")
 
-ggsave(here::here("figures/effect_region_familiarity_plot.jpg"), effect_region_familiarity_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_familiarity_plot.jpg"), effect_region_familiarity_plot, dpi = 300)
 
 effect_region_familiarity_plot
 ```
@@ -1534,16 +1627,19 @@ effect_region_familiarity_plot
 ##### Robustness by the suitability of their self-judged analysis
 
 ```{r include=FALSE}
-processed %>% 
-  distinct(confidence_in_approach)
+processed |> 
+  dplyr::distinct(confidence_in_approach)
 ```
 
 ```{r echo=FALSE, message=FALSE}
-effect_region_suitability_data <- calculate_tolerance_region(processed, confidence_in_approach, drop_missing = TRUE)
+#| label: fig-effect-region-suitability
+#| fig-cap: "The figure shows "
 
-effect_region_suitability_plot <- plot_tolarence_region(effect_region_suitability_data, confidence_in_approach, ylab = "Suitability of their\nself-judged analysis")
+effect_region_suitability_data <- calculate_tolerance_region(data = processed, grouping_var = confidence_in_approach, drop_missing = TRUE)
 
-ggsave(here::here("figures/effect_region_suitability_plot.jpg"), effect_region_suitability_plot, dpi = 300)
+effect_region_suitability_plot <- plot_tolarence_region(data = effect_region_suitability_data, grouping_var = confidence_in_approach, ylab = "Suitability of their\nself-judged analysis")
+
+ggplot2::ggsave(here::here("figures/effect_region_suitability_plot.jpg"), effect_region_suitability_plot, dpi = 300)
 
 effect_region_suitability_plot
 ```
@@ -1565,10 +1661,10 @@ samplesize_region_data <-
     original_cohens_d,
     reanalysis_cohens_d
   ) |>
-  mutate(
+  dplyr::mutate(
     tolarence_region_lower = original_cohens_d - 0.05,
     tolarence_region_upper = original_cohens_d + 0.05,
-    is_within_region = case_when(
+    is_within_region = dplyr::case_when(
       reanalysis_cohens_d <= tolarence_region_lower |
         reanalysis_cohens_d >= tolarence_region_upper ~ "No",
       reanalysis_cohens_d >= tolarence_region_lower |
@@ -1578,27 +1674,27 @@ samplesize_region_data <-
     is_within_region = as.factor(is_within_region),
     log_model_sample_size = log(reanalysis_model_sample_size)
   ) |> 
-  filter(
+  dplyr::filter(
     !is.na(original_cohens_d),
     !is.na(log_model_sample_size),
     is_within_region != "Missing")
 
 samplesize_region_plot <-
   samplesize_region_data |> 
-  ggplot() +
-  aes(x = is_within_region, y = log_model_sample_size) +
-	geom_rain(rain.side = 'l') +
-  labs(
+  ggplot2::ggplot() +
+  ggplot2::aes(x = is_within_region, y = log_model_sample_size) +
+	ggrain::geom_rain(rain.side = 'l') +
+  ggplot2::labs(
     y = "Log sample size",
     x = "Is the re-analysis effect size within the tolerance region?"
   ) +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line()
+  ggplot2::theme(
+    panel.background = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line()
   )
 
-ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
 
 samplesize_region_plot
 ```
