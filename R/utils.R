@@ -8,16 +8,13 @@ calculate_tolerance_region <- function(data, grouping_var, drop_missing = FALSE)
     dplyr::mutate(
       tolarence_region_lower = original_cohens_d - 0.05,
       tolarence_region_upper = original_cohens_d + 0.05,
-      {{ grouping_var }} := as.factor({{ grouping_var }})
-    ) %>% 
-    dplyr::group_by({{ grouping_var }}) %>%
-    dplyr::mutate(
+      {{ grouping_var }} := as.factor({{ grouping_var }}),
       is_within_region = dplyr::case_when(
-        reanalysis_cohens_d <= tolarence_region_lower | reanalysis_cohens_d >= tolarence_region_upper ~ "No",
-        reanalysis_cohens_d >= tolarence_region_lower | reanalysis_cohens_d <= tolarence_region_upper ~ "Yes",
+        reanalysis_cohens_d >= tolarence_region_lower & reanalysis_cohens_d <= tolarence_region_upper ~ "Within tolerance region",
+        reanalysis_cohens_d < tolarence_region_lower | reanalysis_cohens_d > tolarence_region_upper ~ "Outside of tolerance region",
         is.na(reanalysis_cohens_d) ~ "Missing"
       ),
-      is_within_region = as.factor(is_within_region)
+      is_within_region = factor(is_within_region, levels = c("Within tolerance region", "Outside of tolerance region"))
     ) %>% 
     dplyr::count({{ grouping_var }}, is_within_region) %>% 
     dplyr::group_by({{ grouping_var }}) %>%
@@ -61,22 +58,27 @@ plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE, ylab 
     ) +
     ggplot2::geom_bar(
       stat = "identity",
-      color = "black"
+      color = "black",
+      position = position_stack(reverse = TRUE)
       ) +
     ggplot2::scale_x_continuous(
       expand = c(0, 0),
       labels = scales::percent_format(scale = 1)) +
+    ggplot2::scale_y_discrete(limits = rev) +
     viridis::scale_fill_viridis(discrete = TRUE) + 
+    viridis::scale_color_viridis(discrete = TRUE, direction = -1) +
     ggplot2::labs(
       x = "Percentage",
       y = ylab,
-      fill = "Within region"
+      # fill = "Within region"
     ) +
+    ggplot2::guides(color = "none") +
     ggplot2::theme(
       axis.ticks = ggplot2::element_blank(),
       # axis.title.y = element_blank(),
       legend.position = "bottom",
       legend.box = "horizontal",
+      legend.title = element_blank(),
       plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
       panel.grid = ggplot2::element_blank(),
       panel.background = ggplot2::element_blank(),
@@ -88,10 +90,12 @@ plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE, ylab 
       plot +
       ggplot2::geom_text(
         data = . %>% dplyr::filter(percentage > 10),
-        aes(label = scales::percent(round(percentage), scale = 1)),
-        position = position_stack(vjust = 0.5),  # Adjust the vertical position of labels
-        color = "white",  # Label text color
-        size = 5  # Label text size
+        aes(
+          label = scales::percent(round(percentage), scale = 1),
+          color = is_within_region
+          ),
+        position = position_stack(vjust = 0.5, reverse = TRUE), 
+        size = 5  
       )
   }
   
@@ -99,36 +103,34 @@ plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE, ylab 
 }
 
 #' Prepare dataset for effect size robustness plot
-calculate_robustness <- function(data, grouping_var) {
+calculate_estimate_range <- function(data, grouping_var) {
   data %>% 
     dplyr::select(paper_id, {{grouping_var}}, reanalysis_cohens_d) %>% 
     dplyr::group_by(paper_id, {{grouping_var}}) %>% 
-    dplyr::filter(reanalysis_cohens_d == min(reanalysis_cohens_d) | reanalysis_cohens_d == max(reanalysis_cohens_d)) %>% 
+    # dplyr::filter(reanalysis_cohens_d == min(reanalysis_cohens_d, na.rm = FALSE) | reanalysis_cohens_d == max(reanalysis_cohens_d, na.rm = FALSE)) %>% 
     dplyr::summarise(
-      robustness = max(reanalysis_cohens_d) - min(reanalysis_cohens_d)
+      estimate_range = max(reanalysis_cohens_d, na.rm = TRUE) - min(reanalysis_cohens_d, na.rm = TRUE)
     ) %>% 
     dplyr::ungroup()
 }
 
 #' Create effect size robustness plot
-plot_robustness <- function(data, grouping_var, xlab = "") {
-  data %>% 
+plot_rain <- function(data, grouping_var, response_var, x_lab, y_lab, trans = "log10", breaks = c(10, 100, 1000, 10000, 100000)) {
+  data |> 
     ggplot2::ggplot() +
-    ggplot2::aes(
-      x = {{grouping_var}},
-      y = robustness
-    ) +
-    ggplot2::geom_jitter(width = 0.1) +
-    ggplot2::labs(
-      x = xlab,
-      y = "Robustness in Cohen's d",
+    ggplot2::aes(x = {{grouping_var}}, y = {{response_var}}) +
+    ggrain::geom_rain(rain.side = 'l') +
+    ggplot2::labs(y = y_lab,
+                  x = x_lab) +
+    ggplot2::scale_y_continuous(
+      trans = trans,
+      breaks = breaks,
+      labels = scales::comma
     ) +
     ggplot2::theme(
-      axis.ticks = ggplot2::element_blank(),
-      plot.margin = ggplot2::margin(t = 20, r = 20, b = 20, l = 20, "pt"),
-      panel.grid = ggplot2::element_blank(),
       panel.background = ggplot2::element_blank(),
-      # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
+      panel.grid = ggplot2::element_blank(),
+      axis.line = ggplot2::element_line()
     )
 }
 
@@ -147,40 +149,70 @@ calculate_conclusion <- function(data, grouping_var, categorization_var) {
     ungroup()
 }
 
-#' Plot conclusions
-plot_conclusion <- function(data, grouping_var, categorization_var, with_labels = FALSE, y_lab = NULL) {
-  data <- 
-    data |>  
-    dplyr::mutate(label_text := paste0({{ grouping_var }}, "\n", "(N = " , N, ")"))
+#' plot percentage
+plot_percentage <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE) {
   
-  plot <- 
-    data |> 
+  if (with_sum) {
+    new_labels <- setNames(
+      as.character(data[[quo_name(enquo(grouping_var))]]),
+      paste0(
+        data[[quo_name(enquo(grouping_var))]],
+        "\n",
+        "(N = " ,
+        data[["N"]],
+        ")"
+        )
+      )
+    
+    data <-
+      data |>
+      dplyr::mutate(label := forcats::fct_recode({{ grouping_var }}, !!!new_labels))
+  } else {
+    data <-
+      data |> 
+      dplyr::rename(label := {{ grouping_var }})
+  }
+  
+  plot <-
+    data |>
     ggplot2::ggplot() +
     ggplot2::aes(
-      y = label_text,
+      y = label,
       x = relative_frequency,
       fill = {{ categorization_var }}
     ) +
     ggplot2::geom_bar(
       color = "black",
       stat = "identity",
-      width = 0.8) +
+      width = 0.8,
+      position = position_stack(reverse = reverse)
+      ) +
     ggplot2::scale_x_continuous(
       expand = c(0, 0),
       labels = scales::percent_format(scale = 100)) +
-    ggplot2::scale_y_discrete(expand = c(0, 0)) +
+    ggplot2::scale_y_discrete(
+      expand = c(0, 0),
+      limits = if (rev_limits) {
+        rev(levels(droplevels(data$label))) 
+      } else {
+        levels(droplevels(data$label))
+        }
+      # labels = function(x) print(x)
+      ) +
     viridis::scale_fill_viridis(discrete = TRUE) + 
+    viridis::scale_color_viridis(discrete = TRUE, direction = -1) +
     ggplot2::labs(
-      fill = stringr::str_to_sentence(quo_name(enquo(categorization_var))),
-      x = "Percentage",
-      y = y_lab
+      x = x_lab,
+      y = y_lab,
+      fill = legend_lab
     ) +
+    ggplot2::guides(color = "none") +
     ggplot2::theme(
       axis.ticks = ggplot2::element_blank(),
       # axis.title.y = element_blank(),
-      # legend.box = "horizontal",
+      legend.box = "horizontal",
       plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
-      # legend.position = "bottom",
+      legend.position = "bottom",
       panel.background = ggplot2::element_blank(),
       panel.grid = ggplot2::element_blank()
     )
@@ -190,9 +222,9 @@ plot_conclusion <- function(data, grouping_var, categorization_var, with_labels 
       plot +
       ggplot2::geom_text(
         data = dplyr::filter(data, percentage > 10),
-        ggplot2::aes(label = scales::percent(round(percentage), scale = 1)),
-        position = position_stack(vjust = 0.5),  # Adjust the vertical position of labels
-        color = "white",  # Label text color
+        ggplot2::aes(label = scales::percent(round(percentage), scale = 1),
+        color = {{ categorization_var }}),
+        position = position_stack(vjust = 0.5, reverse = reverse),
         size = 5  # Label text size
       )
   }
@@ -206,7 +238,8 @@ calculate_conclusion_robustness <- function(data, grouping_var, categorization_v
     data %>%
       dplyr::group_by(paper_id) %>% 
       dplyr::summarise(
-        robust = dplyr::if_else(all({{categorization_var}} == "Same conclusion"), "Robust", "Not Robust")
+        robust = dplyr::if_else(all({{categorization_var}} == "Same conclusion"), "Inferentially robust", "Inferentially not robust"),
+        robust = factor(robust, levels = c("Inferentially robust", "Inferentially not robust"))
       ) %>%
       dplyr::ungroup() %>% 
       dplyr::count(robust) %>%
@@ -214,12 +247,14 @@ calculate_conclusion_robustness <- function(data, grouping_var, categorization_v
         N = sum(n),
         relative_frequency = n / N,
         percentage = round(relative_frequency * 100, 2)
-      )
+      ) |> 
+      dplyr::ungroup()
   } else {
     data %>% 
       dplyr::group_by(paper_id, {{grouping_var}}) %>%
       dplyr::summarise(
-        robust = dplyr::if_else(all({{categorization_var}} == "Same conclusion"), "Robust", "Not Robust")
+        robust = dplyr::if_else(all({{categorization_var}} == "Same conclusion"), "Inferentially robust", "Inferentially not robust"),
+        robust = factor(robust, levels = c("Inferentially robust", "Inferentially not robust"))
       ) %>% 
       dplyr::ungroup() %>% 
       dplyr::count({{grouping_var}}, robust) %>% 
@@ -246,8 +281,8 @@ plot_conclusion_robustness <- function(data, response_var, grouping_var = NULL, 
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, 1), labels = scales::percent_format(scale = 100)) +
     viridis::scale_fill_viridis(discrete = TRUE) +
     ggplot2::labs(
-      x = "Robustness of the Conclusions",
-      y = "Percentage"
+      x = "Inferential robustness of studies",
+      y = "Percentage of studies"
     ) +
     ggplot2::theme(
       axis.ticks = ggplot2::element_blank(),
@@ -266,7 +301,8 @@ plot_conclusion_robustness <- function(data, response_var, grouping_var = NULL, 
       plot +
       ggplot2::labs(fill = legend_label) +
       ggplot2::theme(
-        legend.position = "bottom"
+        legend.position = "bottom",
+        legend.title = element_blank()
       )
   }
   
@@ -339,5 +375,5 @@ standard_correlation_coefficient <- function(type_of_statistic, test_statistic, 
 
 #' Calculate Cohen's d
 cohens_d <- function(r) {
-  sign(r)*sqrt(4/((1/r^2)-1))
+  round(sign(r)*sqrt(4/((1/r^2)-1)), 3)
 }

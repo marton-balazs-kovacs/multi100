@@ -791,8 +791,7 @@ multi100_data <-
   multi100_data %>% 
   group_by(paper_id) %>% 
   mutate(
-    # TODO: solve trailing 0s
-    simplified_paper_id = paste0("0", cur_group_id())
+    simplified_paper_id = stringr::str_pad(dplyr::cur_group_id(), width = 3, pad = "0")
   ) %>% 
   ungroup()
 ```
