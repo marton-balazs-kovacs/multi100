@@ -299,7 +299,7 @@ analyst_discipline <-
   keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
   calculate_percentage(response_var = primary_discipline) |>
   dplyr::rename(discipline = primary_discipline) |> 
-  dplyr::arrange(dplyr::desc(percentage))
+  dplyr::arrange(dplyr::desc(dplyr::if_else(discipline == "Other", -Inf, percentage)))
 ```
 
 We asked the co-analysts which discipline is the closest to their research area. The following Table summarizes the distribution of their disciplinary orientation. Co-analysts from `r dplyr::slice(analyst_discipline, 1) |> dplyr::pull(discipline)` and `r dplyr::slice(analyst_discipline, 2) |> dplyr::pull(discipline)` disciplines participated in the highest ratio in this study.
@@ -999,10 +999,10 @@ conclusions_analysis_data <-
 
 Across all the re-analyses, `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(percentage)` % (`r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(N)`) of them arrived at the same conclusion; `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(N)`) to no effects, and `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(N)`) to opposite effect compared to the original conclusion.
 
-### Robustness
-#### Robustness by field
+### Inferential robustness
+#### Inferential robustness by discipline
 
-We were interested to see whether these results show a different pattern when inspecting them in different fields. @fig-discipline-robustness shows that for the major fields with more than 10 papers (Economics, Political Science, and Psychology) the pattern was comparably similar. We found no outstanding differences between the fields for the percentage of different and identical conclusions neither (see @fig-conclusions-discipline).
+We were interested to see whether these results show a different pattern when inspecting them in different disciplines. @fig-discipline-robustness shows that for the major fields with more than 10 papers (Economics, Political Science, and Psychology) the pattern was comparably similar. We found no outstanding differences between the fields for the percentage of different and identical conclusions neither (see @fig-conclusions-discipline).
 
 ```{r include=FALSE}
 conclusions_discipline_data <- 
@@ -1024,7 +1024,7 @@ conclusions_discipline_robustness_data <-
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-discipline-robustness
-#| fig-cap: "The figure shows the inferential robustness of the studies by major fields."
+#| fig-cap: "The figure shows the inferential robustness of the studies by major fields (more than 10 papers)."
 
 conclusions_discipline_robustness_plot <-
   plot_percentage(
@@ -1063,7 +1063,7 @@ ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusio
 conclusions_discipline_plot
 ```
 
-#### Robustness by study type (observational, experimental)
+#### Inferential robustness by study type (observational, experimental)
 
 Here, we were interested to see whether these results show a different pattern when separating them by study type. @fig-studytype-robustness illustrates that nearly half of the results from experimental studies remained robust upon independent re-analysis, whereas only one-third of observational studies yielded robust conclusions. Moreover, @fig-conclusions-studytype indicates that, for both study types, the majority of the re-analyses reached the same conclusions as the original study.
 
@@ -1108,7 +1108,7 @@ conclusions_studytype_robustness_plot
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-conclusions-studytype
-#| fig-cap: "The figure shows percentage of identical, inconclusive, and different conclusion of the studies by study type (experimental or observational)."
+#| fig-cap: "The figure shows percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by study type (experimental, observational)."
 
 conclusions_studytype_plot <-
   plot_percentage(
@@ -1126,7 +1126,7 @@ ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusion
 conclusions_studytype_plot
 ```
 
-#### Robustness by expertise (self-reported expertise in data analysis)
+#### Inferential robustness by expertise (self-reported expertise in data analysis)
 
 Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts. The following figure shows these results.
 
@@ -1135,8 +1135,6 @@ conclusions_expertise_data <-
   processed |>
   dplyr::rename(categorisation = task1_categorisation_plotting) |>
   calculate_conclusion(grouping_var = expertise_self_rating, categorization_var = categorisation) |> 
-  # Dropping the first two levels because of not enough data points
-  dplyr::filter(N >= 3) |> 
   dplyr::mutate(
     categorisation = forcats::fct_relevel(
       categorisation,
@@ -1161,24 +1159,26 @@ conclusions_expertise_data <-
 #| fig-cap: "The figure shows ... The figure does not display the bottom two categories where for each less than 3 responses were collected."
 
 conclusions_expertise_plot <-
-  plot_percentage(
+  plot_height(
     data = conclusions_expertise_data,
     grouping_var = expertise_self_rating,
     categorization_var = categorisation,
-    x_lab = "Percentage of re-analyses",
-    y_lab = "Expertise rating",
+    y_lab = "Number of re-analyses",
+    x_lab = "Expertise rating",
     with_labels = TRUE,
     with_sum = TRUE,
-    rev_limits = TRUE
+    rev_limits = FALSE
   ) +
   theme(legend.text = element_text(size = 8))
 
-ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, dpi = 300)
+ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, 
+       height = 6, width = 8,
+       dpi = 300)
 
 conclusions_expertise_plot
 ```
 
-#### Robustness by prior familiarity with the dataset
+#### Inferential robustness by prior familiarity with the dataset
 
 Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. The following figure shows that for these results.
 
@@ -1216,7 +1216,7 @@ ggsave(here::here("figures/conclusions_familiarity_plot.jpg"), conclusions_famil
 conclusions_familiarity_plot
 ```
 
-#### Robustness by the suitability of their self-judged analysis
+#### Inferential robustness by the suitability of their self-judged analysis
 
 ```{r include=FALSE}
 conclusions_suitability_data <- 
@@ -1224,6 +1224,11 @@ conclusions_suitability_data <-
   dplyr::rename(categorisation = task1_categorisation_plotting) |>
   dplyr::mutate(
     categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
+    confidence_in_approach = dplyr::case_when(
+      confidence_in_approach == 1 ~ "1\nNot confident at all",
+      confidence_in_approach == 5 ~ "5\nVery confident",
+      TRUE ~ as.character(confidence_in_approach)
+      ),
     confidence_in_approach = as.factor(confidence_in_approach)
     ) |> 
   calculate_conclusion(grouping_var = confidence_in_approach, categorization_var = categorisation)
@@ -1234,18 +1239,22 @@ conclusions_suitability_data <-
 #| fig-cap: "The figure shows "
 
 conclusions_suitability_plot <-
-  plot_percentage(
+  # TODO: shit name for a function replace or incorporate it with plot_percentage
+  plot_height(
     data = conclusions_suitability_data,
     grouping_var = confidence_in_approach,
     categorization_var = categorisation,
     with_labels = TRUE,
-    x_lab = "Percentage of re-analyses",
-    y_lab = "Suitability of the self-judged analysis"
+    y_lab = "Number of re-analyses",
+    x_lab = "Level of confidence with the suitability of the analysis",
+    rev_limits = FALSE
   ) +
   ggplot2::theme(
-    legend.text = ggplot2::element_text(size = 8),
+    # legend.text = ggplot2::element_text(size = 8),
     legend.position = "bottom",
-    legend.box = "horizontal"
+    legend.box = "horizontal",
+    axis.title = ggplot2::element_text(size = 10),
+    legend.text = ggplot2::element_text(size = 8)
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_suitability_plot.jpg"), conclusions_suitability_plot, dpi = 300)
@@ -1253,7 +1262,7 @@ ggplot2::ggsave(here::here("figures/conclusions_suitability_plot.jpg"), conclusi
 conclusions_suitability_plot
 ```
 
-#### Robustness by the sample size
+#### Inferential robustness by the sample size
 
 Here, we were interested to see whether these results show a different pattern when considering sample size. The following figure shows that for that...,
 
@@ -1292,7 +1301,7 @@ conclusions_samplesize_plot <-
     response_var = reanalysis_model_sample_size,
     trans = "log10",
     breaks = c(10, 100, 1000, 10000, 100000),
-    x_lab = "Direction of the re-analysis conclusion compared to the original effect",
+    x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
     y_lab = "Sample size"
   )
 
@@ -1301,7 +1310,7 @@ ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusio
 conclusions_samplesize_plot
 ```
 
-#### How robust are statistical findings published in social sciences to analytical choices?
+#### How inferentially robust are statistical findings published in social sciences to analytical choices?
 
 A main question of our study was whether different analysts arrive at the same effect estimates (+/- 0.05 Cohen's d) as the analyst of the original study?
 
@@ -1356,7 +1365,7 @@ processed |>
   dplyr::count(both_missing)
   
 # Preparing the data for the plot
-# TODO: use separate datasets to plot
+# TODO: they want two colors and color legend with fixed position
 reanalysis_data <-
   processed |>
   dplyr::select(simplified_paper_id,
@@ -1369,8 +1378,11 @@ reanalysis_data <-
   dplyr::ungroup() |>
   dplyr::mutate(
     simplified_paper_id = as.factor(simplified_paper_id),
-    simplified_paper_id = forcats::fct_reorder(simplified_paper_id,
-                                               original_cohens_d,
+    # Put missing values at the end
+    original_cohens_d = dplyr::if_else(is.na(original_cohens_d), -Inf, original_cohens_d),
+    simplified_paper_id = forcats::fct_reorder(.f = simplified_paper_id,
+                                               .x = original_cohens_d,
+                                               .fun = function(x) median(x),
                                                .na_rm = FALSE)
   )
 
@@ -1385,14 +1397,21 @@ original_data <-
                                                original_cohens_d,
                                                .na_rm = FALSE)
   )
+
+excluded_es <-
+  dplyr::filter(reanalysis_data, effect_size > 10 | effect_size < -10) |> 
+  mutate(excluded = glue::glue("study {simplified_paper_id}: {effect_size}")) |> 
+  summarise(excluded_list = glue::glue_collapse(excluded, sep = "; "))
 ```
+
+The figure does not show `r dplyr::filter(reanalysis_data, effect_size > 10 | effect_size < -10) |> nrow()` (`r dplyr::pull(excluded_es, excluded_list)`) re-analyzed effect sizes which are over 10 or smaller than -10 Cohen's d.
 
 ```{r echo=FALSE, warning=FALSE}
 #| label: fig-effect-main
 #| fig-cap: "The figure shows "
 
 # Colors
-color_vector <- setNames(c("#F8766D", "#CD9600", "#7CAE00", "#00BE67", "#00BFC4", "#00A9FF", "#C77CFF"), paste0("re-analysis_", sprintf("%02d", 1:7)))
+# color_vector <- setNames(c("#F8766D", "#CD9600", "#7CAE00", "#00BE67", "#00BFC4", "#00A9FF", "#C77CFF"), paste0("re-analysis_", sprintf("%02d", 1:7)))
 
 effect_main_plot <-
   reanalysis_data |> 
@@ -1402,10 +1421,14 @@ effect_main_plot <-
   ggplot2::aes(
     y = simplified_paper_id,
     x = effect_size,
-    color = effect_size_type
+    # color = effect_size_type
   ) +
-  ggplot2::geom_point(shape = 16) +
-  ggplot2::scale_color_manual(values = color_vector) +
+  ggplot2::geom_point(
+    shape = 16,
+    color = viridis::viridis(5)[[3]],
+    # size = 5
+    ) +
+  # ggplot2::scale_color_manual(values = color_vector) +
   ggplot2::geom_pointrange(
     data = original_data,
     ggplot2::aes(
@@ -1417,27 +1440,31 @@ effect_main_plot <-
     show.legend = FALSE,
     color = "black",
     shape = 15,
+    # size = 2
     ) +
   labs(
-    x = "Effect size in Cohen's d"
+    x = "Effect size in Cohen's d",
+    y = "Study number"
   ) +
   ggplot2::guides(color = "none") +
   ggplot2::theme(
     axis.ticks = ggplot2::element_blank(),
     legend.title = ggplot2::element_blank(),
     axis.line = ggplot2::element_line(),
-    axis.title.y = ggplot2::element_blank(),
     plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
     panel.grid = ggplot2::element_line(color = "lightgray"),
     panel.grid.major.x = ggplot2::element_blank(),
     panel.grid.minor.x = ggplot2::element_blank(),
     panel.background = ggplot2::element_blank(),
+    axis.title = ggplot2::element_text(size = 20),
+    axis.text.y = ggplot2::element_text(size = 10),
+    axis.text.x = ggplot2::element_text(size = 13)
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
 # TODO: for some reason tolerance region is not showing on saved plot... why?
 ggplot2::ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_plot,
-       width = 13, height = 11.69,
+       width = 12, height = 13,
        dpi = 300)
 
 effect_main_plot
@@ -1447,9 +1474,20 @@ effect_main_plot
 #| label: fig-effect-region-all
 #| fig-cap: "The figure shows "
 
-effect_region_all_data <- calculate_tolerance_region(data = processed, grouping_var = simplified_paper_id, drop_missing = T)
+effect_region_all_data <- 
+  processed |> 
+  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T) |> 
+  mutate(
+    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
+  )
   
-effect_region_all_plot <- plot_tolarence_region(data = effect_region_all_data, grouping_var = simplified_paper_id)
+# TODO: replace this function and delete it from utils
+effect_region_all_plot <- plot_tolarence_region(data = effect_region_all_data, grouping_var = simplified_paper_id, y_lab = "Study number", x_lab = "Percentage of reanalysis results") +
+  ggplot2::theme(
+    axis.title = ggplot2::element_text(size = 15),
+    legend.text = ggplot2::element_text(size = 13),
+    axis.text.x = ggplot2::element_text(size = 13)
+  )
 
 ggplot2::ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
 
@@ -1496,7 +1534,7 @@ within_tolerance_region <-
 
 Here, we were interested in what percentage of the new effect sizes were beyond the tolerance region (+/- 0.05 Cohen's d). We found that `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(percentage)`% (`r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(n)` out of `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(N)`) of the studies contained at least one re-analysis result where the effect size was beyond the tolerance region (+/- 0.05 Cohen's d) of the result of the original study. Out of the `r dplyr::distinct(ind_within_tol_reg, N) |> dplyr::pull(N)` reanalyses effect sizes with available tolerance regions `r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(n)`) were outside of the tolerance region.
 
-##### Robustness by field
+##### Estimate robustness by discipline
 
 We were interested to see whether these robustness results show a different pattern when inspecting them in different fields. The following figure shows that for the major fields (\>=10 studies).
 
@@ -1523,7 +1561,7 @@ effect_region_discipline_plot <-
     data = effect_region_discipline_data,
     grouping_var = paper_discipline,
     categorization_var = is_within_region,
-    x_lab = "Percentage of re-analysis estimates in Cohen's d",
+    x_lab = "Percentage of re-analysis results",
     y_lab = "Disciplines",
     with_labels = TRUE
   )
@@ -1548,7 +1586,7 @@ effect_robustness_discipline_plot <-
             grouping_var = paper_discipline,
             response_var = estimate_range,
             x_lab = "Disciplines",
-            y_lab = "Effect size estimate range (Cohens'd)",
+            y_lab = "Effect size estimate range in Cohen's d",
             trans = "log10",
             breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60))
 
@@ -1557,7 +1595,7 @@ ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), eff
 effect_robustness_discipline_plot 
 ```
 
-##### Robustness by study type (observational, experimental)
+##### Estimate robustness by study type (observational, experimental)
 
 Here, we were interested to see whether these results show a different pattern when separating them by study type.
 
@@ -1582,7 +1620,7 @@ effect_region_studytype_plot <-
     data = effect_region_studytype_data,
     grouping_var = experimental_or_observational,
     categorization_var = is_within_region,
-    x_lab = "Percentage of re-analysis estimates in Cohen's d",
+    x_lab = "Percentage of re-analysis results",
     y_lab = "Study type",
     with_labels = TRUE
   )
@@ -1606,7 +1644,7 @@ effect_robustness_studytype_plot <- plot_rain(
   grouping_var = experimental_or_observational,
   response_var = estimate_range,
   x_lab = "Study type",
-  y_lab = "Estimate range in Cohens'd",
+  y_lab = "Effect size estimate range in Cohen's d",
   trans = "log10",
   breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60)
 )
@@ -1616,7 +1654,7 @@ ggplot2::ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effe
 effect_robustness_studytype_plot 
 ```
 
-##### Robustness by expertise (self-reported expertise in data analysis)
+##### Estimate robustness by expertise (self-reported expertise in data analysis)
 
 Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts.
 
@@ -1643,26 +1681,27 @@ effect_region_expertise_data <-
       "10\n(Expert)")
     )
   ) |> 
-  calculate_tolerance_region(grouping_var = expertise_self_rating, drop_missing = TRUE) |> 
-  # Dropping the first two levels because of not enough data points
-  dplyr::filter(N >= 3)
+  calculate_tolerance_region(grouping_var = expertise_self_rating, drop_missing = TRUE)
 
 effect_region_expertise_plot <-
-  plot_percentage(
+  plot_height(
     data = effect_region_expertise_data,
     grouping_var = expertise_self_rating,
     categorization_var = is_within_region,
-    x_lab = "Percentage of re-analysis estimates in Cohen's d",
-    y_lab = "Expertise rating",
-    with_labels = TRUE
+    y_lab = "Number of re-analyses",
+    x_lab = "Expertise rating",
+    with_labels = TRUE,
+    rev_limits = FALSE
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300,
+                width = 8, height = 6
+                )
 
 effect_region_expertise_plot
 ```
 
-##### Robustness by prior familiarity with the dataset
+##### Estimate robustness by prior familiarity with the dataset
 
 Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. @fig-effect-region-familiarity shows that for these results.
 
@@ -1687,7 +1726,7 @@ ggplot2::ggsave(here::here("figures/effect_region_familiarity_plot.jpg"), effect
 effect_region_familiarity_plot
 ```
 
-##### Robustness by the suitability of their self-judged analysis
+##### Estimate robustness by the suitability of their self-judged analysis
 
 ```{r include=FALSE}
 processed |> 
@@ -1698,24 +1737,35 @@ processed |>
 #| label: fig-effect-region-suitability
 #| fig-cap: "The figure shows "
 
-effect_region_suitability_data <- calculate_tolerance_region(data = processed, grouping_var = confidence_in_approach, drop_missing = TRUE)
+effect_region_suitability_data <- calculate_tolerance_region(data = processed, grouping_var = confidence_in_approach, drop_missing = TRUE) |> 
+  dplyr::mutate(
+        confidence_in_approach = dplyr::case_when(
+      confidence_in_approach == 1 ~ "1\nNot confident at all",
+      confidence_in_approach == 5 ~ "5\nVery confident",
+      TRUE ~ as.character(confidence_in_approach)
+      ),
+    confidence_in_approach = as.factor(confidence_in_approach)
+  )
 
 effect_region_suitability_plot <-
-  plot_percentage(
+  plot_height(
     data = effect_region_suitability_data,
     grouping_var = confidence_in_approach,
     categorization_var = is_within_region,
-    x_lab = "Percentage of re-analysis estimates in Cohen's d",
-    y_lab = "Suitability of their\nself-judged analysis",
-    with_labels = TRUE
+    x_lab = "Number of re-analyses",
+    y_lab = "Level of confidence with the suitability of the analysis",
+    with_labels = TRUE,
+    rev_limits = FALSE
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_suitability_plot.jpg"), effect_region_suitability_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_suitability_plot.jpg"), effect_region_suitability_plot, dpi = 300, 
+                width = 8, height = 6
+                )
 
 effect_region_suitability_plot
 ```
 
-##### Robustness by the sample size
+##### Estiamte robustness by the sample size
 
 Here, we were interested to see whether these results show a different pattern when considering sample size. The following @fig-samplesize-region shows that for that..., 
 
@@ -1742,7 +1792,7 @@ samplesize_region_data <-
         reanalysis_cohens_d <= tolarence_region_upper ~ "Yes",
       is.na(reanalysis_cohens_d) ~ "Missing"
     ),
-    is_within_region = as.factor(is_within_region)
+    is_within_region = factor(is_within_region, levels = c("Yes", "No"))
   ) |> 
   dplyr::filter(
     !is.na(original_cohens_d),
