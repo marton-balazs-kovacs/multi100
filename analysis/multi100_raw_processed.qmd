@@ -54,6 +54,9 @@ analyst_payments <- readr::read_csv(here::here("data/raw/multi100_analyst-paymen
 
 # Reviewing the direction of the claims in task2
 claim_direction_review <- readr::read_csv(here::here("data/raw/multi100_claim-direction-review_raw_data.csv"))
+
+# Non-detailed responses
+non_detailed_responses <- readr::read_csv(here::here("data/raw/multi100_non-detailed-responses_raw_data.csv"))
 ```
 
 ## all_paper
@@ -405,6 +408,24 @@ task1 %>%
   filter(n > 1)
 ```
 
+Replace the non-detailed responses about the analysis procedure with additional information provided by the analyst as a response to our follow-up questions.
+
+```{r}
+task1_change_from <-
+  non_detailed_responses |> 
+  filter(variable_identified_in == "task1_analysis_report") |> 
+  select(paper_id, analyst_id, change_to)
+
+task1 <-
+  task1 |> 
+  left_join(task1_change_from, by = c("paper_id", "analyst_id")) |> 
+  mutate(task1_analysis_report = case_when(
+    !is.na(change_to) ~ change_to,
+    TRUE ~ task1_analysis_report   
+  )) |> 
+  select(-change_to)
+```
+
 ## Task 2
 
 ```{r}
@@ -557,6 +578,24 @@ Check the number of distinct papers in task2.
 task2 %>% 
   distinct(paper_id) %>% 
   nrow()
+```
+
+Replace the non-detailed responses about the analysis procedure with additional information provided by the analyst as a response to our follow-up questions.
+
+```{r}
+task2_change_from <-
+  non_detailed_responses |> 
+  filter(variable_identified_in == "task2_analysis_report") |> 
+  select(paper_id, analyst_id, change_to)
+
+task2 <-
+  task2 |> 
+  left_join(task2_change_from, by = c("paper_id", "analyst_id")) |> 
+  mutate(task2_analysis_report = case_when(
+    !is.na(change_to) ~ change_to,
+    TRUE ~ task2_analysis_report   
+  )) |> 
+  select(-change_to)
 ```
 
 ## Combining Task 1 and Task 2
@@ -713,28 +752,36 @@ multi100_data <-
 See the analyses we have to remove based on the expert review of the peer evaluation.
 
 ```{r}
-# TODO: ask harry and make sure this is right
 peer_eval_review %>% 
   filter(expert_panel_decision == "Remove") %>% 
   select(analyst_id, paper_id, expert_panel_decision)
 ```
 
-Flag analyses that we will exclude because they did not pass the peer evaluation.
+Flag analyses that we will exclude because they did not pass the peer evaluation or because the analyst did not provide an analysis in their response.
 
 ```{r}
 multi100_data <-
-  multi100_data %>% 
+  multi100_data %>%
   dplyr::mutate(
     peer_eval_pass = case_when(
-      analyst_id == "NSDML" & paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
-      analyst_id == "8P2J2" & paper_id == "Dahl_AmEcoRev_2012_VRKK" ~ FALSE,
-      analyst_id == "8PTRZ" & paper_id == "Baccara_AmEcoJourn_2014_RqVE" ~ FALSE,
-      analyst_id == "93K4P" & paper_id == "TERTYTCHNAYA_AmPoliSciRev_2018_9wya" ~ FALSE,
+      # add one more based on harry
       # Based on expert panel decision
-      analyst_id == "NSDML" & paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
+      analyst_id == "NSDML" &
+        paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
+    ),
+    # we removed them because they did not actually do the analysis
+    incomplete_response_pass = case_when(
+      analyst_id == "8P2J2" &
+        paper_id == "Dahl_AmEcoRev_2012_VRKK" ~ FALSE,
+      analyst_id == "8PTRZ" &
+        paper_id == "Baccara_AmEcoJourn_2014_RqVE" ~ FALSE,
+      analyst_id == "93K4P" &
+        paper_id == "TERTYTCHNAYA_AmPoliSciRev_2018_9wya" ~ FALSE,
+      analyst_id == "YZDX0" &
+        paper_id == "Lu_JournLabEco_2015_vaWE" ~ FALSE,
       TRUE ~ TRUE
-      )
     )
+  )
 ```
 
 Recoding free-text responses to gender.
@@ -862,8 +909,7 @@ This is submission number 459.
 ```{r}
 peer_eval <- 
   peer_eval %>% 
-  # TODO: change it to concrete id, is this correct?
-  filter(peereval_submission_number != 459)
+  filter(peereval_submission_number != 459) # flag this to count it in the results paper
 ```
 
 We changed non-unique analyst_ids in the main dataset (multi100_data), now we change the corresponding ids in the peer_eval data as well.
@@ -1025,7 +1071,7 @@ peer_eval <-
   )
 ```
 
-Remove case where evaluator is also co-analyst (!SN. 462: WJVLO_Pastötter_Cognition_2013_EQxa_WJVLO).
+Remove case where evaluator is also co-analyst (!SN. 462: WJVLO_Pastötter_Cognition_2013_EQxa_WJVLO). We decided to treat this responses as non-valid response and do not include it in the summary statistics for the peer evaluation in the results section of the paper.
 
 ```{r}
 peer_eval <-
@@ -1041,23 +1087,24 @@ peer_eval %>%
   arrange(desc(n))
 ```
 
-Transforming peer evaluation responses based on the review by the expert panel.
+Transforming peer evaluation responses based on the review by the expert panel. We will make two version of the peer evaluation dataset for the analysis:
+* One that contains all the peer evaluation data preprocessing steps except the changed responses due to the review of the peer evaluation: multi100_peer-eval-not-reviewed_processed_data
+* One that contains all data preprocessing steps AND the changed values as well: multi100_peer-eval_processed_data
 
 ```{r}
 # Filter values to be changed by the peer evalution review
 # Decision for values to be changed were done by the core team
-# TODO: Maybe this should not be done here?
-peer_eval_change <-
+peer_eval_to_change <-
   peer_eval_review |>
   select(evaluator_id, paper_id, analyst_id, variable_name, change_to) |>
   filter(!is.na(change_to))
 
-peer_eval <-
+peer_eval_changed <-
   peer_eval %>%
   pivot_longer(cols = c(-analyst_id, -paper_id, -evaluator_id, -peereval_timestamp, -peereval_submission_number, -eval_id, -evaluator_comments), names_to = "variable_name") %>%
   left_join(
     .,
-    peer_eval_change,
+    peer_eval_to_change,
     by = c("evaluator_id", "paper_id", "analyst_id", "variable_name")
     ) %>%
   mutate(value = if_else(!is.na(change_to), change_to, value)) %>%
@@ -1070,7 +1117,9 @@ According to the decision of the expert panel `r nrow(peer_eval_change)` decisio
 Save processed peer evaluation and peer evaluation review data separately.
 
 ```{r}
-write_csv(peer_eval, here::here("data/processed/multi100_peer-eval_processed_data.csv"))
+write_csv(peer_eval_changed, here::here("data/processed/multi100_peer-eval_processed_data.csv"))
+
+write_csv(peer_eval, here::here("data/processed/multi100_peer-eval-not-reviewed_processed_data.csv"))
 
 write_csv(peer_eval_review, here::here("data/processed/multi100_peer-eval-review_processed_data.csv"))
 ```
