@@ -104,6 +104,9 @@ analyst_payments <- read_sheet("https://docs.google.com/spreadsheets/d/1OCtUSitK
 
 # Reviewing the direction of the claims in task2
 claim_direction_review <- read_sheet("https://docs.google.com/spreadsheets/d/1drA30NAt1Ocm7pf2RDqNUK57jGENBkqZeTz8Y2P83RA/edit?usp=sharing", col_types = "c")
+
+# Non detailed responses
+non_detailed_responses <- read_sheet("https://docs.google.com/spreadsheets/d/1qr22cDQHHKPQvpflpcdlrBh4jWaIwrkqUgBJbK_zdJM/edit?usp=sharing", col_types = "c")
 ```
 
 ## Creating a codebook
@@ -347,6 +350,20 @@ claim_direction_review_codebook <-
       variable_names == "Notes" ~ "notes"
     )
   )
+
+# Non-detailed responses
+non_detailed_responses_codebook <-
+    tibble::tibble(
+    variable_names = colnames(non_detailed_responses),
+    new_names = case_when(
+      variable_names == "Analyst_ID" ~ "analyst_id",
+      variable_names == "Paper_ID" ~ "paper_id",
+      variable_names == "Non-Detailed_Identified_In" ~ "variable_identified_in",
+      variable_names == "Original_Response" ~ "original_response",
+      variable_names == "Change_To" ~ "change_to",
+      variable_names == "Taken_From" ~ "source_of_information"
+    )
+  )
 ```
 
 Saving the codebook for the raw data.
@@ -428,6 +445,13 @@ claim_direction_review_codebook %>%
     description = variable_names
   ) %>% 
   readr::write_csv(., here::here("data/raw/multi100_claim-direction-review_raw_codebook.csv"))
+
+non_detailed_responses_codebook %>% 
+  rename(
+    variable_name = new_names,
+    description = variable_names
+  ) %>% 
+  readr::write_csv(., here::here("data/raw/multi100_non-detailed-responses_raw_codebook.csv"))
 ```
 
 ## Renaming variables
@@ -486,6 +510,11 @@ colnames(analyst_payments) <- dplyr::recode(
 colnames(claim_direction_review) <- dplyr::recode(
   colnames(claim_direction_review), 
   !!!setNames(as.character(claim_direction_review_codebook$new_names), claim_direction_review_codebook$variable_names)
+)
+
+colnames(non_detailed_responses) <- dplyr::recode(
+  colnames(non_detailed_responses), 
+  !!!setNames(as.character(non_detailed_responses_codebook$new_names), non_detailed_responses_codebook$variable_names)
 )
 ```
 
@@ -568,4 +597,6 @@ readr::write_csv(peer_eval_review, here("data/raw/multi100_peer-eval-review_raw_
 readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
 
 readr::write_csv(claim_direction_review, here("data/raw/multi100_claim-direction-review_raw_data.csv"))
+
+readr::write_csv(non_detailed_responses, here("data/raw/multi100_non-detailed-responses_raw_data.csv"))
 ```
