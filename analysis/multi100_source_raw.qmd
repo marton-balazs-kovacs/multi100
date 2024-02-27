@@ -31,16 +31,16 @@ source(here::here("R/utils.R"))
 
 ```{r}
 # Task1 form
-task1 <- read_sheet("https://docs.google.com/spreadsheets/d/19h6Vn9kIy0ZJ3FY6drq-z9TzDzYCe5cbLcGAs57nSy4/edit?resourcekey#gid=1095105474", col_types = "c") %>%
+task1 <- read_sheet("https://docs.google.com/spreadsheets/d/19h6Vn9kIy0ZJ3FY6drq-z9TzDzYCe5cbLcGAs57nSy4/edit?resourcekey#gid=1095105474", col_types = "c") |> 
   # This column contained a random comment by one of the team members which is not part of the dataset
-  select(-`...26`)
+  dplyr::select(-`...26`)
 
 # Sign up form to be an analyst
 all_people <- read_sheet("https://docs.google.com/spreadsheets/d/1lLr9eoD6uvUDYhaQgKjMYLxUkWOD9ALNcsuPhrXupF0/edit?usp=sharing", col_types = "c")
 
 # Original papers
-all_paper <- read_sheet("https://docs.google.com/spreadsheets/d/1dNNmGjVZbqjlpVAClF5tiW7qraFERh2zVbl2yFhG1zA/edit?usp=sharing", col_types = "c") %>% 
-  select(
+all_paper <- read_sheet("https://docs.google.com/spreadsheets/d/1dNNmGjVZbqjlpVAClF5tiW7qraFERh2zVbl2yFhG1zA/edit?usp=sharing", col_types = "c") |> 
+  dplyr::select(
     title,
     paper_id,
     COS_pub_category,
@@ -57,10 +57,8 @@ all_paper <- read_sheet("https://docs.google.com/spreadsheets/d/1dNNmGjVZbqjlpVA
 task2 <- read_sheet("https://docs.google.com/spreadsheets/d/18qvwVXXmPwnFiM_v4knt-VgeOBZ5YiPxp1pmiL4NLgw/edit?resourcekey#gid=478133863", col_types = "c")
 
 # Master spreadsheet
-master <- read_sheet("https://docs.google.com/spreadsheets/d/1Er7k0INJJQ0Y6gqs0Y9ZC60nWwWzDUucnnXjx_MOlKk/edit#gid=23825094", col_types = "c") %>% 
-  # TODO: Either have to delete not important columns in the spreadsheet or add descriptions to them. we have to make a decision and be systematic throughout
-  # This is a bandaid solution
-  select(
+master <- read_sheet("https://docs.google.com/spreadsheets/d/1Er7k0INJJQ0Y6gqs0Y9ZC60nWwWzDUucnnXjx_MOlKk/edit#gid=23825094", col_types = "c") |> 
+  dplyr::select(
     paper_id,
     `reproduction_type (OSF)`,
     `reproduction result (OSF)`,
@@ -71,8 +69,8 @@ master <- read_sheet("https://docs.google.com/spreadsheets/d/1Er7k0INJJQ0Y6gqs0Y
   )
 
 # comma and dot excel read mistake
-original_effect_sizes <- read_sheet("https://docs.google.com/spreadsheets/d/1WDMCrv3ysmOw_vVX_2DD9HIpqGKRHFH0krDGjA5XkNE/edit?usp=sharing", col_types = "c") %>% 
-  select(
+original_effect_sizes <- read_sheet("https://docs.google.com/spreadsheets/d/1WDMCrv3ysmOw_vVX_2DD9HIpqGKRHFH0krDGjA5XkNE/edit?usp=sharing", col_types = "c") |>  
+  dplyr::select(
     paper_id,
     VOL_original_materials,
     `familiy (z, t, F, or x2)`,
@@ -276,6 +274,7 @@ reanalyzed_effect_sizes_codebook <-
       variable_names == "Status" ~ "cleaning_status",
       variable_names == "Non-Detailed" ~ "non_detailed",
       variable_names == "Response" ~ "response",
+      variable_names == "Notes by DON" ~ "don_notes"
     )
   )
 
@@ -369,89 +368,89 @@ non_detailed_responses_codebook <-
 Saving the codebook for the raw data.
 
 ```{r}
-task1_codebook %>% 
+task1_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_task1_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_task1_raw_codebook.csv"))
 
-task2_codebook %>% 
+task2_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_task2_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_task2_raw_codebook.csv"))
 
-all_people_codebook %>% 
+all_people_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_all-people_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_all-people_raw_codebook.csv"))
 
-all_paper_codebook %>% 
+all_paper_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_all-paper_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_all-paper_raw_codebook.csv"))
 
-master_codebook %>% 
+master_codebook |>  
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_master_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_master_raw_codebook.csv"))
 
-original_effect_sizes_codebook %>% 
+original_effect_sizes_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_original-effect-sizes_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_original-effect-sizes_raw_codebook.csv"))
 
-reanalyzed_effect_sizes_codebook %>% 
+reanalyzed_effect_sizes_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
 
 peer_eval_codebook %>% 
   rename(
     variable_name = new_names,
     description = variable_names
   ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_peer-eval_raw_codebook.csv"))
+  readr::write_csv(here::here("data/raw/multi100_peer-eval_raw_codebook.csv"))
 
-peer_eval_review_codebook %>% 
+peer_eval_review_codebook |>  
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_peer-eval-review_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_peer-eval-review_raw_codebook.csv"))
 
-analyst_payments_codebook %>% 
+analyst_payments_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_analyst-payments_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_analyst-payments_raw_codebook.csv"))
 
-claim_direction_review_codebook %>% 
+claim_direction_review_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_claim-direction-review_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_claim-direction-review_raw_codebook.csv"))
 
-non_detailed_responses_codebook %>% 
+non_detailed_responses_codebook |>  
   rename(
     variable_name = new_names,
     description = variable_names
-  ) %>% 
-  readr::write_csv(., here::here("data/raw/multi100_non-detailed-responses_raw_codebook.csv"))
+  ) |> 
+  readr::write_csv(here::here("data/raw/multi100_non-detailed-responses_raw_codebook.csv"))
 ```
 
 ## Renaming variables
@@ -524,26 +523,26 @@ Some variables contain personal information that we cannot share openly. We will
 
 ```{r}
 task1 <- 
-  task1 %>% 
+  task1 |>  
   select(-email)
 
 task2 <- 
-  task2 %>% 
+  task2 |> 
   select(-email)
 
 all_people <- 
-  all_people %>% 
+  all_people |> 
   select(
     -signup_email,
     -signup_comment
     )
 
 peer_eval <- 
-  peer_eval %>% 
+  peer_eval |>  
   select(-evaluator_email)
 
 analyst_payments <-
-  analyst_payments %>% 
+  analyst_payments |> 
   select(
     -signup_email
   )

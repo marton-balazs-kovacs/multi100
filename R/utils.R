@@ -150,7 +150,7 @@ calculate_conclusion <- function(data, grouping_var, categorization_var) {
 }
 
 #' plot percentage
-plot_percentage <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE) {
+plot_percentage <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE, coord_flip = FALSE) {
   
   if (with_sum) {
     new_labels <- setNames(
@@ -177,8 +177,8 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
     data |>
     ggplot2::ggplot() +
     ggplot2::aes(
-      y = label,
-      x = relative_frequency,
+      x = label,
+      y = relative_frequency,
       fill = {{ categorization_var }}
     ) +
     ggplot2::geom_bar(
@@ -187,10 +187,10 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
       width = 0.8,
       position = position_stack(reverse = reverse)
       ) +
-    ggplot2::scale_x_continuous(
+    ggplot2::scale_y_continuous(
       expand = c(0, 0),
       labels = scales::percent_format(scale = 100)) +
-    ggplot2::scale_y_discrete(
+    ggplot2::scale_x_discrete(
       expand = c(0, 0),
       limits = if (rev_limits) {
         rev(levels(droplevels(data$label))) 
@@ -229,6 +229,11 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
       )
   }
     
+  # Check if coord_flip is TRUE, then apply coord_flip()
+  if (coord_flip) {
+    plot <- plot + ggplot2::coord_flip()
+  }
+  
     return(plot)
 }
 
@@ -449,15 +454,14 @@ calculate_percentage <- function(data, response_var) {
 
 #' Calculate standard correlation coefficient
 standard_correlation_coefficient <- function(type_of_statistic, test_statistic, sample_size, df1, df2) {
-  dplyr::if_else(type_of_statistic == "z",
-    tanh(abs(test_statistic)*sqrt(1/(sample_size-3)))*sign(test_statistic),
-    dplyr::if_else(type_of_statistic == "chi2",
-            tanh(sqrt(abs(test_statistic))*sqrt(1/(sample_size-3)))*sign(test_statistic),
-            dplyr::if_else(type_of_statistic == "t",
-                    sqrt(abs(test_statistic)^2/(test_statistic^2+df1))*sign(test_statistic),
-                    dplyr::if_else(type_of_statistic == "F",
-                            sqrt(abs(sqrt(test_statistic))^2/(sqrt(test_statistic)^2+df2))*sign(test_statistic),
-                            NA_real_)))
+  dplyr::case_when(
+    type_of_statistic == "z" ~ tanh(abs(test_statistic)*sqrt(1/(sample_size-3)))*sign(test_statistic),
+    type_of_statistic == "chi2" ~ tanh(sqrt(abs(test_statistic))*sqrt(1/(sample_size-3)))*sign(test_statistic),
+    type_of_statistic == "t" ~ sqrt(abs(test_statistic)^2/(test_statistic^2+df1))*sign(test_statistic),
+    type_of_statistic == "F" ~ sqrt(abs(sqrt(test_statistic))^2/(sqrt(test_statistic)^2+df2))*sign(test_statistic),
+    type_of_statistic == "r" ~ test_statistic,
+    type_of_statistic == "tau" ~ sin(.5 * test_statistic * pi),
+    TRUE ~ NA_real_
   )
 }
 
