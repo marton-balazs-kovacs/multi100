@@ -158,7 +158,7 @@ reanalyzed_effect_sizes <-
     # Filling in variables with NAs to make values explicit
     reanalysis_es_missing = case_when(
       is.na(reanalysis_es_missing) ~ 0L,
-      !is.na(reanalysis_es_missing) ~ 1L
+      !is.na(reanalysis_es_missing) ~ reanalysis_es_missing
     )
   )
 
@@ -768,6 +768,7 @@ multi100_data <-
       # Based on expert panel decision
       analyst_id == "NSDML" &
         paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
+      TRUE ~ TRUE
     ),
     # we removed them because they did not actually do the analysis
     incomplete_response_pass = case_when(
