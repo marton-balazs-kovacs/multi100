@@ -41,9 +41,9 @@ ggarrange(plot_Fuhrmann+facet_grid(group~.)+ggtitle("Fuhrmann, Brancati, Luttrel
 # Adjusting plot for publication
 
 manipulate_data <- function(df,number){
-  df["family"] <- ifelse(sapply(df["model"],function(x) grepl("Original", x)),"Original analysis","Re-analysis")
+  df["family"] <- ifelse(sapply(df["model"],function(x){ grepl("Original", x) | grepl("original", x)}),"Original analysis","Re-analysis")
   df["model"] <- sapply(df["model"],function(x){
-    ifelse(grepl("Original", x),paste(".",x),x)
+    ifelse(grepl("Original", x) | grepl("original", x),paste("zzz",x),x)
   })
   df["group"] <- paste0("paper ",number)
   return(df)
@@ -74,7 +74,7 @@ ggarrange(plot_Fuhrmann_publication+facet_grid(group~.)+ggtitle("")+labs(subtitl
 
 
 
-ggsave(filename = paste0(dirname(rstudioapi::getSourceEditorContext()$path),"/gMEs.png"),width=6,height=9)
+ggsave(filename = paste0(dirname(rstudioapi::getSourceEditorContext()$path),"/gMEs.png"),width=12,height=18)
 
 
 
