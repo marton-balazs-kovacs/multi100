@@ -62,3 +62,28 @@ forest_density_plot <- function(df, title, subtitle, xLabel, xBreaks,point_inter
       strip.background = element_rect(color = "black", size = 1.5, linetype = "solid"))
   return(output)
 }
+
+forest_density_plot_publication <- function(df, title, subtitle, xLabel, xBreaks,point_interval="median_qi",collevs=NULL) {
+  if(any(isFALSE(c("samples","model","family","formula","group")%in%names(df)))){stop("The data frame is unsuitable (necessary columns are missing).")}
+  lim_min<-min(xBreaks)
+  lim_max<-max(xBreaks)
+  labels<-modfun(df, "model", "formula")
+  output <- ggplot(df, aes(y = as.factor(model), x = samples, fill = factor(family,levels=c(levels(factor(family)),collevs)))) +
+    geom_density_ridges(alpha = 0.4, scale = 0.9, color = "black") +
+    labs(x = xLabel, y = "", title = title, subtitle = subtitle, fill="") +
+    theme_minimal() + stat_pointinterval(point_interval = point_interval)+
+    geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
+    #scale_y_discrete(labels = gsub("`", "",paste0(labels[[1]],unlist(lapply(strwrap(labels[[2]], width = 55, simplify = FALSE), paste, collapse = "<br> "))))) +
+    scale_x_continuous(breaks = xBreaks,limits = c(lim_min,lim_max),
+                       expand = expansion(mult = c(0.0001,0),add = c(0, 0.002))) +
+    #facet_grid(group ~ ., scales = "free", space = "free") +
+    theme(axis.text.y = element_blank(),
+      axis.text.x = element_text(size = 12),
+      axis.title = element_text(size = 14),
+      plot.title = element_text(size = 16, face = "bold"),
+      plot.subtitle = element_text(size = 14, face = "italic"),
+      legend.position = "bottom",
+      panel.margin = unit(1, "lines"),
+      strip.background = element_rect(color = "black", size = 1.5, linetype = "solid"))
+  return(output)
+}
