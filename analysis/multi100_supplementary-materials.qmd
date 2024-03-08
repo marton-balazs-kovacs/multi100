@@ -19,7 +19,7 @@ processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.
 __Table S1__
 _Table showing the unique IDs of the reanalyzed papers and the corresponding simplified numbers used on our figures throughout the article._
 
-```{r}
+```{r echo=FALSE}
 processed |>
   dplyr::distinct(paper_id, simplified_paper_id) |> 
   dplyr::arrange(simplified_paper_id) |> 
