@@ -269,12 +269,13 @@ reanalyzed_effect_sizes_codebook <-
       variable_names == "df_2" ~ "reanalysis_degrees_of_freedom_2",
       variable_names == "Sample Size" ~ "reanalysis_model_sample_size",
       variable_names == "Cleaned By" ~ "cleaned_by",
+      variable_names == "Notes by DON" ~ "cleaning_notes_by_dvr",
+      variable_names == "Notes by Marton Kovacs" ~ "cleaning_notes_by_mk",
       variable_names == "Notes" ~ "cleaning_notes",
       variable_names == "Action" ~ "cleaning_action",
       variable_names == "Status" ~ "cleaning_status",
       variable_names == "Non-Detailed" ~ "non_detailed",
-      variable_names == "Response" ~ "response",
-      variable_names == "Notes by DON" ~ "don_notes"
+      variable_names == "Response" ~ "response"
     )
   )
 

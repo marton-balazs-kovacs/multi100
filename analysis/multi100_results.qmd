@@ -43,6 +43,11 @@ processed <-
   processed |>
   dplyr::mutate(
     task1_timestamp = lubridate::ymd_hms(task1_timestamp))
+
+# Table of long paper ids and simplified paper ids
+processed |> 
+  dplyr::distinct(simplified_paper_id, paper_id) |> 
+  dplyr::arrange(simplified_paper_id)
 ```
 
 ```{r include=FALSE}
@@ -883,16 +888,22 @@ calculate_percentage(peer_eval, task1_pipeline_acceptable) |>
 ##### Review of the peer evaluation reports 
 
 ```{r include=FALSE}
-## TODO: add numbers here based on peer_eval_review table
+# peer eval data before changing the responses based on the review but after excluding the one analysis
+peer_eval_after_exclusion <- 
+  peer_eval_not_reviewed |>
+  dplyr::filter(!(analyst_id == "NSDML" &
+                  paper_id == "PALER_AmPoliSciRev_2013_Pxp7"))
 # Number of task1_analysis_pipeline remaining unacceptable after the review of peer evaluations
 nrow(filter(peer_eval, task1_pipeline_acceptable == "(1) Unacceptable"))
 ```
 
-Following the task 1 conclusion review, one full re-analysis was removed from the final dataset. For the remaining task 1 analysis pipeline review responses, all (n = 7) were revised to ‘(2) Acceptable but low quality’.
+As a consequence of the full peer evaluation review, one analysis was rejected. What follows is a summary of revisions made to peer evaluator’s initial ratings as an outcome of the peer evaluation review.
 
-Following the task 1 categorization review , all initial ratings of ‘(2) Inadequate’ (n = 36) were revised to ‘Adequate’. In many cases, evaluators made their judgment of ‘inadequate’ on the basis of their task 1 conclusion rating. Put simply, evaluators often considered the categorization of results to be inadequate when they also judged that the conclusion does not follow from the results. It was often the case then, that verifying the legitimacy of the task 1 conclusion also verified the legitimacy of the task 1 categorization. The reasoning of the expert panel on a case-by-case basis can be found in the review supplement.
+Following the task 1 analysis pipeline review, ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. Following the task 1 conclusion review, ratings of ‘(2) It does not follow adequately from the results of the analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_conclusion_follows_results == "(2) It does not follow adequately from the results of the analysis"))`) were revised to ‘(1) It follows adequately from the results of the analysis’.
 
-Following the task 2 analysis pipeline review, all initial ratings of ‘(1) Unacceptable’ (n = 17) were revised to ‘(2) Acceptable but low quality’. All initial ratings of ‘(5) Incomplete or missing analysis’ (n = 22) were also revised. Many of these ratings were made simply because the re-analysts task 1 submission also satisfied the requirements of task 2 (i.e., the paper-specific instructions given in task 2 had already been adhered to in task 1), and as a result, no further analysis was needed. For each case, the panel verified that the analyst had reported their test statistic appropriately in the task 2 survey response, and that their analysis files had been uploaded to the OSF as requested. 
+Following the task 1 categorization review, ratings of ‘(2) Inadequate’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_categorisation_is_accurate == "(2) Inadequate"))`) were revised to ‘Adequate’. In many cases, evaluators made their judgment of ‘inadequate’ on the basis of their task 1 conclusion rating. Put simply, evaluators often considered the categorization of results to be inadequate when they also judged that the conclusion does not follow from the results. It was often the case then, that verifying the legitimacy of the task 1 conclusion also verified the legitimacy of the task 1 categorization. The reasoning of the expert panel on a case-by-case basis can be found in the review supplement.
+
+Following the task 2 analysis pipeline review, ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. All initial ratings of ‘(5) Incomplete or missing analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(5) Incomplete or missing analysis"))`) were also revised. Many of these ratings were made simply because the re-analysts task 1 submission also satisfied the requirements of task 2 (i.e., the paper-specific instructions given in task 2 had already been adhered to in task 1), and as a result, no further analysis was needed. For each case, the panel verified that the analyst had reported their test statistic appropriately in the task 2 survey response, and that their analysis files had been uploaded to the OSF as requested. 
 
 Finally, there were no changes made to initial ratings following the code mismatches review. In the cases where evaluators reported ‘(4) I executed it and found mismatches’ (n = `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)`), the panel verified that the mismatches did not have a meaningful impact on the re-analyst’s reported conclusion, categorization or effect size.
 
