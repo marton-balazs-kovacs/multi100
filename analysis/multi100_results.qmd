@@ -313,7 +313,11 @@ country_map_plot <-
   ggplot2::aes(x = long, y = lat, group = group, fill = n) +
   ggplot2::geom_polygon(color = "white", linewidth = 0.2) +
   ggplot2::scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalyst") +
-  ggplot2::theme_void()
+  ggplot2::theme_void() +
+  ggplot2::theme(
+    legend.title = element_text(size = 6),
+    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")
+  )
 
 ggplot2::ggsave(here::here("figures/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
 
@@ -437,7 +441,8 @@ analysis_frequency_plot <-
   ggplot2::theme(
     panel.background = ggplot2::element_blank(),
     panel.grid = ggplot2::element_blank(),
-    axis.line = ggplot2::element_line(color = "black")
+    axis.line = ggplot2::element_line(color = "black"),
+    axis.text.x = ggplot2::element_text(size = 7)
   )
 
 ggplot2::ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
@@ -726,7 +731,8 @@ peer_analysis_frequency_plot <-
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(size = 6)
   )
 
 ggsave(here::here("figures/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
@@ -1054,10 +1060,10 @@ conclusions_discipline_plot <-
     with_labels = TRUE,
     y_lab = "Percentage of re-analyses",
     x_lab = "Disciplines"
-  ) +
-  ggplot2::theme(
-    legend.text = ggplot2::element_text(size = 8)
-  )
+  ) + 
+  theme(
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt")
+    )
 
 ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
 
@@ -1120,7 +1126,13 @@ conclusions_studytype_plot <-
     y_lab = "Percentage of re-analyses",
     with_labels = TRUE
   ) +
-  ggplot2::theme(legend.text = element_text(size = 8))
+  ggplot2::theme(plot.margin = margin(
+    t = 20,
+    r = 10,
+    b = 10,
+    l = 10,
+    unit = "pt"
+  ))
 
 ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
 
@@ -1230,7 +1242,7 @@ conclusions_familiarity_plot <-
     y_lab = "Percentage of re-analyses",
     x_lab = "Analyst familiarity with the paper") + 
   theme(
-    legend.text = element_text(size = 8)
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt")
     )
 
 ggsave(here::here("figures/conclusions_familiarity_plot.jpg"), conclusions_familiarity_plot, dpi = 300)
@@ -1746,10 +1758,17 @@ effect_region_familiarity_plot <-
     data = effect_region_familiarity_data,
     grouping_var = familiar_with_paper,
     categorization_var = is_within_region,
-    y_lab = "Percentage of re-analysis estimates in Cohen's d",
+    y_lab = "Percentage of re-analysis\nestimates in Cohen's d",
     x_lab = "Familiar with the paper",
     with_labels = TRUE
-  )
+  ) +
+  ggplot2::theme(plot.margin = margin(
+    t = 20,
+    r = 10,
+    b = 10,
+    l = 10,
+    unit = "pt"
+  ))
 
 ggplot2::ggsave(here::here("figures/effect_region_familiarity_plot.jpg"), effect_region_familiarity_plot, dpi = 300)
 
