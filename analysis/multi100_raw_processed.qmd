@@ -161,8 +161,6 @@ reanalyzed_effect_sizes <-
       !is.na(reanalysis_es_missing) ~ reanalysis_es_missing
     )
   )
-
-# TODO: Check if reanalysis_es_missing is always flagging empty reanalyzed statistics
 ```
 
 Check if there are duplicate responses in the reanalyzed effect sizes.
@@ -187,7 +185,6 @@ Calculate the Cohen's ds for the reanalyses.
 ```{r}
 reanalysis_vars <- c("reanalysis_type_of_statistic", "reanalysis_statistic_report", "reanalysis_model_sample_size", "reanalysis_degrees_of_freedom_1", "reanalysis_degrees_of_freedom_2")
 
-# TODO: fix warnings
 reanalyzed_effect_sizes <-
   reanalyzed_effect_sizes %>% 
   mutate(reanalysis_type_of_statistic = str_replace_all(reanalysis_type_of_statistic, "²", "2")) %>% 
@@ -202,18 +199,32 @@ reanalyzed_effect_sizes <-
       all_of(c("reanalysis_statistic_report", "reanalysis_model_sample_size", "reanalysis_degrees_of_freedom_1", "reanalysis_degrees_of_freedom_2")),
       ~ as.numeric(.)
       )
-  ) %>% 
-  # rowwise() %>%
+  )
+
+reanalyzed_effect_sizes <-
+  reanalyzed_effect_sizes %>%
   mutate(
-    reanalysis_correlation_coef =
-      standard_correlation_coefficient(
-        type_of_statistic = reanalysis_type_of_statistic,
-        test_statistic = reanalysis_statistic_report,
-        sample_size = reanalysis_model_sample_size,
-        df1 = reanalysis_degrees_of_freedom_1,
-        df2 = reanalysis_degrees_of_freedom_2
-        ),
-    reanalysis_cohens_d = cohens_d(r = reanalysis_correlation_coef),
+    reanalysis_statistic_report = dplyr::case_when(
+      reanalysis_type_of_statistic == "F" ~ abs(reanalysis_statistic_report),
+      TRUE ~ reanalysis_statistic_report
+    ),
+    reanalysis_correlation_coef = mapply(
+      standard_correlation_coefficient,
+      type_of_statistic = reanalysis_type_of_statistic,
+      test_statistic = reanalysis_statistic_report,
+      sample_size = reanalysis_model_sample_size,
+      df1 = reanalysis_degrees_of_freedom_1,
+      df2 = reanalysis_degrees_of_freedom_2,
+      reanalysis_es_missing = reanalysis_es_missing,
+      SIMPLIFY = TRUE  # Ensure results are simplified if applicable
+    ),
+    reanalysis_cohens_d = cohens_d(
+      r = reanalysis_correlation_coef,
+      # Used for calculating cohens d for regression coefficients
+      type_of_statistic = reanalysis_type_of_statistic,
+      test_statistic = reanalysis_statistic_report,
+      sample_size = reanalysis_model_sample_size
+    ),
     # Taking the absolute value of every effect size
     reanalysis_cohens_d = abs(reanalysis_cohens_d)
   )
