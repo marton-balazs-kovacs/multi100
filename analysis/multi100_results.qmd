@@ -1846,3 +1846,14 @@ ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samples
 samplesize_region_plot
 ```
 
+#### Additional analyses
+
+While Cohen's d has the advantage of being easily interpretable and comparable across different analyses, it was designed to compare the means of two groups and its calculation relies on assumptions that can be compromised in more complex designs. Following the conduct of the present project, Kümpel & Hoffmann proposed a formal definition of generalized marginal effects (gMEs) which measure is comparable across different statistical models. When standardized, the value of gMEs is equal to the value of Cohen’s d where the latter effect size measure is strictly applicable. Since we had not originally planned to calculate standardized gMEs, we did not collect all required analysis outputs to compute them. As a result, we calculated gMEs only for a subsample of the 100 studies but we  recommend it for future multi-analyst studies. See @fig-gme for the results of the gME calculation for our submsample of studies.
+
+```{r echo=FALSE}
+#| label: fig-gme
+#| fig-cap: "For each original and re-analysis of papers 22, 40, 63, and 75, this figure shows a forest-density plot of non-standardized gME values as defined by Kümpel & Hoffmann . Specifically, the black dots give the point estimates of the average change in target expectation attributed to the regressor of interest by each analysis, while the thicker and thinner lines visualize the 0.66 and 0.95 quantiles of the corresponding densities. Study numbers correspond to studies listed in Table S1."
+
+knitr::include_graphics(here::here("generalized Marginal Effects/gMEs.png"))
+```
+
