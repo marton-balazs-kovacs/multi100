@@ -1584,7 +1584,7 @@ effect_region_discipline_plot
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-effect-robustness-discipline
-#| fig-cap: "This raincloud figure shows for each major discipline the distribution of effect size estimate ranges (lowest to highest) calculated per study."
+#| fig-cap: "This raincloud figure shows for each major discipline the distributions of effect size estimate ranges (lowest to highest) calculated per study."
 
 effect_robustness_discipline_data <-
   processed |> 
