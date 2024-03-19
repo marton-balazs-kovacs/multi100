@@ -1,0 +1,101 @@
+paper_id,original_type_of_statistic,original_statistic_report,original_degrees_of_freedom_1,original_degrees_of_freedom_2,original_model_sample_size,original_correlation_coef,original_cohens_d,original_effect_size_available,original_reproduction_outcome
+Bigoni_Econometrica_2015_VBx1,t,-6.0973,7,NA,4416,-0.9174,4.6091,Yes,(1) successful reproduction - values correspond with original paper
+Fehr_AmEcoRev_2011_gdlO,z,-2.0226,NA,NA,5,-0.8917,3.9402,Yes,(1) successful reproduction - values correspond with original paper
+Wilfahrt_WorldPolitics_2018_k7wj,t,-5.6105,10,NA,283,-0.8712,3.5484,Yes,(1) successful reproduction - values correspond with original paper
+Christensen_EurJournPersonality_2018_8R9d,t,-65.69,1998,NA,516,-0.8268,2.9392,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Wlezien_CompPolitStu_2017_ByBk,t,-3.9833,13,NA,16,-0.7414,2.2095,Yes,(1) successful reproduction - values correspond with original paper
+Petersen_Cognition_2017_yJwG,t,-4.7079,27,NA,28,-0.6714,1.8121,Yes,(1) successful reproduction - values correspond with original paper
+LINDQVIST_AmPoliSciRev_2010_OeGv,t,-3.5133,30,NA,33,-0.5399,1.2829,Yes,(1) successful reproduction - values correspond with original paper
+Liang_JournPoliEco_2018_q8xv,t,-5.7122,81,NA,393,-0.5359,1.2694,Yes,(1) successful reproduction - values correspond with original paper
+Linkenauger_PsychologSci_2009_7WjP,t,-2.1232,14,NA,15,-0.4935,1.1349,Yes,(1) successful reproduction - values correspond with original paper
+Barreca_JournPoliEco_2016_J999,t,-3.9098,48,NA,26411,-0.4915,1.1287,Yes,(1) successful reproduction - values correspond with original paper
+Ku_JournEnvPsych_2014_YpZZ,t,-4.8728,79,NA,81,-0.4807,1.0965,Yes,(1) successful reproduction - values correspond with original paper
+Bruner_ExpEco_2017_amYY,t,-4.5772,77,NA,79,-0.4625,1.0432,Yes,(1) successful reproduction - values correspond with original paper
+Baker_WorldPolitics_2011_9lBL,t,-2.5394,27.86,NA,48,-0.4335,0.9622,Yes,(1) successful reproduction - values correspond with original paper
+Menaldo_AmJourPoliSci_2016_Vx4e,z,-15.2942,NA,NA,2682,-0.2872,0.5996,Yes,(1) successful reproduction - values correspond with original paper
+Bursztyn_AmEcoRev_2017_VB9K,t,-2.2184,58,NA,60,-0.2797,0.5826,Yes,(1) successful reproduction - values correspond with original paper
+Marshall_BritJournPoliSci_2015_GOYb,z,-3.7533,NA,NA,202,-0.26,0.5384,Yes,(1) successful reproduction - values correspond with original paper
+Rovny_WorldPolitics_2014_AQgj,t,-11.7447,2460,NA,2471,-0.2304,0.4736,Yes,(1) successful reproduction - values correspond with original paper
+Altmann_JournLabEco_2012_WLkV,z,-2.5365,NA,NA,124,-0.2266,0.4653,Yes,(1) successful reproduction - values correspond with original paper
+Bingham Powell_CompPolitStu_2009_0PZl,z,-4.119,NA,NA,328,-0.2246,0.4609,Yes,(1) successful reproduction - values correspond with original paper
+Axt_JournExpSocPsych_2018_zK2,t,-5.7872,855,NA,856,-0.1942,0.3958,Yes,(1) successful reproduction - values correspond with original paper
+Platt_Boustan_AmEcoJourn_2012_PVQK,t,-2.1393,117,NA,4352,-0.194,0.3955,Yes,(1) successful reproduction - values correspond with original paper
+Brancati_JournConflictRes_2013_V0PA,z,-1.8342,NA,NA,94,-0.1899,0.3869,Yes,(1) successful reproduction - values correspond with original paper
+GROSSMAN_AmPoliSciRev_2014_LyWB,z,-3.9515,NA,NA,428,-0.1894,0.3857,Yes,(1) successful reproduction - values correspond with original paper
+Nyhan_JournExpPoliSci_2015_DEqr,t,-5.0652,761,NA,764,-0.1806,0.3672,Yes,(1) successful reproduction - values correspond with original paper
+McDevitt_JournPoliEco_2014_yQeR,t,-6.7881,2291,NA,2293,-0.1404,0.2836,Yes,(1) successful reproduction - values correspond with original paper
+Dumas_AcaManageJourn_2018_5KrD,t,-2.3614,348,NA,353,-0.1256,0.2532,Yes,(1) successful reproduction - values correspond with original paper
+Cleave_ExpEco_2013_Njqj,z,-2.7295,NA,NA,658,-0.1062,0.2137,Yes,(1) successful reproduction - values correspond with original paper
+ANN_SLOCUM_Criminology_2010_JxXe,z,-2.1392,NA,NA,1354,-0.0581,0.1165,Yes,(1) successful reproduction - values correspond with original paper
+Raley_JournMarFam_2012_D2LY,t,-3.5202,10071,NA,4105,-0.0351,0.0702,No,(3) reproduction unsuccessful due to a lack of data and/or code
+Kuo_Demography_2016_JWzJ,z,-4.8786,NA,NA,54291,-0.0209,0.0419,Yes,(2) reproduction unsuccesful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Wang_AmEcoJourn_2013_7d4J,t,-2.0248,10214,NA,13292,-0.02,0.0401,Yes,(1) successful reproduction - values correspond with original paper
+Teney_EurSocioRev_2016_qXX2,z,-4.03,NA,NA,335566,-0.007,0.0139,No,(3) reproduction unsuccessful due to a lack of data and/or code
+Baccara_AmEcoJourn_2014_RqVE,t,4.2303,NA,NA,871215,1,NA,No,(1) successful reproduction - values correspond with original paper
+Gartzke_JournConflictRes_2009_rym8,z,5.04,NA,NA,213454,0.0109,0.0218,Yes,(1) successful reproduction - values correspond with original paper
+Chen_Demography_2018_yAPR,F,8.1373,1,11188,14824,0.027,0.053900000000000003,Yes,(1) successful reproduction - values correspond with original paper
+Dahl_AmEcoRev_2012_VRKK,z,2.6407,NA,NA,8609,0.0285,0.0569,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Turcu_CompPolitStu_2015_YeQg,z,2.9156,NA,NA,5988,0.0377,0.0754,Yes,(1) successful reproduction - values correspond with original paper
+Fuhrmann_JournConflictRes_2010_8Wy0,z,2.8287,NA,NA,5360,0.0386,0.0773,Yes,(1) successful reproduction - values correspond with original paper
+Angrist_AmEcoRev_2009_Gv3O,t,1.7226,1857,NA,1861,0.0399,0.0799,Yes,(1) successful reproduction - values correspond with original paper
+Caldero_n_JournConflictRes_2015_Nv99,z,2.4738,NA,NA,2989,0.0452,0.0906,Yes,(1) successful reproduction - values correspond with original paper
+Wilde_AmSocioRev_2010_4XLv,z,2.3038,NA,NA,1921,0.0526,0.1053,Yes,(1) successful reproduction - values correspond with original paper
+Yoo_PsychologSci_2017_BebG,t,2,1372,NA,1391,0.053900000000000003,0.108,Yes,(2) reproduction unsuccesful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Robertson_BritJournPoliSci_2017_qggQ,z,2.5259,NA,NA,1728,0.0607,0.1217,Yes,(1) successful reproduction - values correspond with original paper
+PALER_AmPoliSciRev_2013_Pxp7,t,2.7001,1861,NA,1863,0.0625,0.1252,Yes,(1) successful reproduction - values correspond with original paper
+Miller_JournConflictRes_2011_zV1O,z,1.9556,NA,NA,798,0.0692,0.1388,Yes,(1) successful reproduction - values correspond with original paper
+TERTYTCHNAYA_AmPoliSciRev_2018_9wya,z,2.5263,NA,NA,1287,0.0704,0.1411,Yes,"(4) successful reproduction but values differ from the original paper - in this case, the estimate is sufficiently precise"
+Waller_JournMarFam_2014_AXBY,z,2.4182,NA,NA,1156,0.0711,0.1426,Yes,(2) reproduction unsuccesful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Cingranelli_BritJournPoliSci_2014_qg47,z,3.2281,NA,NA,1718,0.0778,0.1561,Yes,(1) successful reproduction - values correspond with original paper
+Balcells_JournConflictRes_2014_0P4r,z,2.5115,NA,NA,906,0.0834,0.1673,Yes,(1) successful reproduction - values correspond with original paper
+Desmond_Demography_2015_qQ9Z,t,2.16,536.7318,NA,580,0.0928,0.1865,Yes,(2) reproduction unsuccesful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+PIETRYKA_AmPoliSciRev_2017_yjkQ,z,4.4435,NA,NA,2216,0.0942,0.1892,Yes,(1) successful reproduction - values correspond with original paper
+Hou_ChildDev_2017_YOXl,z,2.089,NA,NA,444,0.0991,0.1993,Yes,(1) successful reproduction - values correspond with original paper
+Clark_JournPoliEco_2009_e5rW,t,3.1232,700,NA,726,0.1172,0.2361,Yes,(1) successful reproduction - values correspond with original paper
+Hendricks_QuartJournEco_2018_wNKW,t,8.2055,3436,NA,3539,0.1386,0.28,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Sliwka_JournLabEco_2017_VDJV,t,2.1313,206,NA,211,0.1469,0.297,Yes,(1) successful reproduction - values correspond with original paper
+Gerber_BritJournPoliSci_2018_3WmY,z,1.9643,NA,NA,174,0.1491,0.3016,Yes,(1) successful reproduction - values correspond with original paper
+Thames_CompPolitStu_2010_l22v,z,2.3607,NA,NA,232,0.1547,0.3133,Yes,(1) successful reproduction - values correspond with original paper
+Antràs_Econometrica_2013_a2Yx,t,2.5399,252,NA,2783,0.158,0.32,Yes,(1) successful reproduction - values correspond with original paper
+Einstein_AmJourPoliSci_2017_mxyQ,z,3.7273,NA,NA,549,0.1582,0.3204,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+McLaren_WorldPolitics_2012_wRvv,t,50.11,90156.3464,NA,68113,0.1646,0.3338,No,(3) reproduction unsuccessful due to a lack of data and/or code
+Jiang_AmJourPoliSci_2018_Rjp9,t,3.0291,325,NA,3693,0.1657,0.336,Yes,(1) successful reproduction - values correspond with original paper
+Luttrell_JournExpSocPsych_2016_rjb,t,2.2823,169,NA,174,0.1729,0.3511,Yes,(1) successful reproduction - values correspond with original paper
+Goerg_JournLabEco_2010_WLpV,t,2.897,268,NA,270,0.1743,0.3539,Yes,(1) successful reproduction - values correspond with original paper
+Cohen_AmEcoRev_2015_2lb5,t,4.8822,574,NA,631,0.1997,0.4076,Yes,(1) successful reproduction - values correspond with original paper
+Baillon_Econometrica_2018_QYNq,t,2.1225,98,NA,198,0.2096,0.4288,Yes,(1) successful reproduction - values correspond with original paper
+Beaman_JournLabEco_2018_7ybJ,F,10.285,1,218,220,0.2123,0.4344,Yes,(1) successful reproduction - values correspond with original paper
+Ihme_JournExpPoliSci_2018_xYbO,t,2.5985,141,NA,143,0.2138,0.4377,No,(4) successful reproduction but values differ from the original paper
+Fitzgerald_SocialForces_2018_4q0L,t,3.7318,286,NA,350,0.2155,0.4413,Yes,(1) successful reproduction - values correspond with original paper
+Adida_CompPolitStu_2016_G0Kb,t,2.75,155,NA,158,0.2157,0.4418,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Bartels_JournConsRes_2015_mrZ,z,2.1418,NA,NA,88,0.2282,0.4688,Yes,(1) successful reproduction - values correspond with original paper
+BATESON_AmPoliSciRev_2012_RYKv,t,9.2945,1493,NA,38346,0.2339,0.4811,Yes,(1) successful reproduction - values correspond with original paper
+Alves_PsychologSci_2018_AvOr,chi²,12.0229,1,NA,210,0.2364,0.4867,Yes,(1) successful reproduction - values correspond with original paper
+Nelson_JournConsRes_2009_eg1q,t,2.4466,100,NA,102,0.2377,0.4893,Yes,(1) successful reproduction - values correspond with original paper
+Steinmetz_JournPerSocPsy_2016_E4Am,t,2.2043,80,NA,82,0.2393,0.4929,Yes,(1) successful reproduction - values correspond with original paper
+Pastötter_Cognition_2013_EQxa,t,3.5505,198,NA,200,0.2447,0.5047,Yes,(1) successful reproduction - values correspond with original paper
+McKibben_AmJourPoliSci_2013_P8az,z,6.3451,NA,NA,588,0.2565,0.5307,Yes,(1) successful reproduction - values correspond with original paper
+Grose_AmJourPoliSci_2015_E0Q3,chi²,4.5,1,NA,56,0.2834,0.5911,Yes,(1) successful reproduction - values correspond with original paper
+Zunick_JournExpSocPsych_2017_zlw,t,2.7011,68,NA,72,0.3113,0.6551,Yes,(1) successful reproduction - values correspond with original paper
+Yang_JournMarketRes_2013_G1Lr,t,3.4297,99,NA,101,0.3259,0.6894,Yes,(1) successful reproduction - values correspond with original paper
+Hertel_ClinPsychSci_2018_YabW,F,6.2037,1,48,54,0.3383,0.719,Yes,(1) successful reproduction - values correspond with original paper
+Kucik_BritJournPoliSci_2016_L22B,t,2.3932,44,NA,6027,0.3394,0.7216,Yes,(1) successful reproduction - values correspond with original paper
+Woltin_JournExpSocPsych_2011_Wre,F,5.7582,1,34,36,0.3806,0.8231,Yes,(1) successful reproduction - values correspond with original paper
+Liu_JournMarket_2015_9DZl,F,8.4988,1,47,49,0.3913,0.8505,Yes,(1) successful reproduction - values correspond with original paper
+Huijts_EurSocioRev_2013_OY3B,t,2.435,31.7562,NA,10477,0.3967,0.8642,Yes,(1) successful reproduction - values correspond with original paper
+Mironova_JournExpPoliSci_2014_59Rq,t,4.0314,75.8936,NA,118,0.42,0.9255,Yes,(1) successful reproduction - values correspond with original paper
+Brough_JournConsRes_2016_9ey,F,43.9976,1,190,194,0.4336,0.9624,Yes,(1) successful reproduction - values correspond with original paper
+Savani_PsychologSci_2010_88xa,t,4.1503,65,NA,67,0.4577,1.0296,No,(4) successful reproduction but values differ from the original paper
+Behrman_JournPoliEco_2015_G55r,t,5.4286,86,NA,11314,0.5052,1.1708,Yes,(1) successful reproduction - values correspond with original paper
+Kleven_AmEcoRev_2013_Jg9v,z,3.8695,NA,NA,48,0.5204,1.2187,Yes,(1) successful reproduction - values correspond with original paper
+Shahar_JournConflictRes_2018_J0Yv,t,10.0086,207,NA,284,0.5711,1.3913,Yes,(1) successful reproduction - values correspond with original paper
+Lu_JournLabEco_2015_vaWE,t,2.7693,11,NA,245,0.6409,1.6699,Yes,(1) successful reproduction - values correspond with original paper
+Andreoni_JournPoliEco_2017_La9x,t,3.5781,15,NA,64,0.6786,1.8477,Yes,(1) successful reproduction - values correspond with original paper
+Ohtsubo_EvoHumanBehavior_2014_zlm2,t,5.91,27,NA,29,0.751,2.2748,Yes,(2) reproduction unsuccesful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Bursztyn_JournPoliEco_2012_jaK4,t,6.3676,10,NA,156,0.8956,4.0272,Yes,(1) successful reproduction - values correspond with original paper
+Usmani_AmJournSocio_2018_GJe4,NA,NA,NA,NA,NA,NA,NA,No,(3) reproduction unsuccessful due to a lack of data and/or code
+Hurst_EvoHumanBehavior_2017_yypJ,NA,6.9511,135,NA,138,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
+Anderson_AmEcoJourn_2011_bLe8,t,2.7103,89,NA,1295,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
+Benjamin_AmEcoRev_2010_WaYe,t,3.4261,69,NA,71,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
+Wright_JournConflictRes_2016_W0GN,z,3.4885,NA,NA,2788,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
+Li_JournExpPoliSci_2017_G4mp,NA,NA,NA,NA,NA,NA,NA,No,(3) reproduction unsuccessful due to a lack of data and/or code

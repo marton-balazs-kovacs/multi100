@@ -1,0 +1,24 @@
+description,variable_name
+Analyst_ID,analyst_id
+Paper_ID,paper_id
+Analysis_Number,analysis_number
+Task1_Analysis_Report,task1_analysis_report
+Task2_Analysis_Report,task2_analysis_report
+Type_of_Statistic,type_of_statistic
+Statistic_Report,statistic_report
+Model_Degrees_of_Freedom,model_degrees_of_freedom
+Model_Sample_Size,model_sample_size
+N/A,reanalysis_es_missing
+Problem,reanalysis_es_missing_reason
+Type of Statistic,reanalysis_type_of_statistic
+Test Statistic,reanalysis_statistic_report
+df_1,reanalysis_degrees_of_freedom_1
+df_2,reanalysis_degrees_of_freedom_2
+Sample Size,reanalysis_model_sample_size
+Cleaned By,cleaned_by
+Notes by DON,cleaning_notes_by_dvr
+Notes by Marton Kovacs,cleaning_notes_by_mk
+Action,cleaning_action
+Status,cleaning_status
+Non-Detailed,non_detailed
+Response,response

@@ -1,0 +1,16 @@
+description,variable_name
+Időbélyeg,peereval_timestamp
+E-mail-cím,evaluator_email
+your ID in the project:,evaluator_id
+ID of the re-analyzed paper you evaluated:,paper_id
+ID of co-analyst (whose analysis you chose to evaluate):,analyst_id
+"Please indicate whether you judge the pipeline of the given re-analysis to be acceptable, meaning that it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Please rate its quality by the following options:",task1_pipeline_acceptable
+Please explain why you deemed the pipeline of the re-analysis unacceptable:,why_is_task1_pipeline_unacceptable
+Please indicate whether the provided conclusion adequately follows from the results of the analysis:,task1_conclusion_follows_results
+Please explain why you think that the conclusion did not follow adequately from the results:,why_does_conclusion_not_follow_results
+Please indicate whether the co-analyst’s self-categorization of the result is adequate:,task1_categorisation_is_accurate
+"Please indicate whether you judge the present analysis pipeline to be acceptable, meaning that it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Please rate its quality by the following options:",task2_pipeline_acceptable
+Please explain why you deemed the present pipeline of the re-analysis unacceptable:,why_is_task2_pipeline_unacceptable
+"Code reproducibility check: You are not required to execute the analysis code or follow the description of the analysis script, but if you nevertheless managed to do so, did you find any mismatch between the results of the analysis and the reported results?",any_code_mismatches
+Please describe the mismatches you found:,description_of_mismatches
+Comment to the organizers:,evaluator_comments

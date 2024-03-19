@@ -1,0 +1,19 @@
+description,variable_name
+Időbélyeg,task2_timestamp
+E-mail-cím,email
+1. Please provide your analyst ID.,analyst_id
+2. Please provide the ID of your paper.,paper_id
+3. What language/software/tools did you use in your data analysis?,task2_software
+"4. Please report the most important steps of the analysis to the level of detail that you would provide in a methods/analysis section of a typical research article. Include any preprocessing steps that you might have conducted on the dataset. Describe the exact hypothesis you tested and explain the reason for choosing the statistical procedure you applied. Finally, please report the result of your statistical test. Please also describe the steps you took in order to satisfy the specific instructions of Task 2.",task2_analysis_report
+5. What type of test statistics did you calculate?,type_of_statistic
+6. Please report the numeric value of your test statistic with three decimals precision. Please use “.” as the decimal separator.,statistic_report
+7. What is the sample size of your model?,model_sample_size
+"8. What is the degrees of freedom of your model (if applicable, i.e., in case your result is based on a Chi²-, t-, or F-statistic)? (separate them by ; )",model_degrees_of_freedom
+9. Did you base your conclusion on a p-value or on a Bayes factor?,p_value_or_bayes
+10. What is the p-value or Bayes factor of your main result? (report only the values here),p_value_report
+11. What is the conclusion of your analysis in words?,task2_conclusion
+12.  Please indicate the direction to which your result points disregarding whether it is conclusive/significant or not?,direction_of_result
+13. Did you arrive at the same statistical result in Task 2 as in Task 1?,same_statistical_result_as_task1
+14. Did you have to make additional calculations to complete the Task 2?,additional_calculations
+15. Approximately how many hours did it require from you to perform Task 1 and Task 2 together?,total_hours
+16. We are very interested to know any thoughts and comments you have about the survey you just completed or about the Multi100 project more generally. We would be grateful for any feedback you could provide here:,task2_comments

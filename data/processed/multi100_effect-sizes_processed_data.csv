@@ -1,0 +1,110 @@
+paper_id,original_type_of_statistic,original_statistic_report,degrees_of_freedom_1,degrees_of_freedom_2,original_model_sample_size,correlation_coef,cohens_d,comment_on_reproduction_materials
+Andreoni_JournPoliEco_2017_La9x,t,35781,15,NA,64,"0,6786","1,8477",NA
+Cohen_AmEcoRev_2015_2lb5,t,48822,574,NA,631,"0,1997","0,4076",NA
+Baker_WorldPolitics_2011_9lBL,t,-25394,"27,86",NA,48,"-0,4335","-0,9622",NA
+Caldero_n_JournConflictRes_2015_Nv99,z,24738,NA,NA,2989,"0,0452","0,0906",updated based on log file
+GROSSMAN_AmPoliSciRev_2014_LyWB,z,-39515,NA,NA,428,"-0,1894","-0,3857",NA
+Luttrell_JournExpSocPsych_2016_rjb,t,22823,169,NA,174,"0,1729","0,3511",NA
+ANN_SLOCUM_Criminology_2010_JxXe,z,-21392,NA,NA,1354,"-0,0581","-0,1165",NA
+Angrist_AmEcoRev_2009_Gv3O,t,17226,1857,NA,1861,"0,0399","0,0799",NA
+Baccara_AmEcoJourn_2014_RqVE,z,42303,NA,NA,871215,"0,0045","0,0091",updated; eventually found the result in the thousands of estimates
+Barreca_JournPoliEco_2016_J999,t,-39098,48,NA,26411,"-0,4915","-1,1287",updated/corrected/verified based on reproduction materials
+Beaman_JournLabEco_2018_7ybJ,F,10285,1,218,220,"0,2123","0,4344",NA
+Behrman_JournPoliEco_2015_G55r,t,54286,86,NA,11314,"0,5052","1,1708",NA
+Bruner_ExpEco_2017_amYY,t,-45772,77,NA,79,"-0,4625","-1,0432",updated/corrected/verified based on reproduction materials
+Bursztyn_JournPoliEco_2012_jaK4,t,63676,10,NA,156,"0,8956","4,0272",NA
+Clark_JournPoliEco_2009_e5rW,t,31232,700,NA,726,"0,1172","0,2361",NA
+Liang_JournPoliEco_2018_q8xv,t,-57122,81,NA,393,"-0,5359","-1,2694",double-checked (based on reproduction material) ~~> accurate
+Lu_JournLabEco_2015_vaWE,t,27693,11,NA,245,NA,NA,NA
+McDevitt_JournPoliEco_2014_yQeR,t,-67881,2291,NA,2293,NA,NA,Elza's coding is accurate (verified based on reproduction materials)
+Sliwka_JournLabEco_2017_VDJV,t,21313,206,NA,211,"0,1469","0,2970",NA
+Wang_AmEcoJourn_2013_7d4J,t,-20248,10214,NA,13292,NA,NA,updated/corrected based on reproduction materials
+Dumas_AcaManageJourn_2018_5KrD,t,-23614,348,NA,353,"-0,1256","-0,2532",verfied (reproduced using Stata)
+Bartels_JournConsRes_2015_mrZ,z,21418,NA,NA,88,"0,2282","0,4688",updated/corrected/reestimated based on reproduction materials
+Liu_JournMarket_2015_9DZl,F,84988,1,47,49,"0,3913","0,8505",double-checked; updated with more precise estimate
+Yang_JournMarketRes_2013_G1Lr,t,34297,99,NA,101,"0,3259","0,6894",double-checked; updated with more precise estimate
+LINDQVIST_AmPoliSciRev_2010_OeGv,t,-35133,30,NA,33,"-0,5399","-1,2829",NA
+Brancati_JournConflictRes_2013_V0PA,z,-18342,NA,NA,94,"-0,1899","-0,3869",NA
+Fuhrmann_JournConflictRes_2010_8Wy0,z,28287,NA,NA,5360,"0,0386","0,0773",NA
+Gartzke_JournConflictRes_2009_rym8,z,50400,NA,NA,213454,"0,0109","0,0218",NA
+Grose_AmJourPoliSci_2015_E0Q3,chi²,45000,1,NA,56,"0,2834","0,5911",NA
+Ihme_JournExpPoliSci_2018_xYbO,t,25985,141,NA,143,"0,2138","0,4377","the reported test statistic cannot be reproduced; a comment in the syntax file reads ""t-tests on political knowledge were executed as follows: The weighted means (and standard deviations) of the males/females in each experimental condition were computed from the means (and standard deviations)  that are presented in Table 2 (""Estimated means (standard deviations) of the political knowledge test and subsample sizes for all conditions"") of the manuscript
+ This resulted in the means as presented in Figure 1. These means and standard deviations were then used to calculate the t-scores manually."" As weird as it is to compute a t-statistic manually, the result differs (slightly) when following their instructions. The original paper reports t(141) = 2.46"
+Jiang_AmJourPoliSci_2018_Rjp9,t,30291,325,NA,3693,"0,1657","0,3360",NA
+Kucik_BritJournPoliSci_2016_L22B,t,23932,44,NA,6027,"0,3394","0,7216",NA
+Marshall_BritJournPoliSci_2015_GOYb,z,-37533,NA,NA,202,"-0,2600","-0,5384",NA
+McKibben_AmJourPoliSci_2013_P8az,z,63451,NA,NA,588,"0,2565","0,5307",NA
+Miller_JournConflictRes_2011_zV1O,z,19556,NA,NA,798,"0,0692","0,1388",NA
+Nyhan_JournExpPoliSci_2015_DEqr,t,-50652,761,NA,764,"-0,1806","-0,3672",NA
+Rovny_WorldPolitics_2014_AQgj,t,-117447,2460,NA,2471,"-0,2304","-0,4736",NA
+Turcu_CompPolitStu_2015_YeQg,z,29156,NA,NA,5988,"0,0377","0,0754",NA
+Wlezien_CompPolitStu_2017_ByBk,t,-39833,13,NA,16,"-0,7414","-2,2095",NA
+Alves_PsychologSci_2018_AvOr,chi square,120229,1,NA,210,NA,NA,double-checked; updated with more precise estimate
+Axt_JournExpSocPsych_2018_zK2,t,-57872,855,NA,856,"-0,1942","-0,3958",updated/corrected/reestimated based on reproduction materials
+Hou_ChildDev_2017_YOXl,z,20890,NA,NA,444,"0,0991","0,1993","double-checked (based on .out-file); the analysis has been conducted in MPlus, which I don't have access to. The statistic reported in the table seems correct (though, only available with three digits precision. However, the p-value reported in the paper deviates from what is logged in the output file: 0.032 (paper) vs. 0.037 (log)."
+Savani_PsychologSci_2010_88xa,t,41503,65,NA,67,"0,4577","1,0296","the original authors couldn't reproduce their own results (see ""author_notes.txt"" file on OSF. The author's reproduction results (available as a .docx file) can be reproduced using the data which is available in the OSF repo. The original paper reports t(32) = 4.25, n = 33."
+Steinmetz_JournPerSocPsy_2016_E4Am,t,22043,80,NA,82,"0,2393","0,4929",double-checked; updated with more precise estimate
+Woltin_JournExpSocPsych_2011_Wre,F,57582,1,34,36,"0,3806","0,8231",coding was wrong; re-estimated using Stata - estimates match the reports in the paper
+Zunick_JournExpSocPsych_2017_zlw,t,27011,68,NA,72,"0,3113","0,6551",double-checked ~~> correct; updated with more precise estimate
+Chen_Demography_2018_yAPR,NA,NA,NA,NA,NA,NA,NA,"Eventually, I got access to the database. However, it's not clear to me which data is actually relevant and how it should be pre-rocessed. As per the files on OSF, the original authors eventually shared the data to be used for the analysis with the COS team. Perhaps they could simply forward it to us?"
+Baillon_Econometrica_2018_QYNq,t,21225,98,NA,198,"0,2096","0,4288",estimated based on data shared by Barna/Harry
+Cleave_ExpEco_2013_Njqj,z,-27295,NA,NA,658,"-0,1062","-0,2137","eventually, I managed to reproduce the result based on the original data and the description in the paper"
+Dahl_AmEcoRev_2012_VRKK,z,26407,NA,NA,8609,"0,0285","0,0569","I tried again to reproduce the result but failed. The analysis relies on a program provided by NBER. The version of the package (v9) used in the original script fails due to server-side restrictions; the up-to-date version (v35) fails due to some issue in terms of backward compatibility.  
+Yet, the estimates reported in the paper are relatively precise with four digits; and it is clear from the analysis script that the model is estimated using a 2SLS model, which implies a z-statistic. Thus, I think it's fine to keep it as is."
+Fehr_AmEcoRev_2011_gdlO,z,-20226,NA,NA,5,"-0,8917","-3,9402",double-checked ~~> correct; compares session averages; that's why the sample is so small
+Adida_CompPolitStu_2016_G0Kb,NA,NA,NA,NA,NA,NA,NA,Missing relevant data: Harry is trying to acquire it
+Balcells_JournConflictRes_2014_0P4r,z,25115,NA,NA,906,"0,0834","0,1673",NA
+PALER_AmPoliSciRev_2013_Pxp7,t,27001,1861,NA,1863,"0,0625","0,1252",double-checked; Elza's coding is accurate
+Christensen_EurJournPersonality_2018_8R9d,t,-6569,1998,NA,516,"-0,8268","-2,9392","R script does not run due to versioning issues of required packages. The t-stati and DFs are fine, but what puzzles me is the sample size (which cannot, be definition, be smaller than the DFs)."
+Teney_EurSocioRev_2016_qXX2,NA,NA,NA,NA,NA,NA,NA,"Missing relevant data: Harry is trying to acquire it
+Felix: Data can be obtained from GESIS. Perhaps I'm not smart enough, but I don't find the relevant datafiles in the database."
+Usmani_AmJournSocio_2018_GJe4,NA,NA,NA,NA,NA,NA,NA,"Raphael: The authors are not using a classical test, but a simulation-based approach. The critical part of the code can be found in the R script '10_mainmods.R' in the codes directory of the replication materials. The relevant lines of the code are 590 - 596. The author samples from a multivariate Gaussian and checks for significance later by looking at the 95%-Interval.
+
+Felix: maybe an expert could translate the CI reported to a p-value, if the distribution is known, then the df-s are achievable too from the sample size"
+Wilde_AmSocioRev_2010_4XLv,z,23038,NA,NA,1921,"0,0526","0,1053",NA
+Nelson_JournConsRes_2009_eg1q,t,24466,100,NA,102,"0,2377","0,4893","updated/corrected/reestimated based on reproduction materials
+minor reporting error in the original paper (t-stat is reported as t(100) = 2.43; reproduction generates the same result as provided by the original authors in their datafile (at the very bottom, as indicated in the author_notes file)."
+Ku_JournEnvPsych_2014_YpZZ,t,-48728,79,NA,81,"-0,4807","-1,0965",updated/corrected/reestimated based on reproduction materials
+Hurst_EvoHumanBehavior_2017_yypJ,NA,69511,135,NA,138,NA,NA,updated/reestimated based on original data
+Pastötter_Cognition_2013_EQxa,t,35505,198,NA,200,"0,2447","0,5047","updated/corrected/reestimated based on original dataset
+note: the paper reports a between-subjects t-test result and, in parenthesis, the p-value of a Mann-Whitney-U test. I coded the t-test result; the Mann-Whitney-U result would be z = 3.45132196 (n = 200)."
+Linkenauger_PsychologSci_2009_7WjP,t,-21232,14,NA,15,"-0,4935","-1,1349",double-checked; updated with more precise estimate
+Anderson_AmEcoJourn_2011_bLe8,t,27103,89,NA,1295,NA,NA,double-checked; Elza's coding is perfectly accurate
+Platt_Boustan_AmEcoJourn_2012_PVQK,t,-21393,117,NA,4352,"-0,1940","-0,3955","double-checked; Elza's coding is perfectly accurate
+yet, there's a small reporting error in the paper: the coefficient in the reproduction is -0.059 (reported as -0.058 in the paper)"
+Bursztyn_AmEcoRev_2017_VB9K,t,-22184,58,NA,60,"-0,2797","-0,5826",updated/corrected/reestimated based on reproduction materials
+Kleven_AmEcoRev_2013_Jg9v,z,38695,NA,NA,48,"0,5204","1,2187",NA
+Benjamin_AmEcoRev_2010_WaYe,t,34261,69,NA,71,NA,NA,double-checked; Elza's coding is perfectly accurate
+Bigoni_Econometrica_2015_VBx1,t,-60973,7,NA,4416,"-0,9174","-4,6091",NA
+Hendricks_QuartJournEco_2018_wNKW,t,82055,3353 (underestimated) or 3519 (overestimated),NA,3539,#VALUE!,#VALUE!,"Coded by Juliane
+I couldn't reproduce it due to a lack of data access. The coding is based on the reported estimates, not on a reproduction, I guess. DFs are missing. The model includes country fixed effects, i.e., we would at least need to know how many countries are included in the analysis - then, the DFs could be backed out."
+Einstein_AmJourPoliSci_2017_mxyQ,z,37273,NA,NA,549,"0,1582","0,3204","The coding was clearly wrong. The result pertains to a logit regression, thus, it's a z-test. However, only blinded data is available, and the reproduction generates results that differ from those reported in the paper (since identifying information was not publicly shared). Relying on the reports in the paper (which are quite imprecise with only two digits, the result should be coded as z = 3.7272727 (n=549)"
+TERTYTCHNAYA_AmPoliSciRev_2018_9wya,z,25263,NA,NA,1287,"0,0704","0,1411","Elzas coding in columns C-G is proper, based on the reports in the paper. Reproducing the result based on the original data and script, however, results in a different estimate: b = 0.0450689, se = 0.0227033; z = 1.9851255; n = 1247 (in the paper, the result is reported as b = 0.048, se = 0.019; n = 1287)."
+Menaldo_AmJourPoliSci_2016_Vx4e,z,-152942,NA,NA,2682,"-0,2872","-0,5996",Elza indeed messed up the family - it's a z-stat (not a chi²-stat); reestimated based on the original data
+Wright_JournConflictRes_2016_W0GN,z,34885,NA,NA,2788,NA,NA,double-checked; Elza's coding is perfectly accurate
+PIETRYKA_AmPoliSciRev_2017_yjkQ,z,44435,NA,NA,2216,"0,0942","0,1892",double-checked ~~> correct; updated with more precise estimate
+Gerber_BritJournPoliSci_2018_3WmY,z,19643,NA,NA,174,"0,1491","0,3016",double-checked ~~> DFs were mistakenly reported for z-test
+Cingranelli_BritJournPoliSci_2014_qg47,z,32281,NA,NA,1718,"0,0778","0,1561",NA
+Shahar_JournConflictRes_2018_J0Yv,t,100086,207,NA,284,"0,5711","1,3913","I'm not an expert on repeated measures ANOVA, but I managed to reproduce the result of F(3,69) = 7.66, eta² = 0.10 based on the original data. The test statistic for the pairwise comparison (outgroup non-NGO vs. closely related figures) is coded in columns D-G (note that the number of observations is 71*4=284; the DFs are given by the total number of observations - the number of subjects (71) - the number of covariates/factors)."
+Li_JournExpPoliSci_2017_G4mp,NA,NA,NA,NA,NA,NA,NA,Data is not available and result is only reported graphically. It seems impossible to infer a test statistic from the figure.
+Mironova_JournExpPoliSci_2014_59Rq,t,40314,"75,8936",NA,118,NA,NA,NA
+Wilfahrt_WorldPolitics_2018_k7wj,t,-56105,10,NA,283,"-0,8712","-3,5484",updated/corrected/reestimated based on reproduction materials
+Brough_JournConsRes_2016_9ey,F,439976,1,190,194,"0,4336","0,9624",re-estimated based on original data (no code is available; reproduced based on descriptions in the paper); all results could be perfectly reproduced; updated with more precise estimate
+Petersen_Cognition_2017_yJwG,t,-47079,27,NA,28,"-0,6714","-1,8121",reestimated based on reproduction materials; updated with more precise estimate
+Goerg_JournLabEco_2010_WLpV,t,28970,268,NA,270,"0,1743","0,3539",NA
+Thames_CompPolitStu_2010_l22v,z,23607,NA,NA,232,"0,1547","0,3133",NA
+Bingham Powell_CompPolitStu_2009_0PZl,z,-41190,NA,NA,328,"-0,2246","-0,4609",NA
+Hertel_ClinPsychSci_2018_YabW,F,62037,1,48,54,"0,3383","0,7190",re-coded with more precision based on output file available at OSF; sample size was incorrectly reported with 60
+Altmann_JournLabEco_2012_WLkV,z,-25365,NA,NA,124,"-0,2266","-0,4653",re-estimated base on original data; updated with more precise estimate
+Robertson_BritJournPoliSci_2017_qggQ,z,25259,NA,NA,1728,"0,0607","0,1217",added; reproduced/estimated based on original dataset
+Antràs_Econometrica_2013_a2Yx,t,25399,252,NA,2783,"0,1580","0,3200",NA
+BATESON_AmPoliSciRev_2012_RYKv,t,92945,1493,NA,38346,"0,2339","0,4811",NA
+Fitzgerald_SocialForces_2018_4q0L,t,37318,286,NA,350,"0,2155","0,4413",NA
+Raley_JournMarFam_2012_D2LY,t,-35202,10071,NA,4105,"-0,0351","-0,0702","The OSF repository does not provide the relevant data and the files sent by Barna are of no avail either (the .csv-files do not even have column labels). What is coded in columns C-G has been based on the log output of the reproduction attempt available in the OSF repository. Yet, the estimate differs from what is reported in the paper."
+Desmond_Demography_2015_qQ9Z,t,21600,"536,7318",NA,580,"0,0928","0,1865","The link to the OSF repository points to a Word document only - i.e., I don't have access to the data to reproduce the result. What is coded in columns C-G is based on a reproduction attempt and differs from what is reported in the paper."
+Waller_JournMarFam_2014_AXBY,z,24182,NA,NA,1156,"0,0711","0,1426","The link to the OSF repository points to a Word document only - i.e., I don't have access to the data to reproduce the result. What is coded in columns C-G is based on the information given in the paper (logistic regression, i.e., z-statistic; sample size is given; test statistic based on b/se (reported with 2 digits precision each))"
+McLaren_WorldPolitics_2012_wRvv,t,501100,"90156,3464",NA,68113,"0,1646","0,3338","The link to the OSF repository points to a Word document only - i.e., I don't have access to the data to reproduce the result. Not clear how Julian obtained the results reported in columns C-G. The coding seems odd given that DF > N (and the t is huge)."
+Huijts_EurSocioRev_2013_OY3B,t,24350,"31,7562",NA,10477,"0,3967","0,8642","The link to the OSF repository points to a Word document only - i.e., I don't have access to the data to reproduce the result. What is coded in columns C-G is based on a reproduction attempt and differs from what is reported in the paper."
+Yoo_PsychologSci_2017_BebG,t,20000,1372,NA,1391,"0,0539","0,1080","Again, the OSF link points to materials and results from a reproduction. Double-checked the coding based on what is reported in the paper and it seems correct (though, rather imprecise)."
+Kuo_Demography_2016_JWzJ,z,-48786,NA,NA,54291,"-0,0209","-0,0419","Again, the OSF link points to materials and results from a reproduction. Coding is based on what is reported in the paper."
+Ohtsubo_EvoHumanBehavior_2014_zlm2,t,59100,27,NA,29,"0,7510","2,2748",Couldn't reproduce the results; the data file is described in Chinese; the reporting based on what is reported in the paper is accurate (but imprecise)

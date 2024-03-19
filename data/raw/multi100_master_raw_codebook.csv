@@ -1,0 +1,16 @@
+description,variable_name
+paper_id,paper_id
+reproduction_type (OSF),reproduction_type_osf
+reproduction result (OSF),reproduction_result_osf
+"categorization of the claims
+
+(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);
+(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true
+(3) part = new claim is part of the original claim
+(2) no = not the same claim;",categorisation_of_claim
+original statistical result,in_text_original_statistical_result
+"Related_statistical_result
+
+Zoli/Felix (Barna)
+M-S columns",related_original_statistical_result
+Location_of_result_in_paper,original_result_page_number

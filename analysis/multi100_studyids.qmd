@@ -1,6 +1,6 @@
 ---
-title: "Supplementary Materials"
-format: docx
+title: ""
+format: html
 editor: source
 editor_options: 
   chunk_output_type: console
@@ -16,8 +16,10 @@ library(gt)
 processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
 ```
 
+<div align="center">
 __Table S1__
 _Table showing the unique IDs of the reanalyzed papers and the corresponding simplified numbers used on our figures throughout the article._
+</div>
 
 ```{r echo=FALSE}
 processed |>

@@ -1,0 +1,9 @@
+description,variable_name
+Analyst_ID,analyst_id
+Paper_ID,paper_id
+Original_Claim,original_claim
+Task1_Conclusion,task1_conclusion
+Task2_Conclusion,task2_conclusion
+Is_It_Actually_Opposite,is_it_opposite
+Coded_By,coded_by
+Notes,notes

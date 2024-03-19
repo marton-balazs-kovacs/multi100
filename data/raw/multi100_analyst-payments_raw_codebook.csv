@@ -1,0 +1,9 @@
+description,variable_name
+first_name,first_name
+analyst_id,analyst_id
+signup_email,signup_email
+n_analyses,n_analyses
+n_peer_evals,n_peer_evals
+Analysis $,analyses_payment
+Review $,peer_eval_payment
+sum $,sum_payment

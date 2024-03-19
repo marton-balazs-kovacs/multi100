@@ -1,0 +1,10 @@
+description,variable_name
+paper_id,paper_id
+"familiy (z, t, F, or x2)",original_type_of_statistic
+test statistic,original_statistic_report
+df_1,degrees_of_freedom_1
+df_2,degrees_of_freedom_2
+sample size,original_model_sample_size
+std. corr. coef.,correlation_coef
+Cohen's d,cohens_d
+Comment_on_any_materials,comment_on_reproduction_materials
