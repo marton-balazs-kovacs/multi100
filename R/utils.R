@@ -1,20 +1,21 @@
 #' Prepare dataset for tolerance region plot
-calculate_tolerance_region <- function(data, grouping_var, drop_missing = FALSE) {
+calculate_tolerance_region <- function(data, grouping_var, drop_missing = FALSE, weight = NULL) {
   res <-
     data %>%
     # Drop missing original_cohens_d
     dplyr::filter(!is.na(original_cohens_d)) %>% 
-    dplyr::select({{ grouping_var }}, reanalysis_cohens_d, original_cohens_d) %>% 
+    dplyr::select({{ grouping_var }}, reanalysis_cohens_d, original_cohens_d) |> 
     dplyr::mutate(
-      tolarence_region_lower = original_cohens_d - 0.05,
-      tolarence_region_upper = original_cohens_d + 0.05,
+      threshold = if (!is.null(weight)) original_cohens_d * weight else 0.05,
+      tolarence_region_lower = original_cohens_d - threshold,
+      tolarence_region_upper = original_cohens_d + threshold,
       {{ grouping_var }} := as.factor({{ grouping_var }}),
       is_within_region = dplyr::case_when(
         reanalysis_cohens_d >= tolarence_region_lower & reanalysis_cohens_d <= tolarence_region_upper ~ "Within tolerance region",
         reanalysis_cohens_d < tolarence_region_lower | reanalysis_cohens_d > tolarence_region_upper ~ "Outside of tolerance region",
         is.na(reanalysis_cohens_d) ~ "Missing"
       ),
-      is_within_region = factor(is_within_region, levels = c("Within tolerance region", "Outside of tolerance region"))
+      is_within_region = factor(is_within_region, levels = c("Within tolerance region", "Outside of tolerance region", "Missing"))
     ) %>% 
     dplyr::count({{ grouping_var }}, is_within_region) %>% 
     dplyr::group_by({{ grouping_var }}) %>%
@@ -37,6 +38,74 @@ calculate_tolerance_region <- function(data, grouping_var, drop_missing = FALSE)
     dplyr::ungroup()
   
   res
+}
+
+#' Function to calculate proportions within tolerance regions for a given threshold
+calculate_tolerance_region_proportions <- function(data, threshold = NULL, weight = NULL) {
+  region_data <-
+    data  |> 
+    dplyr::select(simplified_paper_id, original_cohens_d, reanalysis_cohens_d) |> 
+    dplyr::filter(!is.na(original_cohens_d)) |> 
+    dplyr::filter(!is.na(reanalysis_cohens_d)) |>
+    dplyr::mutate(
+      threshold = if (!is.null(weight)) original_cohens_d * weight else threshold,
+      tolerance_region_lower = original_cohens_d - threshold,
+      tolerance_region_upper = original_cohens_d + threshold,
+      is_within_region = case_when(
+        reanalysis_cohens_d >= tolerance_region_lower & reanalysis_cohens_d <= tolerance_region_upper ~ "Within tolerance region",
+        reanalysis_cohens_d < tolerance_region_lower | reanalysis_cohens_d > tolerance_region_upper~ "Outside of tolerance region",
+        is.na(reanalysis_cohens_d) ~ "Missing"
+      ),
+      is_within_region = as.factor(is_within_region)
+    )
+  
+  analysis_propotion <-
+    region_data |> 
+    dplyr::count(is_within_region) %>%
+    tidyr::complete(is_within_region, fill = list(n = 0)) |> 
+    dplyr::mutate(
+      N = sum(n),
+      relative_frequency = n / N,
+      analysis_percentage = round(relative_frequency * 100, 2)
+    ) %>%
+    dplyr::filter(is_within_region == "Within tolerance region") |> 
+    dplyr::select(analysis_percentage)
+    
+    paper_proportion <-
+      region_data |> 
+      dplyr::count(simplified_paper_id, is_within_region) %>% 
+      dplyr::group_by(simplified_paper_id) %>%
+      tidyr::complete(is_within_region, fill = list(n = 0)) |> 
+      dplyr::group_by(simplified_paper_id) %>% 
+      dplyr::mutate(
+        N = sum(n),
+        relative_frequency = n / N,
+        percentage = relative_frequency * 100
+      ) %>% 
+      dplyr::summarise(
+        robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust"),
+        robust = factor(robust, levels = c("Inferentially robust", "Inferentially not Robust"))
+      ) |> 
+      dplyr::ungroup() |> 
+      dplyr::count(robust) |> 
+      tidyr::complete(robust, fill = list(n = 0)) |> 
+      dplyr::mutate(
+        N = sum(n),
+        relative_frequency = n / N,
+        paper_percentage = round(relative_frequency * 100, 2)
+      ) |> 
+      dplyr::filter(robust == "Inferentially robust") |> 
+      dplyr::select(paper_percentage)
+  
+    if (!is.null(weight) & is.null(threshold)) {
+      dplyr::bind_cols(analysis_propotion, paper_proportion) |> 
+        dplyr::mutate(weight = weight)
+    } else if (is.null(weight) & !is.null(threshold)) {
+      dplyr::bind_cols(analysis_propotion, paper_proportion) |> 
+        dplyr::mutate(threshold = threshold)
+    } else (
+      stop("Only pass either threshold or weight as an input parameter.")
+    )
 }
 
 #' Function to NOT include a vector in another vector
@@ -119,7 +188,7 @@ plot_rain <- function(data, grouping_var, response_var, x_lab, y_lab, trans = "l
   data |> 
     ggplot2::ggplot() +
     ggplot2::aes(x = {{grouping_var}}, y = {{response_var}}) +
-    ggrain::geom_rain(rain.side = 'l') +
+    ggrain::geom_rain(rain.side = 'r') +
     ggplot2::labs(y = y_lab,
                   x = x_lab) +
     ggplot2::scale_y_continuous(
@@ -150,7 +219,7 @@ calculate_conclusion <- function(data, grouping_var, categorization_var) {
 }
 
 #' plot percentage
-plot_percentage <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE, coord_flip = FALSE) {
+plot_percentage <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE, coord_flip = FALSE, colors = NULL) {
   
   if (with_sum) {
     new_labels <- setNames(
@@ -198,9 +267,22 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
         levels(droplevels(data$label))
         }
       # labels = function(x) print(x)
-      ) +
-    viridis::scale_fill_viridis(discrete = TRUE) + 
-    viridis::scale_color_viridis(discrete = TRUE, direction = -1) +
+      )
+  
+  if (!is.null(colors)) {
+    plot <-
+      plot +
+      ggplot2::scale_fill_manual(values = colors) +
+      ggplot2::scale_color_manual(values = rev(colors))
+  } else {
+    plot <-
+      plot + 
+      viridis::scale_fill_viridis(discrete = TRUE) + 
+      viridis::scale_color_viridis(discrete = TRUE, direction = -1)
+  }
+  
+  plot <- 
+    plot +
     ggplot2::labs(
       x = x_lab,
       y = y_lab,
