@@ -629,6 +629,57 @@ ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot,
 total_hours_plot
 ```
 
+```{r}
+same_test_family <-
+  processed |>
+  dplyr::select(
+    simplified_paper_id,
+    analyst_id,
+    reanalysis_type_of_statistic,
+    reanalysis_statistic_report
+  ) |>
+  dplyr::filter(!is.na(reanalysis_statistic_report) &
+                  !is.na(reanalysis_type_of_statistic)) |>
+  dplyr::mutate(
+    reanalysis_statistic_report = round(reanalysis_statistic_report, 2),
+    reanalysis_statistic = interaction(reanalysis_type_of_statistic, reanalysis_statistic_report)
+  ) |>
+  dplyr::group_by(simplified_paper_id, reanalysis_statistic) |>
+  dplyr::summarise(
+    pair_count = n(), .groups = 'drop'
+  ) |>
+  dplyr::mutate(
+    is_unique = (pair_count == 1)
+  ) |> 
+  dplyr::group_by(simplified_paper_id, is_unique) |>
+  dplyr::summarise(
+    total = sum(pair_count), .groups = 'drop'
+  ) |> 
+   tidyr::complete(
+    simplified_paper_id, is_unique,
+    fill = list(total = 0)
+  )
+
+proportion_unique_analysis <-
+  same_test_family |>
+  dplyr::group_by(is_unique) |>
+  dplyr::summarise(grand_total = sum(total), .groups = 'drop') |>
+  dplyr::mutate(total_count = sum(grand_total),
+                percentage = round(grand_total / total_count * 100))
+
+proportion_unique_paper <-
+  same_test_family |> 
+  dplyr::group_by(simplified_paper_id) |>
+  dplyr::summarise(
+    has_non_unique = sum(total[!is_unique] > 0), .groups = 'drop'
+  ) |>
+  dplyr::summarise(
+    percentage_all_unique = round(mean(has_non_unique == 0) * 100, 2)
+  )
+```
+
+In Task 2 `r dplyr::filter(proportion_unique_analysis, is_unique) |> pull(percentage)`% of the co-analyst used unique analytical pipelines based on the statistical test family and the value of the test statistics they arrived at. In total `r pull(proportion_unique_paper, percentage_all_unique)`% of the papers had completely unique reanalysis attempts.
+
 ## Peer evaluation
 ### Peer evaluators
 #### Basic demographics of the peer evaluators 
@@ -950,7 +1001,12 @@ conclusions_discipline_robustness_plot <-
     grouping_var = paper_discipline,
     with_labels = TRUE,
     y_lab = "Percentage of studies",
-    x_lab = "Disciplines"
+    x_lab = "Disciplines",
+    colors = c("#000004FF", "#FCFDBFFF"),
+    rev_limits = FALSE
+  ) +
+  ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
   )
 
 ggsave(here::here("figures/conclusions_discipline_robustness_plot.jpg"), conclusions_discipline_robustness_plot, dpi = 300)
@@ -973,7 +1029,8 @@ conclusions_discipline_plot <-
   ) + 
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
-    legend.text = element_text(size = 8)
+    legend.text = element_text(size = 8),
+    axis.title.y = element_text(hjust = 1)
     )
 
 ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
@@ -1016,7 +1073,12 @@ conclusions_studytype_robustness_plot <-
     grouping_var = experimental_or_observational,
     y_lab = "Percentage of studies",
     x_lab = "Study type",
-    with_labels = TRUE
+    with_labels = TRUE,
+     colors = c("#000004FF", "#FCFDBFFF"),
+    rev_limits = FALSE
+  ) +
+  ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
@@ -1046,6 +1108,9 @@ conclusions_studytype_plot <-
       unit = "pt"
     ),
     legend.text = element_text(size = 8)
+  ) +
+    ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
@@ -1093,7 +1158,7 @@ conclusions_expertise_plot <-
     y_lab = "Number of re-analyses",
     x_lab = "Expertise rating",
     with_labels = TRUE,
-    with_sum = TRUE,
+    with_sum = FALSE,
     rev_limits = FALSE
   ) +
   theme(legend.text = element_text(size = 8))
@@ -1126,7 +1191,12 @@ peer_eval_subset_task1_data <-
     common_task1_acceptable = ifelse(dplyr::n_distinct(task1_pipeline_acceptable) == 1, first(task1_pipeline_acceptable), NA),
     .groups = 'drop'
   ) |> 
-  dplyr::filter(!is.na(common_task1_acceptable)) |> 
+  dplyr::filter(!is.na(common_task1_acceptable))
+
+count(peer_eval_subset_task1_data, common_task1_acceptable)
+  
+peer_eval_subset_task1_data <- 
+  peer_eval_subset_task1_data |> 
   dplyr::filter(common_task1_acceptable != "(2) Acceptable but low quality") |> 
   left_join(dplyr::select(processed, paper_id, analyst_id, task1_categorisation_plotting), by = c("paper_id", "analyst_id")) |> 
   dplyr::rename(categorisation = task1_categorisation_plotting) |>
@@ -1151,7 +1221,8 @@ peer_eval_subset_task1_plot <-
     x_lab = "Peer evaluation rating of\nTask 1 analysis pipeline"
   ) +
   ggplot2::theme(
-    legend.text = element_text(size = 8)
+    legend.text = element_text(size = 8),
+    axis.title.y = element_text(hjust = 1)
   )
 
 ggsave(here::here("figures/peer_eval_subset_task1_plot.jpg"), peer_eval_subset_task1_plot, dpi = 300)
@@ -1210,7 +1281,8 @@ conclusions_familiarity_plot <-
     x_lab = "Analyst familiarity with the paper") + 
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
-    legend.text = element_text(size = 8)
+    legend.text = element_text(size = 8),
+    axis.title.y = element_text(hjust = 1)
     )
 
 ggsave(here::here("figures/conclusions_familiarity_plot.jpg"), conclusions_familiarity_plot, dpi = 300)
@@ -1290,7 +1362,7 @@ conclusions_samplesize_plot <-
       categorisation,
       c("Same conclusion", "No effect/inconclusive", "Opposite effect")
     )
-  ) |>
+  ) |> 
   plot_rain(
     grouping_var = categorisation,
     response_var = reanalysis_model_sample_size,
@@ -1298,11 +1370,59 @@ conclusions_samplesize_plot <-
     breaks = c(10, 100, 1000, 10000, 100000),
     x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
     y_lab = "Sample size"
+  ) +
+  ggplot2::coord_flip() +
+  ggplot2::theme(
+    axis.title = element_text(size = 9)
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
 
-conclusions_samplesize_plot
+# Number of analysis where samplesize is present
+nrow(filter(processed, !is.na(reanalysis_model_sample_size)))
+# Number of analysis where df1 is present
+nrow(filter(processed, !is.na(reanalysis_degrees_of_freedom_1) | !is.na(reanalysis_degrees_of_freedom_2)))
+# dplyr::select(processed, reanalysis_model_sample_size, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2)
+
+conclusions_df_plot <-
+  processed |>
+  dplyr::rename(categorisation = task1_categorisation_plotting) |>
+  dplyr::select(paper_id,
+                analyst_id,
+                categorisation,
+                reanalysis_degrees_of_freedom_1,
+                reanalysis_degrees_of_freedom_2) |>
+  # It looks like of df2 is present than df2 belongs to the responses and df1 is for the parameters
+  dplyr::mutate(
+    reanalysis_degrees_of_freedom_1 = dplyr::case_when(
+      !is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_2,
+      is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_1
+    )
+  ) |> 
+  dplyr::select(-reanalysis_degrees_of_freedom_2) |> 
+  dplyr::filter(!is.na(reanalysis_degrees_of_freedom_1)) |>
+  dplyr::mutate(
+    categorisation = forcats::fct_relevel(
+      categorisation,
+      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
+    )
+  ) |> 
+  plot_rain(
+    grouping_var = categorisation,
+    response_var = reanalysis_degrees_of_freedom_1,
+    x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
+    y_lab = "Log10 of degrees of freedom",
+    trans = "log10",
+    breaks = c(10, 100, 1000, 10000, 100000)
+  ) +
+  ggplot2::coord_flip() +
+    ggplot2::theme(
+    axis.title = element_text(size = 9)
+  )
+
+ggplot2::ggsave(here::here("figures/conclusions_df_plot.jpg"), conclusions_df_plot, dpi = 300)
+
+conclusions_df_plot
 ```
 
 #### Estimate robustness: robust of the statistical findings published in social sciences to analytical choices
@@ -1348,6 +1468,13 @@ processed |>
   ) |> 
   dplyr::count(both_present_or_missing)
 
+# Number of cases where reanalyzed effect size is comparable to original effect size
+processed |>
+  dplyr::select(original_cohens_d, reanalysis_cohens_d) |>
+  filter(!is.na(original_cohens_d)) |>
+  filter(!is.na(reanalysis_cohens_d)) |> 
+  nrow()
+
 # Check if there are any cases where everything is missing
 processed |> 
   dplyr::group_by(paper_id) |>
@@ -1388,15 +1515,16 @@ original_data <-
     simplified_paper_id = forcats::fct_reorder(simplified_paper_id,
                                                original_cohens_d,
                                                .na_rm = FALSE)
-  )
+  ) |> 
+  dplyr::filter(!is.na(original_cohens_d))
 
 excluded_es <-
-  dplyr::filter(reanalysis_data, effect_size > 10 | effect_size < -10) |> 
+  dplyr::filter(reanalysis_data, effect_size > 5 | effect_size < -5) |> 
   mutate(excluded = glue::glue("study {simplified_paper_id}: {effect_size}")) |> 
   summarise(excluded_list = glue::glue_collapse(excluded, sep = "; "))
 ```
 
-A main question of our study was whether different analysts arrive at the same effect estimates (+/- 0.05 Cohen’s d) as the analyst of the original study? @fig-effect-main shows percentages of the effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The figure displays `r nrow(dplyr::filter(reanalysis_data, !is.na(effect_size)))` re-analysis effect size estimates. For `r missing_reanalysis_n` re-analyses, the reported effect size was not convertible to Cohen’s d. The figure does not show `r dplyr::filter(reanalysis_data, effect_size > 10 | effect_size < -10) |> nrow()` re-analysed effect sizes which are higher than 10 or lower than -10 Cohen's d (`r dplyr::pull(excluded_es, excluded_list)`). For the `r missing_original_n` studies listed in the bottom of the graph, we could not determine the original effect size due to missing information.
+A main question of our study was whether different analysts arrive at the same effect estimates (+/- 0.05 Cohen’s d) as the analyst of the original study? @fig-effect-main shows percentages of the effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The figure displays `r nrow(dplyr::filter(reanalysis_data, !is.na(effect_size)))` re-analysis effect size estimates. For `r missing_reanalysis_n` re-analyses, the reported effect size was not convertible to Cohen’s d. The figure does not show `r dplyr::filter(reanalysis_data, effect_size > 5 | effect_size < -5) |> nrow()` re-analysed effect sizes which are higher than 5 or lower than -5 Cohen's d (`r dplyr::pull(excluded_es, excluded_list)`). For the `r missing_original_n` studies listed in the bottom of the graph, we could not determine the original effect size due to missing information.
 
 ```{r echo=FALSE, warning=FALSE}
 #| label: fig-effect-main
@@ -1407,8 +1535,7 @@ A main question of our study was whether different analysts arrive at the same e
 
 effect_main_plot <-
   reanalysis_data |> 
-  # TODO: what to do with huge cohens ds?
-  dplyr::filter(effect_size <= 10 & effect_size >= -10) |> 
+  dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
   ggplot2::ggplot() +
   ggplot2::aes(
     y = simplified_paper_id,
@@ -1418,7 +1545,7 @@ effect_main_plot <-
   ggplot2::geom_point(
     shape = 16,
     color = viridis::viridis(5)[[3]],
-    # size = 5
+    # size = 4
     ) +
   # ggplot2::scale_color_manual(values = color_vector) +
   ggplot2::geom_pointrange(
@@ -1432,34 +1559,145 @@ effect_main_plot <-
     show.legend = FALSE,
     color = "black",
     shape = 15,
-    # size = 2
+    # size = 1
     ) +
   labs(
     x = "Effect size in Cohen's d",
     y = "Study number"
   ) +
   ggplot2::guides(color = "none") +
+  ggplot2::scale_x_continuous(breaks = seq(-5.0, 5.0, by = 0.5)) +
   ggplot2::theme(
     axis.ticks = ggplot2::element_blank(),
     legend.title = ggplot2::element_blank(),
     axis.line = ggplot2::element_line(),
     plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
     panel.grid = ggplot2::element_line(color = "lightgray"),
-    panel.grid.major.x = ggplot2::element_blank(),
+    # panel.grid.major.x = ggplot2::element_blank(),
     panel.grid.minor.x = ggplot2::element_blank(),
     panel.background = ggplot2::element_blank(),
     axis.title = ggplot2::element_text(size = 20),
     axis.text.y = ggplot2::element_text(size = 10),
+    # axis.text.x = ggplot2::element_text(angle = 90, size = 5)
     axis.text.x = ggplot2::element_text(size = 13)
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
-# TODO: for some reason tolerance region is not showing on saved plot... why?
 ggplot2::ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_plot,
        width = 12, height = 13,
        dpi = 300)
 
 effect_main_plot
+```
+
+```{r}
+# Based on: https://github.com/CenterForOpenScience/rpp
+colors <- c("Original" = "#440154FF", "Replication" = "#FDE725FF")
+
+y_dense <-
+  reanalysis_data |> 
+  dplyr::filter(!is.na(effect_size)) |> 
+  dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
+  ggplot(aes(x = effect_size)) +
+  geom_density(aes(y = ..count.., fill = "Replication"), trim = F, alpha = .5) +
+  xlab("") + 
+  ylab("") + 
+  coord_flip() +
+  scale_fill_manual(values = colors) + 
+  theme(
+    legend.position = "none",
+        
+    plot.margin = unit(c(0, 0, 3, 0), "lines"),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank()
+    )
+
+x_dense <- 
+  original_data |> 
+  dplyr::filter(original_cohens_d != -Inf) |> 
+  ggplot(aes(x = original_cohens_d)) +
+  geom_density(aes(y = ..count.., fill = "Original"), trim = F, alpha = .5) +
+  xlab("") + 
+  ylab("") +
+  scale_fill_manual(values = colors) + 
+  theme(
+    legend.position = "none",
+        plot.margin = unit(c(0, 0, 0, 4), "lines"),
+        panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank()
+    ) 
+
+scatter <-
+  reanalysis_data |>
+  dplyr::filter(!is.na(effect_size)) |>
+  dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
+  dplyr::filter(original_cohens_d != -Inf) |>
+  ggplot(aes(x = original_cohens_d, y = effect_size)) +
+    geom_rug(aes(color = "Original"),
+           size = 1,
+           sides = "b",
+           alpha = .6) +
+  geom_rug(aes(color = "Replication"),
+           size = 1,
+           sides = "l",
+           alpha = .6) +
+  scale_color_manual(values = colors) + 
+  geom_hline(aes(yintercept = 0), linetype = 2) +
+  geom_abline(intercept = 0,
+              slope = 1,
+              color = "Grey60") +
+   geom_smooth(method = "lm", se = FALSE, color = "black", alpha = 0.2) +
+  geom_point(
+    color = "Grey30",
+    shape = 21,
+    alpha = .8
+  ) +
+  scale_x_continuous(
+    limits = c(0, 5),
+    breaks = c(0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
+  ) +
+  scale_y_continuous(
+    limits = c(-5, 5),
+     breaks = c(-4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
+  ) +
+  labs(
+    x = "Original effect size in Cohen's d",
+    y = "Reanalysis effect size in Cohen's d",
+    # color = "Type"
+  ) +
+  theme(
+    # legend.position = c(.9, .6),
+    plot.margin = unit(c(-2, -1.5, 2, 2), "lines"),
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    # axis.title = element_text(size = 9),
+    # legend.background = element_blank(),
+    # legend.box.background = element_blank(),
+    # legend.key = element_blank()
+    legend.position = "none"
+    ) 
+
+## Uncomment to save subplot
+# ggsave("RPP_F3_scatter.png",plot=scatterP)
+
+blank_plot <- ggplot() + 
+  theme_void()
+
+effec_size_corr_plot <- gridExtra::grid.arrange(x_dense, blank_plot, scatter, y_dense, ncol = 2, nrow = 2
+                                                , widths = c(4, 1.4), heights = c(1.4, 4)
+                                                )
+
+# SAVE combined plots as PDF
+ggplot2::ggsave(here::here("figures/effec_size_corr_plot.jpg"), plot = effec_size_corr_plot,
+                width = 13, height = 10,
+       dpi = 300)
+
+effec_size_corr_plot
 ```
 
 ```{r include=FALSE}
@@ -1526,6 +1764,116 @@ ggplot2::ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_
 effect_region_all_plot
 ```
 
+To investigate the robustness of our tolerance region threshold we calculated the proportion of reanalysis effect size estimates within the tolerance region for a range of thresholds between 0.05 and 0.1.
+
+```{r}
+thresholds <- seq(0.01, 0.5, by = 0.001)
+
+threshold_robustness_plot_data <- map_df(thresholds, ~ calculate_tolerance_region_proportions(processed, threshold = .x, weight = NULL))
+
+threshold_robustness_plot_data <-
+  threshold_robustness_plot_data |> 
+  dplyr::mutate(
+    tolerance_region = threshold * 2
+  ) |> 
+    pivot_longer(
+    cols = c(analysis_percentage, paper_percentage),
+    names_to = "type",
+    values_to = "value",
+    names_prefix = "_percentage"
+  ) |> 
+  dplyr::mutate(
+    type =  stringr::str_replace(type, "_percentage", ""),
+    type = dplyr::case_when(
+      type == "analysis" ~ "Re-analysis effect sizes",
+      type == "paper" ~ "Papers"
+    )
+  )
+```
+
+```{r}
+threshold_robustness_plot <-
+  threshold_robustness_plot_data |> 
+  ggplot() +
+  aes(
+    x = tolerance_region,
+    y = value,
+    linetype = type
+  ) +
+  geom_vline(xintercept = 0.1, color = "#440154FF", linetype = "dashed") +
+  geom_line() +
+  scale_x_continuous(breaks = c(0.01, seq(0.05, 0.5, by = 0.05)) * 2, expand = c(0.05, 0)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 70, 10)) +
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  labs(
+    x = "Width of the Cohen's d tolerance region",
+    y = "Percentage within the tolerance region",
+    linetype = "Percentage of"
+  ) +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = c(0.8, 0.2)
+  )
+
+ggplot2::ggsave(here::here("figures/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
+
+threshold_robustness_plot
+```
+
+```{r}
+weights <- seq(0.05, 0.2, by = 0.001)
+
+threshold_weighted_robustness_plot_data <- map_df(weights, ~ calculate_tolerance_region_proportions(processed, threshold = NULL, weight = .x))
+
+threshold_weighted_robustness_plot_data <-
+  threshold_weighted_robustness_plot_data |> 
+    pivot_longer(
+    cols = c(analysis_percentage, paper_percentage),
+    names_to = "type",
+    values_to = "value",
+    names_prefix = "_percentage"
+  ) |> 
+  dplyr::mutate(
+    type =  stringr::str_replace(type, "_percentage", ""),
+    type = dplyr::case_when(
+      type == "analysis" ~ "Re-analysis effect sizes",
+      type == "paper" ~ "Papers"
+    )
+  )
+```
+
+```{r}
+threshold_weighted_robustness_plot <-
+  threshold_weighted_robustness_plot_data |> 
+  ggplot() +
+  aes(
+    x = weight,
+    y = value,
+    linetype = type
+  ) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(0.05, 0.2, by = 0.05), labels = scales::percent_format(scale = 1), expand = c(0.05, 0)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 70, 10)) +
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  labs(
+    x = "Percentage of original study's Cohen's d used\nto calculate tolerance region",
+    y = "Percentage within the tolerance region",
+    linetype = "Percentage of"
+  ) +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = c(0.8, 0.4)
+  )
+
+ggplot2::ggsave(here::here("figures/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
+
+threshold_weighted_robustness_plot
+```
+
 ##### Estimate robustness by discipline
 
 We were interested to see whether these robustness results show a different pattern when inspecting separately by the disciplines of the studies. @fig-effect-region-discipline and @fig-effect-robustness-discipline show that for the major disciplines (>=10 studies).
@@ -1546,7 +1894,11 @@ effect_region_discipline_data <-
   dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |>
   dplyr::mutate(paper_discipline = stringr::str_to_title(paper_discipline)) |> 
   # Exclude missing values
-  calculate_tolerance_region(grouping_var = paper_discipline, drop_missing = TRUE)
+  calculate_tolerance_region(
+    grouping_var = paper_discipline,
+    drop_missing = TRUE
+    # weight = 0.2
+    )
 
 effect_region_discipline_plot <-
   plot_percentage(
@@ -1556,6 +1908,9 @@ effect_region_discipline_plot <-
     y_lab = "Percentage of re-analysis results",
     x_lab = "Disciplines",
     with_labels = TRUE
+  ) +
+  ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
   )
 
 ggplot2::ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
@@ -1580,7 +1935,10 @@ effect_robustness_discipline_plot <-
             x_lab = "Disciplines",
             y_lab = "Effect size estimate range in Cohen's d",
             trans = "log10",
-            breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60))
+            breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60)) +
+  ggplot2::theme(
+    axis.title = element_text(size = 9)
+  )
 
 ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
 
@@ -1615,6 +1973,9 @@ effect_region_studytype_plot <-
     y_lab = "Percentage of re-analysis results",
     x_lab = "Study type",
     with_labels = TRUE
+  ) +
+  ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
   )
 
 ggplot2::ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
@@ -1639,7 +2000,10 @@ effect_robustness_studytype_plot <- plot_rain(
   y_lab = "Effect size estimate range in Cohen's d",
   trans = "log10",
   breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60)
-)
+) +
+  ggplot2::theme(
+    axis.title = element_text(size = 9)
+  )
 
 ggplot2::ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
 
@@ -1809,17 +2173,72 @@ samplesize_region_plot <-
     grouping_var = is_within_region,
     response_var = reanalysis_model_sample_size,
     y_lab = "Sample size",
-    x_lab = "Is the re-analysis effect size within the tolerance region?",
+    x_lab = "Is the re-analysis effect size\nwithin the tolerance region?",
     trans = "log10",
     breaks = c(10, 100, 1000, 10000, 100000)
   ) +
+  ggplot2::coord_flip() +
   ggplot2::theme(
-    axis.title.x = element_text(size = 10)
+    axis.title.x = element_text(size = 9)
   )
 
 ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
 
 samplesize_region_plot
+```
+
+```{r}
+df_region_data <-
+  processed |>
+  dplyr::select(
+    paper_id,
+    analyst_id,
+    reanalysis_degrees_of_freedom_1,
+    reanalysis_degrees_of_freedom_2,
+    original_cohens_d,
+    reanalysis_cohens_d
+  ) |>
+  dplyr::mutate(
+    reanalysis_degrees_of_freedom_1 = dplyr::case_when(
+      !is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_2,
+      is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_1
+    )
+  ) |>
+  dplyr::select(-reanalysis_degrees_of_freedom_2) |>
+  dplyr::filter(
+    !is.na(original_cohens_d),!is.na(reanalysis_cohens_d),!is.na(reanalysis_degrees_of_freedom_1)
+  ) |>
+  dplyr::mutate(
+    tolarence_region_lower = original_cohens_d - 0.05,
+    tolarence_region_upper = original_cohens_d + 0.05,
+    is_within_region = dplyr::case_when(
+      reanalysis_cohens_d <= tolarence_region_lower |
+        reanalysis_cohens_d >= tolarence_region_upper ~ "No",
+      reanalysis_cohens_d >= tolarence_region_lower |
+        reanalysis_cohens_d <= tolarence_region_upper ~ "Yes"
+    ),
+    is_within_region = factor(is_within_region, levels = c("Yes", "No"))
+  )
+
+
+df_region_plot <-
+  plot_rain(
+    data = df_region_data,
+    grouping_var = is_within_region,
+    response_var = reanalysis_degrees_of_freedom_1,
+    y_lab = "Log10 degrees of freedom",
+    x_lab = "Is the re-analysis effect size\nwithin the tolerance region?",
+    trans = "log10",
+    breaks = c(10, 100, 1000, 10000, 100000)
+  ) +
+  ggplot2::coord_flip() +
+  ggplot2::theme(
+    axis.title = element_text(size = 9)
+  )
+
+ggplot2::ggsave(here::here("figures/effect_region_df_plot.jpg"), df_region_plot, dpi = 300)
+
+df_region_plot
 ```
 
 #### Additional analyses

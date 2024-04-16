@@ -1,6 +1,6 @@
 ---
 title: ""
-format: html
+format: pdf
 editor: source
 editor_options: 
   chunk_output_type: console
