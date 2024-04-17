@@ -400,7 +400,7 @@ plot_height <- function(data, grouping_var, categorization_var, with_labels = FA
         ggplot2::aes(label = scales::percent(round(percentage), scale = 1),
                      color = {{ categorization_var }}),
         position = position_stack(vjust = 0.5, reverse = reverse),
-        size = 4  # Label text size
+        size = 3  # Label text size
       )
   }
   

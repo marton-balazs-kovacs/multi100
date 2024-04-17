@@ -629,7 +629,7 @@ ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot,
 total_hours_plot
 ```
 
-```{r}
+```{r include=FALSE}
 same_test_family <-
   processed |>
   dplyr::select(
@@ -672,7 +672,7 @@ proportion_unique_paper <-
   dplyr::group_by(simplified_paper_id) |>
   dplyr::summarise(
     has_non_unique = sum(total[!is_unique] > 0), .groups = 'drop'
-  ) |>
+  ) |> 
   dplyr::summarise(
     percentage_all_unique = round(mean(has_non_unique == 0) * 100, 2)
   )
@@ -1025,7 +1025,8 @@ conclusions_discipline_plot <-
     categorization_var = categorisation,
     with_labels = TRUE,
     y_lab = "Percentage of re-analyses",
-    x_lab = "Disciplines"
+    x_lab = "Disciplines",
+    rev_limits = FALSE
   ) + 
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
@@ -1097,7 +1098,8 @@ conclusions_studytype_plot <-
     categorization_var = categorisation,
     x_lab = "Study type",
     y_lab = "Percentage of re-analyses",
-    with_labels = TRUE
+    with_labels = TRUE,
+    rev_limits = FALSE
   ) +
   ggplot2::theme(
     plot.margin = margin(
@@ -1201,6 +1203,10 @@ peer_eval_subset_task1_data <-
   left_join(dplyr::select(processed, paper_id, analyst_id, task1_categorisation_plotting), by = c("paper_id", "analyst_id")) |> 
   dplyr::rename(categorisation = task1_categorisation_plotting) |>
   dplyr::mutate(
+    common_task1_acceptable = dplyr::case_when(
+      common_task1_acceptable == "(3) Acceptable and medium quality" ~ "Acceptable and medium quality",
+      common_task1_acceptable == "(4) Acceptable and high quality" ~ "Acceptable and high quality"
+    ),
     categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
     ) |> 
   calculate_conclusion(grouping_var = common_task1_acceptable,
@@ -1786,7 +1792,7 @@ threshold_robustness_plot_data <-
     type =  stringr::str_replace(type, "_percentage", ""),
     type = dplyr::case_when(
       type == "analysis" ~ "Re-analysis effect sizes",
-      type == "paper" ~ "Papers"
+      type == "paper" ~ "Studies"
     )
   )
 ```
@@ -1839,7 +1845,7 @@ threshold_weighted_robustness_plot_data <-
     type =  stringr::str_replace(type, "_percentage", ""),
     type = dplyr::case_when(
       type == "analysis" ~ "Re-analysis effect sizes",
-      type == "paper" ~ "Papers"
+      type == "paper" ~ "Studies"
     )
   )
 ```
@@ -1907,7 +1913,8 @@ effect_region_discipline_plot <-
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
     x_lab = "Disciplines",
-    with_labels = TRUE
+    with_labels = TRUE,
+    rev_limits = FALSE
   ) +
   ggplot2::theme(
     axis.title.y = element_text(hjust = 1)
@@ -1945,7 +1952,7 @@ ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), eff
 effect_robustness_discipline_plot 
 ```
 
-##### Estimate robustness by study type (observational, experimental)
+##### Estimate robustness by study design (observational, experimental)
 
 Here (@fig-effect-region-studytype and @fig-effect-robustness-studytype), we were interested to see whether these results show a different pattern when separating them by study type.
 
@@ -1972,7 +1979,8 @@ effect_region_studytype_plot <-
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
     x_lab = "Study type",
-    with_labels = TRUE
+    with_labels = TRUE,
+    rev_limits = FALSE
   ) +
   ggplot2::theme(
     axis.title.y = element_text(hjust = 1)
@@ -2001,8 +2009,10 @@ effect_robustness_studytype_plot <- plot_rain(
   trans = "log10",
   breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60)
 ) +
+  ggplot2::coord_flip() +
   ggplot2::theme(
-    axis.title = element_text(size = 9)
+    axis.title = element_text(size = 9),
+    axis.text = element_text(size = 7)
   )
 
 ggplot2::ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
@@ -2047,11 +2057,12 @@ effect_region_expertise_plot <-
     y_lab = "Number of re-analyses",
     x_lab = "Expertise rating",
     with_labels = TRUE,
-    rev_limits = FALSE
+    rev_limits = FALSE,
+    with_sum = FALSE
   )
 
 ggplot2::ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300,
-                width = 8, height = 6
+                # width = 8, height = 6
                 )
 
 effect_region_expertise_plot
