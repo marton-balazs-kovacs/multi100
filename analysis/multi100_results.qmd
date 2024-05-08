@@ -15,6 +15,7 @@ library(mapdata)
 library(countrycode)
 library(raster)
 library(gt)
+library(patchwork)
 
 # Load custom functions
 source(here::here("R/utils.R"))
@@ -2309,7 +2310,6 @@ knitr::include_graphics(here::here("generalized Marginal Effects/gMEs.png"))
 inferential_panel <- (
   conclusion_main_plot +
   (
-    conclusion_main_robustness_plot +
     conclusions_discipline_robustness_plot +
     conclusions_discipline_plot +
     conclusions_studytype_robustness_plot +
@@ -2321,7 +2321,7 @@ inferential_panel <- (
   )
 ) +
   plot_layout(widths = c(1, 3)) + 
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'a')
 
 
 inferential_panel
@@ -2332,9 +2332,10 @@ ggsave("figures/inferential_panel.png", inferential_panel, width = 22, height = 
 # effec_size_corr_plot_gg <- ggplotify::as.ggplot(effec_size_corr_plot) +
 # ggplot2::theme(plot.margin = margin(t = 0, r = 0, b = -2, l = 0, "cm"))
 # effec_size_corr_plot_gg
-main_section <- effect_main_plot +
-                effect_region_all_plot +
-                plot_layout(widths = c(2, 1))
+main_section <- 
+  effect_main_plot +
+  effect_region_all_plot +
+  plot_layout(widths = c(2, 1))
 
 # Define the remaining plots section
 small_plot_section <-
@@ -2350,7 +2351,7 @@ small_plot_section <-
 small_plot_section
 # Combine the main section and the remaining plots section
 estimate_panel <-
-  (main_section | small_plot_section) + plot_annotation(tag_levels = 'A')
+  (main_section | small_plot_section) + plot_annotation(tag_levels = 'a')
 
 estimate_panel
 
