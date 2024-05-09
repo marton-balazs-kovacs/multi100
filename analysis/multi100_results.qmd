@@ -253,7 +253,7 @@ age_plot <-
     axis.line = ggplot2::element_line()
   )
 
-ggplot2::ggsave(here::here("figures_barna/demographic_age_plot.jpg"), age_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_age_plot.jpg"), age_plot, dpi = 300)
 
 age_plot
 ```
@@ -341,7 +341,7 @@ country_map_plot <-
     plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")
   )
 
-ggplot2::ggsave(here::here("figures_barna/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
 
 country_map_plot
 ```
@@ -411,7 +411,7 @@ analyst_experience_years_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggplot2::ggsave(here::here("figures_barna/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
 
 analyst_experience_years_plot
 ```
@@ -469,7 +469,7 @@ analysis_frequency_plot <-
     axis.text.x = ggplot2::element_text(size = 7)
   )
 
-ggplot2::ggsave(here::here("figures_barna/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
 
 analysis_frequency_plot
 ```
@@ -516,7 +516,7 @@ expertise_self_rating_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures_barna/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
+ggsave(here::here("figures/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
 
 expertise_self_rating_plot
 ```
@@ -588,7 +588,7 @@ software_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures_barna/demographic_software_plot.jpg"), software_plot, dpi = 300)
+ggsave(here::here("figures/demographic_software_plot.jpg"), software_plot, dpi = 300)
 
 software_plot
 ```
@@ -644,7 +644,7 @@ total_hours_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures_barna/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
+ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
 
 total_hours_plot
 ```
@@ -752,7 +752,7 @@ peer_analyst_experience_years_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures_barna/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
+ggsave(here::here("figures/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
 
 peer_analyst_experience_years_plot
 ```
@@ -810,7 +810,7 @@ peer_analysis_frequency_plot <-
     axis.text.x = element_text(size = 6)
   )
 
-ggsave(here::here("figures_barna/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
+ggsave(here::here("figures/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
 
 peer_analysis_frequency_plot
 ```
@@ -856,7 +856,7 @@ peer_expertise_self_rating_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures_barna/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
+ggsave(here::here("figures/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
 
 peer_expertise_self_rating_plot
 ```
@@ -927,7 +927,7 @@ In Task 1, the co-analysts were asked to conduct any statistical analysis to arr
 
 conclusion_main_robustness_plot <- plot_conclusion_robustness(conclusions_main_robustness_data, robust)
 
-ggsave(here::here("figures_barna/conclusion_main_robustness_plot.jpg"), conclusion_main_robustness_plot, dpi = 300)
+ggsave(here::here("figures/conclusion_main_robustness_plot.jpg"), conclusion_main_robustness_plot, dpi = 300)
 
 conclusion_main_robustness_plot
 ```
@@ -965,7 +965,7 @@ conclusion_main_plot <-
 # legend <- cowplot::get_legend(conclusion_main_plot)
 # conclusion_main_plot_w_legend <- cowplot::plot_grid(conclusion_main_plot_wo_legend, legend, nrow = 2, rel_heights = c(1, 0.05), rel_widths = c(1, 5))
 
-ggsave(here::here("figures_barna/conclusion_main_plot.jpg"), conclusion_main_plot, width = 9, height = 11.69, dpi = 300)
+ggsave(here::here("figures/conclusion_main_plot.jpg"), conclusion_main_plot, width = 9, height = 11.69, dpi = 300)
 
 conclusion_main_plot
 ```
@@ -1029,7 +1029,7 @@ conclusions_discipline_robustness_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggsave(here::here("figures_barna/conclusions_discipline_robustness_plot.jpg"), conclusions_discipline_robustness_plot, dpi = 300)
+ggsave(here::here("figures/conclusions_discipline_robustness_plot.jpg"), conclusions_discipline_robustness_plot, dpi = 300)
 
 conclusions_discipline_robustness_plot
 ```
@@ -1054,7 +1054,7 @@ conclusions_discipline_plot <-
     axis.title.y = element_text(hjust = 1)
     )
 
-ggplot2::ggsave(here::here("figures_barna/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
 
 conclusions_discipline_plot
 ```
@@ -1102,7 +1102,7 @@ conclusions_studytype_robustness_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures_barna/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
 
 conclusions_studytype_robustness_plot
 ```
@@ -1135,7 +1135,7 @@ conclusions_studytype_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures_barna/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
 
 conclusions_studytype_plot
 ```
@@ -1185,7 +1185,7 @@ conclusions_expertise_plot <-
   ) +
   theme(legend.text = element_text(size = 8))
 
-ggsave(here::here("figures_barna/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, 
+ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, 
        height = 6, width = 8,
        dpi = 300)
 
@@ -1251,7 +1251,7 @@ peer_eval_subset_task1_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggsave(here::here("figures_barna/peer_eval_subset_task1_plot.jpg"), peer_eval_subset_task1_plot, dpi = 300)
+ggsave(here::here("figures/peer_eval_subset_task1_plot.jpg"), peer_eval_subset_task1_plot, dpi = 300)
 
 peer_eval_subset_task1_plot
 ```
@@ -1311,7 +1311,7 @@ conclusions_familiarity_plot <-
     axis.title.y = element_text(hjust = 1)
     )
 
-ggsave(here::here("figures_barna/conclusions_familiarity_plot.jpg"), conclusions_familiarity_plot, dpi = 300)
+ggsave(here::here("figures/conclusions_familiarity_plot.jpg"), conclusions_familiarity_plot, dpi = 300)
 
 conclusions_familiarity_plot
 ```
@@ -1402,7 +1402,7 @@ conclusions_samplesize_plot <-
     axis.title = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures_barna/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
 
 # Number of analysis where samplesize is present
 nrow(filter(processed, !is.na(reanalysis_model_sample_size)))
@@ -1446,7 +1446,7 @@ conclusions_df_plot <-
     axis.title = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures_barna/conclusions_df_plot.jpg"), conclusions_df_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/conclusions_df_plot.jpg"), conclusions_df_plot, dpi = 300)
 
 conclusions_df_plot
 ```
@@ -1609,7 +1609,7 @@ effect_main_plot <-
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
-ggplot2::ggsave(here::here("figures_barna/effect_main_plot.jpg"), plot = effect_main_plot,
+ggplot2::ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_plot,
        width = 12, height = 13,
        dpi = 300)
 
@@ -1740,7 +1740,7 @@ effec_size_corr_plot <- effec_size_corr_plot +
 # )
 
 # SAVE combined plots as PDF
-ggplot2::ggsave(here::here("figures_barna/effec_size_corr_plot.jpg"), plot = effec_size_corr_plot,
+ggplot2::ggsave(here::here("figures/effec_size_corr_plot.jpg"), plot = effec_size_corr_plot,
                 width = 13, height = 10,
        dpi = 300)
 
@@ -1806,7 +1806,7 @@ effect_region_all_plot <- plot_tolarence_region(data = effect_region_all_data, g
     axis.text.x = ggplot2::element_text(size = 13)
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
 
 effect_region_all_plot
 ```
@@ -1814,7 +1814,7 @@ effect_region_all_plot
 To investigate the robustness of our tolerance region threshold we calculated the proportion of reanalysis effect size estimates within the tolerance region for a range of thresholds between 0.05 and 0.1.
 
 ```{r}
-thresholds <- seq(0.01, 0.5, by = 0.001)
+thresholds <- seq(0.01, 0.2, by = 0.001)
 
 threshold_robustness_plot_data <- map_df(thresholds, ~ calculate_tolerance_region_proportions(processed, threshold = .x, weight = NULL))
 
@@ -1849,8 +1849,8 @@ threshold_robustness_plot <-
   ) +
   geom_vline(xintercept = 0.1, color = "#440154FF", linetype = "dashed") +
   geom_line() +
-  scale_x_continuous(breaks = c(0.01, seq(0.05, 0.5, by = 0.05)) * 2, expand = c(0.05, 0)) +
-  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 70, 10)) +
+  scale_x_continuous(breaks = c(0.01, seq(0.05, 0.2, by = 0.05)) * 2, expand = c(0.05, 0)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 100, 10), limits = c(0, 100)) +
   viridis::scale_fill_viridis(discrete = TRUE) +
   labs(
     x = "Width of the Cohen's d tolerance region",
@@ -1861,10 +1861,10 @@ threshold_robustness_plot <-
     panel.background = element_blank(),
     panel.grid = element_blank(),
     axis.line = element_line(color = "black"),
-    legend.position = c(0.8, 0.2)
+    legend.position = c(0.8, 0.8)
   )
 
-ggplot2::ggsave(here::here("figures_barna/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
+ggplot2::ggsave(here::here("figures/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
 
 threshold_robustness_plot
 ```
@@ -1901,8 +1901,8 @@ threshold_weighted_robustness_plot <-
     linetype = type
   ) +
   geom_line() +
-  scale_x_continuous(breaks = seq(0.05, 0.2, by = 0.05), labels = scales::percent_format(scale = 1), expand = c(0.05, 0)) +
-  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 70, 10)) +
+  scale_x_continuous(breaks = seq(0.05, 0.2, by = 0.05), labels = scales::percent_format(scale = 100), expand = c(0.05, 0)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 100, 10), limits = c(0, 100)) +
   viridis::scale_fill_viridis(discrete = TRUE) +
   labs(
     x = "Percentage of original study's Cohen's d used\nto calculate tolerance region",
@@ -1913,10 +1913,10 @@ threshold_weighted_robustness_plot <-
     panel.background = element_blank(),
     panel.grid = element_blank(),
     axis.line = element_line(color = "black"),
-    legend.position = c(0.8, 0.4)
+    legend.position = c(0.8, 0.8)
   )
 
-ggplot2::ggsave(here::here("figures_barna/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
+ggplot2::ggsave(here::here("figures/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
 
 threshold_weighted_robustness_plot
 ```
@@ -1961,7 +1961,7 @@ effect_region_discipline_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
 
 effect_region_discipline_plot
 ```
@@ -1988,7 +1988,7 @@ effect_robustness_discipline_plot <-
     axis.title = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
 
 effect_robustness_discipline_plot 
 ```
@@ -2027,7 +2027,7 @@ effect_region_studytype_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
 
 effect_region_studytype_plot
 ```
@@ -2056,7 +2056,7 @@ effect_robustness_studytype_plot <- plot_rain(
     axis.text = element_text(size = 7)
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
 
 effect_robustness_studytype_plot 
 ```
@@ -2102,7 +2102,7 @@ effect_region_expertise_plot <-
     with_sum = FALSE
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300,
+ggplot2::ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300,
                 # width = 8, height = 6
                 )
 
@@ -2136,7 +2136,7 @@ effect_region_familiarity_plot <-
     unit = "pt"
   ))
 
-ggplot2::ggsave(here::here("figures_barna/effect_region_familiarity_plot.jpg"), effect_region_familiarity_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_familiarity_plot.jpg"), effect_region_familiarity_plot, dpi = 300)
 
 effect_region_familiarity_plot
 ```
@@ -2234,7 +2234,7 @@ samplesize_region_plot <-
     axis.title.x = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
 
 samplesize_region_plot
 ```
@@ -2288,7 +2288,7 @@ df_region_plot <-
     axis.title = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures_barna/effect_region_df_plot.jpg"), df_region_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/effect_region_df_plot.jpg"), df_region_plot, dpi = 300)
 
 df_region_plot
 ```
@@ -2326,7 +2326,7 @@ inferential_panel <- (
 
 inferential_panel
 
-ggsave("figures/inferential_panel.png", inferential_panel, width = 22, height = 14, dpi = 300)
+ggsave(here::here("figures/inferential_panel.png"), inferential_panel, width = 22, height = 14, dpi = 300)
 
 # Estimate robustness
 # effec_size_corr_plot_gg <- ggplotify::as.ggplot(effec_size_corr_plot) +
@@ -2355,6 +2355,6 @@ estimate_panel <-
 
 estimate_panel
 
-ggsave("figures/estimate_panel.png", estimate_panel, width = 30, height = 14, dpi = 300)
+ggsave(here::here("figures/estimate_panel.png"), estimate_panel, width = 30, height = 14, dpi = 300)
 ```
 
