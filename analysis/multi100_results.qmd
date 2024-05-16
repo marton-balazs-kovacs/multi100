@@ -1620,131 +1620,131 @@ effect_main_plot
 # Based on: https://github.com/CenterForOpenScience/rpp
 colors <- c("Original" = "#440154FF", "Replication" = "#FDE725FF")
 
-y_dense <-
-  reanalysis_data |> 
-  dplyr::filter(!is.na(effect_size)) |> 
-  dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
-  ggplot(aes(x = effect_size)) +
-  geom_density(aes(y = ..count.., fill = "Replication"), trim = F, alpha = .5) +
-  xlab("") + 
-  ylab("") + 
-  coord_flip() +
-  scale_fill_manual(values = colors) + 
-  theme(
-    legend.position = "none",
-        
-    plot.margin = unit(c(0, 0, 3, 0), "lines"),
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.text = element_blank(),
-    axis.ticks = element_blank()
-    )
-
-x_dense <- 
-  original_data |> 
-  dplyr::filter(original_cohens_d != -Inf) |> 
-  ggplot(aes(x = original_cohens_d)) +
-  geom_density(aes(y = ..count.., fill = "Original"), trim = F, alpha = .5) +
-  xlab("") + 
-  ylab("") +
-  scale_fill_manual(values = colors) + 
-  theme(
-    legend.position = "none",
-        plot.margin = unit(c(0, 0, 0, 4), "lines"),
-        panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.text = element_blank(),
-    axis.ticks = element_blank()
-    ) 
-
-scatter <-
+effec_size_corr_plot_data <-
   reanalysis_data |>
   dplyr::filter(!is.na(effect_size)) |>
-  dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
-  dplyr::filter(original_cohens_d != -Inf) |>
-  ggplot(aes(x = original_cohens_d, y = effect_size)) +
-    geom_rug(aes(color = "Original"),
-           size = 1,
-           sides = "b",
-           alpha = .6) +
-  geom_rug(aes(color = "Replication"),
-           size = 1,
-           sides = "l",
-           alpha = .6) +
+  dplyr::filter(effect_size <= 5 & effect_size >= -5) |>
+  dplyr::filter(original_cohens_d != -Inf)
+
+scatter <-
+  effec_size_corr_plot_data |> 
+  ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
+  geom_point(color = "Grey30",
+             shape = 21,
+             alpha = .8) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "black",
+    alpha = 0.2
+  ) +
+  geom_rug(
+    aes(color = "Original"),
+    size = 1,
+    sides = "b",
+    alpha = .6
+  ) +
+  geom_rug(
+    aes(color = "Replication"),
+    size = 1,
+    sides = "l",
+    alpha = .6
+  ) +
   scale_color_manual(values = colors) + 
   geom_hline(aes(yintercept = 0), linetype = 2) +
   geom_abline(intercept = 0,
               slope = 1,
               color = "Grey60") +
-   geom_smooth(method = "lm", se = FALSE, color = "black", alpha = 0.2) +
-  geom_point(
-    color = "Grey30",
-    shape = 21,
-    alpha = .8
-  ) +
   scale_x_continuous(
     limits = c(0, 5),
     breaks = c(0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
   ) +
   scale_y_continuous(
     limits = c(-5, 5),
-     breaks = c(-4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
+     breaks = c(-5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
   ) +
   labs(
     x = "Original effect size in Cohen's d",
-    y = "Reanalysis effect size in Cohen's d",
-    # color = "Type"
+    y = "Reanalysis effect size in Cohen's d"
   ) +
   theme(
-    # legend.position = c(.9, .6),
-    plot.margin = unit(c(-2, -1.5, 2, 2), "lines"),
     panel.background = element_blank(),
     panel.grid = element_blank(),
     axis.line = element_line(color = "black"),
-    # axis.title = element_text(size = 9),
-    # legend.background = element_blank(),
-    # legend.box.background = element_blank(),
-    # legend.key = element_blank()
     legend.position = "none"
-    ) 
+    )
 
-## Uncomment to save subplot
-# ggsave("RPP_F3_scatter.png",plot=scatterP)
+# Add reference lines for alignment checking
+# x_dense <- x_dense + geom_vline(xintercept = c(0, 2.5, 5), linetype = "dashed", color = "red")
+# y_dense <- y_dense + geom_vline(xintercept = c(-5, 0, 5), linetype = "dashed", color = "blue") + coord_flip()
+# scatter <- scatter + geom_vline(xintercept = c(0, 2.5, 5), linetype = "dashed", color = "red") +
+#                       geom_hline(yintercept = c(-5, 0, 5), linetype = "dashed", color = "blue")
 
-blank_plot <- ggplot() + 
-  geom_blank() +
-  theme_void()
+effec_size_corr_plot <- ggExtra::ggMarginal(scatter, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
 
-row1 <- x_dense | blank_plot
-row2 <- scatter | y_dense
+scatter_zoomed <-
+  effec_size_corr_plot_data |> 
+   dplyr::filter(effect_size <= 1 & effect_size >= -1) |> 
+  ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
+  geom_point(color = "Grey30",
+             shape = 21,
+             alpha = .8) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "black",
+    alpha = 0.2
+  ) +
+  geom_rug(
+    aes(color = "Original"),
+    size = 1,
+    sides = "b",
+    alpha = .6
+  ) +
+  geom_rug(
+    aes(color = "Replication"),
+    size = 1,
+    sides = "l",
+    alpha = .6
+  ) +
+  scale_color_manual(values = colors) + 
+  geom_hline(aes(yintercept = 0), linetype = 2) +
+  geom_abline(intercept = 0,
+              slope = 1,
+              color = "Grey60") +
+  scale_x_continuous(
+    limits = c(0, 1),
+    breaks = c(0, .5, 1)
+  ) +
+  scale_y_continuous(
+    limits = c(-1, 1),
+     breaks = c(-1, -0.5, 0, .5, 1)
+  ) +
+  labs(
+    x = "Original effect size in Cohen's d",
+    y = "Reanalysis effect size in Cohen's d"
+  ) +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = "none"
+    )
 
-# Stack the rows to create the final 2x2 grid
-effec_size_corr_plot <- row1 / row2
+effec_size_corr_plot_zoomed <- ggExtra::ggMarginal(scatter_zoomed, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
 
-# Use plot_layout() to specify the relative widths and heights
-effec_size_corr_plot <- effec_size_corr_plot + 
-  plot_layout(widths = c(4, 1.4), heights = c(1.4, 4))
-
-# effec_size_corr_plot <-
-#   gridExtra::grid.arrange(
-#     x_dense, blank_plot, scatter, y_dense,
-#     ncol = 2, nrow = 2,
-#     widths = c(4, 1.4), heights = c(1.4, 4)
-#   )
-
-# effec_size_corr_plot <- cowplot::plot_grid(
-#   x_dense, blank_plot, scatter, y_dense,
-#   ncol = 2, nrow = 2,
-#   widths = c(4, 1.4),  # Relative widths
-#   heights = c(1.4, 4)  # Relative heights
-# )
-
-# SAVE combined plots as PDF
+# Save plot
 ggplot2::ggsave(here::here("figures/effec_size_corr_plot.jpg"), plot = effec_size_corr_plot,
                 width = 13, height = 10,
        dpi = 300)
 
+ggplot2::ggsave(here::here("figures/effec_size_corr_plot_zoomed.jpg"), plot = effec_size_corr_plot_zoomed,
+                width = 13, height = 10,
+       dpi = 300)
+
 effec_size_corr_plot
+
+effec_size_corr_plot_zoomed
 ```
 
 ```{r include=FALSE}
