@@ -1684,7 +1684,8 @@ effec_size_corr_plot <- ggExtra::ggMarginal(scatter, type = "density", margins =
 
 scatter_zoomed <-
   effec_size_corr_plot_data |> 
-   dplyr::filter(effect_size <= 1 & effect_size >= -1) |> 
+  dplyr::filter(effect_size <= 1 & effect_size >= -1) |>
+  dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1) |> 
   ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
   geom_point(color = "Grey30",
              shape = 21,
