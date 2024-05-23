@@ -1626,6 +1626,14 @@ effec_size_corr_plot_data <-
   dplyr::filter(effect_size <= 5 & effect_size >= -5) |>
   dplyr::filter(original_cohens_d != -Inf)
 
+# Median
+round(median(effec_size_corr_plot_data$effect_size), 2)
+round(median(effec_size_corr_plot_data$original_cohens_d), 2)
+
+# Mean
+round(mean(effec_size_corr_plot_data$effect_size), 2)
+round(mean(effec_size_corr_plot_data$original_cohens_d), 2)
+
 scatter <-
   effec_size_corr_plot_data |> 
   ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
@@ -1671,7 +1679,9 @@ scatter <-
     panel.background = element_blank(),
     panel.grid = element_blank(),
     axis.line = element_line(color = "black"),
-    legend.position = "none"
+    legend.position = "none",
+    axis.title = element_text(size = 25),
+    axis.text = element_text(size = 20)
     )
 
 # Add reference lines for alignment checking
@@ -1729,7 +1739,9 @@ scatter_zoomed <-
     panel.background = element_blank(),
     panel.grid = element_blank(),
     axis.line = element_line(color = "black"),
-    legend.position = "none"
+    legend.position = "none",
+    axis.title = element_text(size = 25),
+    axis.text = element_text(size = 20)
     )
 
 effec_size_corr_plot_zoomed <- ggExtra::ggMarginal(scatter_zoomed, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
