@@ -407,16 +407,29 @@ plot_height <- function(data, grouping_var, categorization_var, with_labels = FA
   return(plot)
 }
 
+get_comparison_fn <- function(operator) {
+  switch(operator,
+         ">=" = function(a, b) a >= b,
+         "<=" = function(a, b) a <= b,
+         ">" = function(a, b) a > b,
+         "<" = function(a, b) a < b,
+         "==" = function(a, b) a == b,
+         stop("Invalid operator")
+  )
+}
+
 #' independent of calculate_conclusion function
-calculate_conclusion_robustness <- function(data, grouping_var, categorization_var, threshold = 100) {
+calculate_conclusion_robustness <- function(data, grouping_var, categorization_var, threshold = 100, operator = "==") {
   threshold_fraction <- threshold / 100
+  # Custom function to make robustness comparison dynamic
+  comparison_fn <- get_comparison_fn(operator)
   
   if (missing(grouping_var)) {
     data %>%
       dplyr::group_by(simplified_paper_id) %>% 
       dplyr::summarise(
         same_conclusion_fraction = mean({{categorization_var}} == "Same conclusion"),
-        robust = dplyr::if_else(same_conclusion_fraction >= threshold_fraction, "Inferentially robust", "Inferentially not robust"),
+        robust = dplyr::if_else(comparison_fn(same_conclusion_fraction, threshold_fraction), "Inferentially robust", "Inferentially not robust"),
         robust = factor(robust, levels = c("Inferentially robust", "Inferentially not robust"))
       ) |> 
       dplyr::ungroup() %>%
@@ -432,7 +445,7 @@ calculate_conclusion_robustness <- function(data, grouping_var, categorization_v
       dplyr::group_by(paper_id, {{grouping_var}}) %>%
       dplyr::summarise(
         same_conclusion_fraction = mean({{categorization_var}} == "Same conclusion"),
-        robust = dplyr::if_else(same_conclusion_fraction >= threshold_fraction, "Inferentially robust", "Inferentially not robust"),
+        robust = dplyr::if_else(comparison_fn(same_conclusion_fraction, threshold_fraction), "Inferentially robust", "Inferentially not robust"),
         robust = factor(robust, levels = c("Inferentially robust", "Inferentially not robust"))
       ) %>% 
       dplyr::ungroup() %>% 
