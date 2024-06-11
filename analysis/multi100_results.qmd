@@ -900,9 +900,9 @@ conclusions_main_data <-
 # When threshold is 100% same conclusion for robust result
 conclusions_main_robustness_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 100)
 # When threshold is 80% same conclusion for robust result
-conclusions_main_robustness_80_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 80)
+conclusions_main_robustness_80_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 80, operator = ">")
 # When threshold is 60% same conclusion for robust result
-conclusions_main_robustness_60_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 60)
+conclusions_main_robustness_60_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 60, operator = ">")
 ```
 
 In Task 1, the co-analysts were asked to conduct any statistical analysis to arrive at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed studies, the conclusions of `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)`% (`r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(n)`) remained robust to independent re-analysis, so all assigned co-analysts arrived at the same conclusion as reported in the article of the original study (inferential robustness; see @fig-conclusions-main-robustness). With alternative definitions of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)`% when 80% and `r filter(conclusions_main_robustness_60_data, robust == "Inferentially robust") |> pull(percentage)`% when 60% reanalysis agreement with the original conclusion defined analytical robustness. For one study (1%), all co-analysts reported no effect or an inconclusive conclusion. 
