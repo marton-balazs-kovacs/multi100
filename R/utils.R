@@ -407,28 +407,32 @@ plot_height <- function(data, grouping_var, categorization_var, with_labels = FA
   return(plot)
 }
 
-#' for now input must be calculate_conclusion() result data
-calculate_conclusion_robustness <- function(data, grouping_var, categorization_var) {
+#' independent of calculate_conclusion function
+calculate_conclusion_robustness <- function(data, grouping_var, categorization_var, threshold = 100) {
+  threshold_fraction <- threshold / 100
+  
   if (missing(grouping_var)) {
     data %>%
-      dplyr::group_by(paper_id) %>% 
+      dplyr::group_by(simplified_paper_id) %>% 
       dplyr::summarise(
-        robust = dplyr::if_else(all({{categorization_var}} == "Same conclusion"), "Inferentially robust", "Inferentially not robust"),
+        same_conclusion_fraction = mean({{categorization_var}} == "Same conclusion"),
+        robust = dplyr::if_else(same_conclusion_fraction >= threshold_fraction, "Inferentially robust", "Inferentially not robust"),
         robust = factor(robust, levels = c("Inferentially robust", "Inferentially not robust"))
-      ) %>%
-      dplyr::ungroup() %>% 
+      ) |> 
+      dplyr::ungroup() %>%
       dplyr::count(robust) %>%
       dplyr::mutate(
         N = sum(n),
         relative_frequency = n / N,
         percentage = round(relative_frequency * 100, 2)
-      ) |> 
+      ) |>
       dplyr::ungroup()
   } else {
     data %>% 
       dplyr::group_by(paper_id, {{grouping_var}}) %>%
       dplyr::summarise(
-        robust = dplyr::if_else(all({{categorization_var}} == "Same conclusion"), "Inferentially robust", "Inferentially not robust"),
+        same_conclusion_fraction = mean({{categorization_var}} == "Same conclusion"),
+        robust = dplyr::if_else(same_conclusion_fraction >= threshold_fraction, "Inferentially robust", "Inferentially not robust"),
         robust = factor(robust, levels = c("Inferentially robust", "Inferentially not robust"))
       ) %>% 
       dplyr::ungroup() %>% 
