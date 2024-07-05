@@ -1574,7 +1574,7 @@ effect_main_plot <-
     # size = 1
     ) +
   labs(
-    x = "Effect size in Cohen's d",
+    x = expression("Effect size in Cohen's " * italic("d")),
     y = "Study number"
   ) +
   ggplot2::guides(color = "none") +
@@ -1602,7 +1602,7 @@ ggplot2::ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_p
 effect_main_plot
 ```
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Based on: https://github.com/CenterForOpenScience/rpp
 colors <- c("Original" = "#440154FF", "Replication" = "#FDE725FF")
 
@@ -1658,8 +1658,8 @@ scatter <-
      breaks = c(-5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
   ) +
   labs(
-    x = "Original effect size in Cohen's d",
-    y = "Reanalysis effect size in Cohen's d"
+    x = expression("Original effect size in Cohen's " * italic("d")),
+    y = expression("Re-analysis effect size in Cohen's" * italic("d"))
   ) +
   theme(
     panel.background = element_blank(),
@@ -1718,8 +1718,8 @@ scatter_zoomed <-
      breaks = c(-1, -0.5, 0, .5, 1)
   ) +
   labs(
-    x = "Original effect size in Cohen's d",
-    y = "Reanalysis effect size in Cohen's d"
+    x = expression("Original effect size in Cohen's " * italic("d")),
+    y = expression("Re-analysis effect size in Cohen's" * italic("d"))
   ) +
   theme(
     panel.background = element_blank(),
@@ -1747,13 +1747,8 @@ effec_size_corr_plot_zoomed
 ```
 
 ```{r include=FALSE}
-effect_region_all_data <- 
-  processed |> 
-  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T) |> 
-  mutate(
-    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
-  )
-
+# On the individual analysis level
+# +-0.05 threshold for tolerance region
 ind_within_tol_reg <-
   processed |>
   dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) |>
@@ -1775,7 +1770,38 @@ ind_within_tol_reg <-
   # Exclude missing tolerance region decisions
   dplyr::filter(!is.na(is_within_region)) |> 
   calculate_percentage(is_within_region)
-  
+
+# +-0.2 threshold for tolerance region
+ind_within_tol_reg_20 <-
+  processed |>
+  dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) |>
+  dplyr::mutate(
+    tolarence_region_lower = original_cohens_d - 0.2,
+    tolarence_region_upper = original_cohens_d + 0.2,
+    is_within_region = dplyr::case_when(
+      reanalysis_cohens_d >= tolarence_region_lower &
+        reanalysis_cohens_d <= tolarence_region_upper ~ "Within tolerance region",
+      reanalysis_cohens_d < tolarence_region_lower |
+        reanalysis_cohens_d > tolarence_region_upper ~ "Outside of tolerance region",
+      is.na(reanalysis_cohens_d) ~ "Missing"
+    ),
+    is_within_region = factor(
+      is_within_region,
+      levels = c("Within tolerance region", "Outside of tolerance region")
+    )
+  ) |> 
+  # Exclude missing tolerance region decisions
+  dplyr::filter(!is.na(is_within_region)) |> 
+  calculate_percentage(is_within_region)
+
+# On the paper level
+effect_region_all_data <- 
+  processed |> 
+  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T) |> 
+  mutate(
+    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
+  )
+
 within_tolerance_region <-
   effect_region_all_data |> 
   dplyr::group_by(simplified_paper_id) |> 
@@ -1791,7 +1817,7 @@ within_tolerance_region <-
     )
 ```
 
-We found that `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(percentage)`% (`r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(n)` out of `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(N)`) of the studies contained at least one re-analysis result where the effect size was beyond the tolerance region (+/- 0.05 Cohen's d) of the result of the original study (@fig-effect-region-all). Out of the `r dplyr::distinct(ind_within_tol_reg, N) |> dplyr::pull(N)` available reanalysis effect sizes `r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(n)`) were outside of the tolerance region.
+We found that `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(percentage)`% (`r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(n)` out of `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(N)`) of the studies contained at least one re-analysis result where the effect size was beyond the tolerance region (+/- 0.05 Cohen's d) of the result of the original study (@fig-effect-region-all). Out of the `r dplyr::distinct(ind_within_tol_reg, N) |> dplyr::pull(N)` available reanalysis effect sizes `r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(n)`) were outside of the tolerance region. With a broader tolerance region (+/- 0.20 Cohen’s d) we found that from the available reanalysis effect sizes `r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Outside of tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Outside of tolerance region") |> dplyr::pull(n)`) were outside of the tolerance region.
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-effect-region-all
@@ -1812,7 +1838,7 @@ effect_region_all_plot
 
 To investigate the robustness of our tolerance region threshold we calculated the proportion of reanalysis effect size estimates within the tolerance region for a range of thresholds between 0.05 and 0.1.
 
-```{r}
+```{r include=FALSE, message=FALSE, warning=FALSE}
 thresholds <- seq(0.01, 0.2, by = 0.001)
 
 threshold_robustness_plot_data <- map_df(thresholds, ~ calculate_tolerance_region_proportions(processed, threshold = .x, weight = NULL))
@@ -1837,7 +1863,7 @@ threshold_robustness_plot_data <-
   )
 ```
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 threshold_robustness_plot <-
   threshold_robustness_plot_data |> 
   ggplot() +
@@ -1868,7 +1894,7 @@ ggplot2::ggsave(here::here("figures/threshold_robustness_plot.jpg"), threshold_r
 threshold_robustness_plot
 ```
 
-```{r}
+```{r include=FALSE, message=FALSE, warning=FALSE}
 weights <- seq(0.05, 0.2, by = 0.001)
 
 threshold_weighted_robustness_plot_data <- map_df(weights, ~ calculate_tolerance_region_proportions(processed, threshold = NULL, weight = .x))
@@ -1890,7 +1916,7 @@ threshold_weighted_robustness_plot_data <-
   )
 ```
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 threshold_weighted_robustness_plot <-
   threshold_weighted_robustness_plot_data |> 
   ggplot() +
@@ -2238,7 +2264,7 @@ ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samples
 samplesize_region_plot
 ```
 
-```{r}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 df_region_data <-
   processed |>
   dplyr::select(
@@ -2303,7 +2329,7 @@ While Cohen's d has the advantage of being easily interpretable and comparable a
 knitr::include_graphics(here::here("generalized Marginal Effects/gMEs.png"))
 ```
 
-```{r}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 # Panel figures for Nature
 ## Inferential robustness
 inferential_panel <- (

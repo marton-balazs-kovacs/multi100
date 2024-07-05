@@ -26,7 +26,7 @@ processed |>
   dplyr::distinct(paper_id, simplified_paper_id) |> 
   dplyr::arrange(simplified_paper_id) |> 
   dplyr::rename(`Paper ID` = paper_id,
-                `Simplified Paper ID` = simplified_paper_id) |>
+                `Study Number` = simplified_paper_id) |>
   gt::gt() |>
   gt::tab_style(
     style = gt::cell_text(weight = "bold"),
