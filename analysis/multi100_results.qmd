@@ -1620,6 +1620,12 @@ round(median(effec_size_corr_plot_data$original_cohens_d), 2)
 round(mean(effec_size_corr_plot_data$effect_size), 2)
 round(mean(effec_size_corr_plot_data$original_cohens_d), 2)
 
+# Fit the linear model
+lm_fit <- lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data)
+
+# Extract slope
+beta <- coef(lm_fit)[2]
+
 scatter <-
   effec_size_corr_plot_data |> 
   ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
@@ -1632,6 +1638,7 @@ scatter <-
     color = "black",
     alpha = 0.2
   ) +
+  annotate("text", x = 4.7, y = 4, label = bquote(italic(beta) == .(round(beta, 2))), size = 4, color = "black") +
   geom_rug(
     aes(color = "Original"),
     size = 1,
@@ -1659,7 +1666,7 @@ scatter <-
   ) +
   labs(
     x = expression("Original effect size in Cohen's " * italic("d")),
-    y = expression("Re-analysis effect size in Cohen's" * italic("d"))
+    y = expression("Re-analysis effect size in Cohen's " * italic("d"))
   ) +
   theme(
     panel.background = element_blank(),
@@ -1678,10 +1685,19 @@ scatter <-
 
 effec_size_corr_plot <- ggExtra::ggMarginal(scatter, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
 
-scatter_zoomed <-
+effec_size_corr_plot_data_zoomed <-
   effec_size_corr_plot_data |> 
   dplyr::filter(effect_size <= 1 & effect_size >= -1) |>
-  dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1) |> 
+  dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1)
+
+# Fit the linear model
+lm_fit_zoomed <- lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data_zoomed)
+
+# Extract slope
+beta_zoomed <- coef(lm_fit)[2]
+
+scatter_zoomed <-
+  effec_size_corr_plot_data_zoomed |> 
   ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
   geom_point(color = "Grey30",
              shape = 21,
@@ -1692,6 +1708,7 @@ scatter_zoomed <-
     color = "black",
     alpha = 0.2
   ) +
+  annotate("text", x = 0.97, y = 0.8, label = bquote(italic(beta) == .(round(beta_zoomed, 2))), size = 4, color = "black") +
   geom_rug(
     aes(color = "Original"),
     size = 1,
@@ -1719,7 +1736,7 @@ scatter_zoomed <-
   ) +
   labs(
     x = expression("Original effect size in Cohen's " * italic("d")),
-    y = expression("Re-analysis effect size in Cohen's" * italic("d"))
+    y = expression("Re-analysis effect size in Cohen's " * italic("d"))
   ) +
   theme(
     panel.background = element_blank(),
@@ -1804,6 +1821,27 @@ effect_region_all_data <-
 
 within_tolerance_region <-
   effect_region_all_data |> 
+  dplyr::group_by(simplified_paper_id) |> 
+  dplyr::summarise(
+    robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust")
+    ) |> 
+  dplyr::ungroup() |> 
+  dplyr::count(robust) |> 
+  dplyr::mutate(
+    N = sum(n),
+    relative_frequency = n / N,
+    percentage = round(relative_frequency * 100)
+    )
+
+effect_region_all_data_20 <- 
+  processed |> 
+  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T, weight = 0.2) |> 
+  mutate(
+    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
+  )
+
+within_tolerance_region_20 <-
+  effect_region_all_data_20 |> 
   dplyr::group_by(simplified_paper_id) |> 
   dplyr::summarise(
     robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust")
