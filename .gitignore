@@ -2,5 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-data/source/
+data/
 analysis/multi100_source_raw.qmd
