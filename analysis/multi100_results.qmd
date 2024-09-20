@@ -122,9 +122,9 @@ final_n_analyst <-
 
 As a result, we ended up with `r nrow(processed)` re-analyses, submitted by `r final_n_analyst` co-analysts.
 
-Although we invited more than 5 co-analysts to each of the 100 studies, due to drop-outs and peer evaluation exclusions the final number of completed analyses ranged between `r min(dplyr::count(processed, paper_id)$n)` and `r max(dplyr::count(processed, paper_id)$n)`. Table 1 shows the distribution of of the number of analyses for individual studies. 
+Although we invited more than 5 co-analysts to each of the 100 studies, due to drop-outs and peer evaluation exclusions the final number of completed analyses ranged between `r min(dplyr::count(processed, paper_id)$n)` and `r max(dplyr::count(processed, paper_id)$n)`. Table 1 shows the distribution of of the number of analyses for individual studies.
 
-__Table 1. The Distribution of the Number of Analyses for Studies__
+**Table 1. The Distribution of the Number of Analyses for Studies**
 
 ```{r echo=FALSE, message=FALSE}
 processed |>
@@ -168,7 +168,7 @@ position <-
   ))
 ```
 
-Out of all the co-analysts who submitted their work by the deadline, there were `r dplyr::filter(position, position == "Professor") |> dplyr::pull(n)` professors, `r dplyr::filter(position, position == "Associate Professor") |> dplyr::pull(n)` associate professors, `r filter(position, position == "Assistant Professor") |> dplyr::pull(n)` assistant professors, `r dplyr::filter(position, position == "Post-Doc Researcher") |> dplyr::pull(n)` post-doctoral researchers, `r dplyr::filter(position, position == "Doctoral Student") |> dplyr::pull(n)` doctoral students, `r dplyr::filter(position, position == "Other academic/research position") |> dplyr::pull(n)` from other academic/research positions. 
+Out of all the co-analysts who submitted their work by the deadline, there were `r dplyr::filter(position, position == "Professor") |> dplyr::pull(n)` professors, `r dplyr::filter(position, position == "Associate Professor") |> dplyr::pull(n)` associate professors, `r filter(position, position == "Assistant Professor") |> dplyr::pull(n)` assistant professors, `r dplyr::filter(position, position == "Post-Doc Researcher") |> dplyr::pull(n)` post-doctoral researchers, `r dplyr::filter(position, position == "Doctoral Student") |> dplyr::pull(n)` doctoral students, `r dplyr::filter(position, position == "Other academic/research position") |> dplyr::pull(n)` from other academic/research positions.
 
 ```{r include=FALSE}
 check_diff_response(processed, analyst_id, gender)
@@ -342,7 +342,7 @@ analyst_discipline <-
 
 We asked the co-analysts which discipline is the closest to their research area. The following Table 2 summarizes the distribution of their disciplinary orientation. Co-analysts from `r dplyr::slice(analyst_discipline, 1) |> dplyr::pull(discipline)` and `r dplyr::slice(analyst_discipline, 2) |> dplyr::pull(discipline)` disciplines participated in the highest ratio in this study.
 
-__Table 2. The Distribution of Co-analysts’ Disciplinary Orientation__
+**Table 2. The Distribution of Co-analysts’ Disciplinary Orientation**
 
 ```{r, echo=FALSE}
 # tbl-discipline
@@ -682,8 +682,10 @@ proportion_unique_paper <-
 In Task 2 `r dplyr::filter(proportion_unique_analysis, is_unique) |> pull(percentage)`% of the co-analyst used unique analytical pipelines based on the statistical test family and the value of the test statistics they arrived at. In total `r pull(proportion_unique_paper, percentage_all_unique)`% of the papers had completely unique reanalysis attempts.
 
 ## Peer evaluation
+
 ### Peer evaluators
-#### Basic demographics of the peer evaluators 
+
+#### Basic demographics of the peer evaluators
 
 ```{r include=FALSE}
 # Get peer evaluator demographic info from task1 and task2 survey results
@@ -703,7 +705,7 @@ peer_eval |>
   arrange(desc(n))
 ```
 
-@fig-evaluator-years shows that most peer evaluators have many years of experience with conducting statistical analysis. 
+@fig-evaluator-years shows that most peer evaluators have many years of experience with conducting statistical analysis.
 
 ```{r include=FALSE}
 check_diff_response(peer_evaluator_data, evaluator_id, years_of_experience)
@@ -738,7 +740,7 @@ ggsave(here::here("figures/demographic_evaluators_experience_years_plot.jpg"), p
 peer_analyst_experience_years_plot
 ```
 
-@fig-evaluator-analysis-frequency indicates that peer evaluators regularly perform data analysis. 
+@fig-evaluator-analysis-frequency indicates that peer evaluators regularly perform data analysis.
 
 ```{r include=FALSE}
 check_diff_response(peer_evaluator_data, evaluator_id, analysis_frequency)
@@ -796,7 +798,7 @@ ggsave(here::here("figures/demographic_evaluators_analysis_frequency_plot.jpg"),
 peer_analysis_frequency_plot
 ```
 
-@fig-evaluator-expertise indicates that most peer evaluators rate themselves close to expert level in data analysis. 
+@fig-evaluator-expertise indicates that most peer evaluators rate themselves close to expert level in data analysis.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 #| label: fig-evaluator-expertise
@@ -843,7 +845,8 @@ peer_expertise_self_rating_plot
 ```
 
 ### Peer evaluations
-#### Descriptives of peer evaluations 
+
+#### Descriptives of peer evaluations
 
 ```{r include=FALSE}
 # Number of peer evaluations
@@ -852,7 +855,7 @@ nrow(peer_eval_not_reviewed)
 nrow(peer_eval)
 ```
 
-In total, we received `r nrow(peer_eval_not_reviewed) + 1` peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated leaving us with a total of `r nrow(peer_eval_not_reviewed)` peer evaluation reports on `r nrow(distinct(peer_eval_not_reviewed, paper_id))` different papers. After the panel member review of the peer evaluations (see Peer Evaluation: Review and Decisions’ supplement for all decisions and reasoning behind each case), the final result of the peer evaluation was the following.  
+In total, we received `r nrow(peer_eval_not_reviewed) + 1` peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated leaving us with a total of `r nrow(peer_eval_not_reviewed)` peer evaluation reports on `r nrow(distinct(peer_eval_not_reviewed, paper_id))` different papers. After the panel member review of the peer evaluations (see Peer Evaluation: Review and Decisions’ supplement for all decisions and reasoning behind each case), the final result of the peer evaluation was the following.
 
 ```{r include=FALSE}
 dplyr::count(peer_eval, task1_pipeline_acceptable)
@@ -905,7 +908,7 @@ conclusions_main_robustness_80_data <- calculate_conclusion_robustness(data = pr
 conclusions_main_robustness_60_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 60, operator = ">")
 ```
 
-In Task 1, the co-analysts were asked to conduct any statistical analysis to arrive at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed studies, the conclusions of `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)`% (`r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(n)`) remained robust to independent re-analysis, so all assigned co-analysts arrived at the same conclusion as reported in the article of the original study (inferential robustness; see @fig-conclusions-main-robustness). With alternative definitions of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)`% when 80% and `r filter(conclusions_main_robustness_60_data, robust == "Inferentially robust") |> pull(percentage)`% when 60% reanalysis agreement with the original conclusion defined analytical robustness. For one study (1%), all co-analysts reported no effect or an inconclusive conclusion. 
+In Task 1, the co-analysts were asked to conduct any statistical analysis to arrive at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed studies, the conclusions of `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)`% (`r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(n)`) remained robust to independent re-analysis, so all assigned co-analysts arrived at the same conclusion as reported in the article of the original study (inferential robustness; see @fig-conclusions-main-robustness). With alternative definitions of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)`% when 80% and `r filter(conclusions_main_robustness_60_data, robust == "Inferentially robust") |> pull(percentage)`% when 60% reanalysis agreement with the original conclusion defined analytical robustness. For one study (1%), all co-analysts reported no effect or an inconclusive conclusion.
 
 ```{r echo=FALSE, message=FALSE}
 #| label: fig-conclusions-main-robustness
@@ -1047,7 +1050,7 @@ conclusions_discipline_plot
 
 #### Inferential robustness by study type (observational, experimental)
 
-Here, we were interested to see whether these results show a different pattern when separating them by study type. @fig-studytype-robustness illustrates that nearly half of the results from experimental studies remained robust upon independent re-analysis, whereas only one-third of observational studies yielded robust conclusions. Moreover, @fig-conclusions-studytype indicates that, for both study types, the majority of the re-analyses reached the same conclusions as the original study. 
+Here, we were interested to see whether these results show a different pattern when separating them by study type. @fig-studytype-robustness illustrates that nearly half of the results from experimental studies remained robust upon independent re-analysis, whereas only one-third of observational studies yielded robust conclusions. Moreover, @fig-conclusions-studytype indicates that, for both study types, the majority of the re-analyses reached the same conclusions as the original study.
 
 ```{r include=FALSE}
 conclusions_studytype_data <-
@@ -1128,7 +1131,7 @@ conclusions_studytype_plot
 
 #### Inferential robustness by expertise (self-reported expertise in data analysis)
 
-Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts. @fig-conclusions-expertise shows these results. 
+Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts. @fig-conclusions-expertise shows these results.
 
 ```{r include=FALSE, message=FALSE}
 conclusions_expertise_data <-
@@ -1322,7 +1325,7 @@ conclusions_suitability_data <-
 
 The following Table 3 shows the percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by the analyst's level of confidence with the suitability of the analysis.
 
-__Table 3. Inferential Robustness by the Level of Confidence with the Suitability of the Analysis__
+**Table 3. Inferential Robustness by the Level of Confidence with the Suitability of the Analysis**
 
 ```{r echo=FALSE, message=FALSE}
 conclusions_suitability_data |>
@@ -1343,7 +1346,7 @@ conclusions_suitability_data |>
 
 #### Inferential robustness by the sample size
 
-Here, in @fig-conclusions-samplesize we were interested to see whether these results show a different pattern when considering sample size. 
+Here, in @fig-conclusions-samplesize we were interested to see whether these results show a different pattern when considering sample size.
 
 ```{r include=FALSE}
 processed |>
@@ -1986,7 +1989,7 @@ threshold_weighted_robustness_plot
 
 ##### Estimate robustness by discipline
 
-We were interested to see whether these robustness results show a different pattern when inspecting separately by the disciplines of the studies. @fig-effect-region-discipline and @fig-effect-robustness-discipline show that for the major disciplines (>=10 studies).
+We were interested to see whether these robustness results show a different pattern when inspecting separately by the disciplines of the studies. @fig-effect-region-discipline and @fig-effect-robustness-discipline show that for the major disciplines (\>=10 studies).
 
 ```{r include=FALSE, warning=FALSE}
 processed |> 
@@ -2213,7 +2216,7 @@ processed |>
   dplyr::distinct(confidence_in_approach)
 ```
 
-__Table 4. Estimate Robustness by the Level of Confidence with the Suitability of the Analysis__
+**Table 4. Estimate Robustness by the Level of Confidence with the Suitability of the Analysis**
 
 ```{r echo=FALSE, message=FALSE}
 effect_region_suitability_data <- calculate_tolerance_region(data = processed, grouping_var = confidence_in_approach, drop_missing = TRUE) |> 
@@ -2420,4 +2423,3 @@ estimate_panel
 
 ggsave(here::here("figures/estimate_panel.png"), estimate_panel, width = 30, height = 14, dpi = 300)
 ```
-
