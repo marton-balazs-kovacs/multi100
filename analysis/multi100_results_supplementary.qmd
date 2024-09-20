@@ -1,0 +1,15 @@
+---
+title: "Results_supplementary"
+format: docx
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+# **Supplementary materials**
+
+Here are the results of the multi100 study that were not included in the paper
+
+```{r}
+
+```
