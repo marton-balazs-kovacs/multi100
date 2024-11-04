@@ -18,13 +18,13 @@ library(here)
 
 ```{r}
 # Uncomment this line if you would like to run the code and you need to connect R to your Drive
-# gs4_auth()
+gs4_auth()
 ```
 
 ### Load custom functions
 
 ```{r}
-source(here::here("R/utils.R"))
+source(here::here("multi100/R/utils.R"))
 ```
 
 ### Read data
@@ -62,9 +62,9 @@ master <- read_sheet("https://docs.google.com/spreadsheets/d/1Er7k0INJJQ0Y6gqs0Y
     paper_id,
     `reproduction_type (OSF)`,
     `reproduction result (OSF)`,
-    `categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;`,
+    `categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible that paticulars (e.g., numbers) are deleted from the claim);\n(2) similar = a closely related claim\n(3) part = new claim is part of the original claim\n(4) no = not the same claim`,
     `original statistical result`,
-    `Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns`,
+    `Related_statistical_result\n\nM-S columns`,
     Location_of_result_in_paper
   )
 
@@ -217,9 +217,9 @@ master_codebook <-
       variable_names == "paper_id" ~ "paper_id",
       variable_names == "reproduction_type (OSF)" ~ "reproduction_type_osf",
       variable_names == "reproduction result (OSF)" ~ "reproduction_result_osf",
-      variable_names == "categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;" ~ "categorisation_of_claim",
+      variable_names == "categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible that paticulars (e.g., numbers) are deleted from the claim);\n(2) similar = a closely related claim\n(3) part = new claim is part of the original claim\n(4) no = not the same claim" ~ "categorisation_of_claim",
       variable_names == "original statistical result" ~ "in_text_original_statistical_result",
-      variable_names == "Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns" ~ "related_original_statistical_result",
+      variable_names == "Related_statistical_result\n\nM-S columns" ~ "related_original_statistical_result",
       variable_names == "Location_of_result_in_paper" ~ "original_result_page_number"
     )
   )
@@ -374,84 +374,84 @@ task1_codebook |>
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_task1_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_task1_raw_codebook.csv"))
 
 task2_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_task2_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_task2_raw_codebook.csv"))
 
 all_people_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_all-people_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_all-people_raw_codebook.csv"))
 
 all_paper_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_all-paper_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_all-paper_raw_codebook.csv"))
 
 master_codebook |>  
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_master_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_master_raw_codebook.csv"))
 
 original_effect_sizes_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_original-effect-sizes_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_original-effect-sizes_raw_codebook.csv"))
 
 reanalyzed_effect_sizes_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
 
 peer_eval_codebook %>% 
   rename(
     variable_name = new_names,
     description = variable_names
   ) %>% 
-  readr::write_csv(here::here("data/raw/multi100_peer-eval_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_peer-eval_raw_codebook.csv"))
 
 peer_eval_review_codebook |>  
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_peer-eval-review_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_peer-eval-review_raw_codebook.csv"))
 
 analyst_payments_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_analyst-payments_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_analyst-payments_raw_codebook.csv"))
 
 claim_direction_review_codebook |> 
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_claim-direction-review_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_claim-direction-review_raw_codebook.csv"))
 
 non_detailed_responses_codebook |>  
   rename(
     variable_name = new_names,
     description = variable_names
   ) |> 
-  readr::write_csv(here::here("data/raw/multi100_non-detailed-responses_raw_codebook.csv"))
+  readr::write_csv(here::here("multi100/data/raw/multi100_non-detailed-responses_raw_codebook.csv"))
 ```
 
 ## Renaming variables
@@ -576,27 +576,27 @@ reanalyzed_effect_sizes <-
 ## Save raw dataset
 
 ```{r}
-readr::write_csv(task1, here("data/raw/multi100_task1_raw_data.csv"))
+readr::write_csv(task1, here("multi100/data/raw/multi100_task1_raw_data.csv"))
 
-readr::write_csv(task2, here("data/raw/multi100_task2_raw_data.csv"))
+readr::write_csv(task2, here("multi100/data/raw/multi100_task2_raw_data.csv"))
 
-readr::write_csv(all_people, here("data/raw/multi100_all-people_raw_data.csv"))
+readr::write_csv(all_people, here("multi100/data/raw/multi100_all-people_raw_data.csv"))
 
-readr::write_csv(all_paper, here("data/raw/multi100_all-paper_raw_data.csv"))
+readr::write_csv(all_paper, here("multi100/data/raw/multi100_all-paper_raw_data.csv"))
 
-readr::write_csv(master, here("data/raw/multi100_master_raw_data.csv"))
+readr::write_csv(master, here("multi100/data/raw/multi100_master_raw_data.csv"))
 
-readr::write_csv(original_effect_sizes, here("data/raw/multi100_original-effect-sizes_raw_data.csv"))
+readr::write_csv(original_effect_sizes, here("multi100/data/raw/multi100_original-effect-sizes_raw_data.csv"))
 
-readr::write_csv(reanalyzed_effect_sizes, here("data/raw/multi100_reanalyzed-effect-sizes_raw_data.csv"))
+readr::write_csv(reanalyzed_effect_sizes, here("multi100/data/raw/multi100_reanalyzed-effect-sizes_raw_data.csv"))
 
-readr::write_csv(peer_eval, here("data/raw/multi100_peer-eval_raw_data.csv"))
+readr::write_csv(peer_eval, here("multi100/data/raw/multi100_peer-eval_raw_data.csv"))
 
-readr::write_csv(peer_eval_review, here("data/raw/multi100_peer-eval-review_raw_data.csv"))
+readr::write_csv(peer_eval_review, here("multi100/data/raw/multi100_peer-eval-review_raw_data.csv"))
 
-readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
+readr::write_csv(analyst_payments, here("multi100/data/raw/multi100_analyst-payments_raw_data.csv"))
 
-readr::write_csv(claim_direction_review, here("data/raw/multi100_claim-direction-review_raw_data.csv"))
+readr::write_csv(claim_direction_review, here("multi100/data/raw/multi100_claim-direction-review_raw_data.csv"))
 
-readr::write_csv(non_detailed_responses, here("data/raw/multi100_non-detailed-responses_raw_data.csv"))
+readr::write_csv(non_detailed_responses, here("multi100/data/raw/multi100_non-detailed-responses_raw_data.csv"))
 ```

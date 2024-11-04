@@ -77,6 +77,72 @@ peer_eval |>
 
 ## Basic demographics of the co-analysts
 
+## General descriptives
+
+```{r include=FALSE}
+analyst_signed_up <-
+  all_people |>
+  dplyr::mutate(first_name = tolower(first_name),
+                last_name = tolower(last_name)) |>
+  dplyr::distinct(first_name, last_name, .keep_all = T) |>
+  dplyr::filter(disclosure_agreement == "I agree")
+
+analyst_submitted <-
+  processed |>
+  dplyr::distinct(analyst_id) |>
+  nrow()
+```
+
+As a response to our recruitment call, `r nrow(analyst_signed_up)` researchers signed up to participate in our study. Out of these volunteers, `r analyst_submitted` signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
+
+
+```{r include=FALSE}
+expertise_self_rating_data <-
+  processed |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |>
+  dplyr::count(expertise_self_rating)
+```
+
+We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution on @fig-self-rating-plot shows that the most prevalent answer was `r dplyr::filter(expertise_self_rating_data, n == max(n)) |> dplyr::pull(expertise_self_rating)` .
+
+```{r echo=FALSE, message=FALSE}
+#| label: fig-self-rating-plot
+#| fig-cap: "The figure shows the analysts' self-rated level of expertise in data analysis. When an analyst submitted more than one re-analysis we only kept their first response."
+
+expertise_self_rating_plot <-
+  expertise_self_rating_data |>
+  mutate(
+    expertise_self_rating = case_when(
+      expertise_self_rating == 1 ~ "1\n(Beginner)",
+      expertise_self_rating == 10 ~ "10\n(Expert)",
+      TRUE ~ as.character(expertise_self_rating)
+    ),
+    expertise_self_rating = as.factor(expertise_self_rating),
+    expertise_self_rating = fct_relevel(
+      expertise_self_rating,
+      c("1\n(Beginner)",
+        as.character(2:9),
+        "10\n(Expert)")
+    )
+  ) |>
+  ggplot() +
+  aes(x = expertise_self_rating, y = n) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Self-rated expertise of data analysis",
+       y = "Number of co-analysts") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggsave(here::here("figures/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
+
+expertise_self_rating_plot
+```
+
 ```{r include=FALSE}
 # Checking if analysts consistently reported their current position
 check_diff_response(processed, analyst_id, current_position_grouped)
@@ -545,6 +611,15 @@ software_plot
 ## Descriptives of the statistical analyses
 
 ```{r include=FALSE}
+direction_of_result_data <- 
+  calculate_percentage(processed, direction_of_result)
+```
+
+In Task 2, `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(percentage)`% of the results (`r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(n)` out of `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(N)`) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
+
+In Task 2 `r dplyr::filter(proportion_unique_analysis, is_unique) |> pull(percentage)`% of the co-analyst used unique analytical pipelines based on the statistical test family and the value of the test statistics they arrived at. In total `r pull(proportion_unique_paper, percentage_all_unique)`% of the papers had completely unique reanalysis attempts.
+
+```{r include=FALSE}
 p_value_or_bayes_data <-
   calculate_percentage(processed, p_value_or_bayes)
 ```
@@ -589,58 +664,73 @@ ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot,
 total_hours_plot
 ```
 
+## Peer evaluation
+
+#### Basic demographics of the peer evaluators
+
 ```{r include=FALSE}
-same_test_family <-
-  processed |>
-  dplyr::select(
-    simplified_paper_id,
-    analyst_id,
-    reanalysis_type_of_statistic,
-    reanalysis_statistic_report
-  ) |>
-  dplyr::filter(!is.na(reanalysis_statistic_report) &
-                  !is.na(reanalysis_type_of_statistic)) |>
-  dplyr::mutate(
-    reanalysis_statistic_report = round(reanalysis_statistic_report, 2),
-    reanalysis_statistic = interaction(reanalysis_type_of_statistic, reanalysis_statistic_report)
-  ) |>
-  dplyr::group_by(simplified_paper_id, reanalysis_statistic) |>
-  dplyr::summarise(
-    pair_count = n(), .groups = 'drop'
-  ) |>
-  dplyr::mutate(
-    is_unique = (pair_count == 1)
-  ) |> 
-  dplyr::group_by(simplified_paper_id, is_unique) |>
-  dplyr::summarise(
-    total = sum(pair_count), .groups = 'drop'
-  ) |> 
-   tidyr::complete(
-    simplified_paper_id, is_unique,
-    fill = list(total = 0)
-  )
+# Get peer evaluator demographic info from task1 and task2 survey results
+peer_evaluator_data <-
+  peer_eval |> 
+  distinct(evaluator_id) |> 
+  inner_join(processed, by = c("evaluator_id" = "analyst_id"))
 
-proportion_unique_analysis <-
-  same_test_family |>
-  dplyr::group_by(is_unique) |>
-  dplyr::summarise(grand_total = sum(total), .groups = 'drop') |>
-  dplyr::mutate(total_count = sum(grand_total),
-                percentage = round(grand_total / total_count * 100))
+# Check if an evaluator has more than one analysis submitted
+peer_evaluator_data |> 
+  count(evaluator_id) |> 
+  arrange(desc(n))
 
-proportion_unique_paper <-
-  same_test_family |> 
-  dplyr::group_by(simplified_paper_id) |>
-  dplyr::summarise(
-    has_non_unique = sum(total[!is_unique] > 0), .groups = 'drop'
-  ) |> 
-  dplyr::summarise(
-    percentage_all_unique = round(mean(has_non_unique == 0) * 100, 2)
-  )
+# Check if a peer evaluator has more than one evaluation submitted
+peer_eval |>
+  count(evaluator_id) |>
+  arrange(desc(n))
 ```
 
-In Task 2 `r dplyr::filter(proportion_unique_analysis, is_unique) |> pull(percentage)`% of the co-analyst used unique analytical pipelines based on the statistical test family and the value of the test statistics they arrived at. In total `r pull(proportion_unique_paper, percentage_all_unique)`% of the papers had completely unique reanalysis attempts.
+@fig-evaluator-expertise indicates that most peer evaluators rate themselves close to expert level in data analysis.
 
-## Peer evaluation
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#| label: fig-evaluator-expertise
+#| fig-cap: "The figure shows the peer evaluators’ self-rated level of expertise in data analysis. When a peer evaluator submitted more than one re-analysis, we kept only their first response."
+
+peer_expertise_self_rating_data <-
+  peer_evaluator_data |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = evaluator_id, time_var = task1_timestamp) |>
+  count(expertise_self_rating) |> 
+  complete(expertise_self_rating, fill = list(n = 0))
+
+peer_expertise_self_rating_plot <-
+  peer_expertise_self_rating_data |>
+  mutate(
+    expertise_self_rating = case_when(
+      expertise_self_rating == 1 ~ "1\n(Beginner)",
+      expertise_self_rating == 10 ~ "10\n(Expert)",
+      TRUE ~ as.character(expertise_self_rating)
+    ),
+    expertise_self_rating = factor(
+      expertise_self_rating,
+      levels = c("1\n(Beginner)",
+                 as.character(2:9),
+                 "10\n(Expert)")
+    )
+  ) |>
+  tidyr::complete(expertise_self_rating, fill = list(n = 0)) |> 
+  ggplot() +
+  aes(x = expertise_self_rating, y = n) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Self-reported expertise rating",
+       y = "Number of peer evaluators") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggsave(here::here("figures/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
+
+peer_expertise_self_rating_plot
+```
 
 #### Descriptives of peer evaluations
 
@@ -659,6 +749,23 @@ reproducibility_checks_n <-
 
 `r reproducibility_checks_n` analytical reproducibility checks were successfully conducted which identified mismatches in `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)` analyses. In all of these cases we verified that that the mismatches did not have a meaningful impact on the reported conclusion, categorization, or effect size.
 
+#### Descriptives of peer evaluations
+
+```{r include=FALSE}
+# Number of peer evaluations
+# One response was excluded in multi100_raw_processed because the evaluator did not provide the analyst_id
+nrow(peer_eval_not_reviewed)
+nrow(peer_eval)
+```
+
+In total, we received `r nrow(peer_eval_not_reviewed) + 1` peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated leaving us with a total of `r nrow(peer_eval_not_reviewed)` peer evaluation reports on `r nrow(distinct(peer_eval_not_reviewed, paper_id))` different papers. After the panel member review of the peer evaluations (see Peer Evaluation: Review and Decisions’ supplement for all decisions and reasoning behind each case), the final result of the peer evaluation was the following.
+
+```{r include=FALSE}
+dplyr::count(peer_eval, task1_pipeline_acceptable)
+dplyr::count(peer_eval, task1_conclusion_follows_results)
+dplyr::count(peer_eval, task2_pipeline_acceptable)
+```
+
 #### Inferential robustness by the level of confidence with the suitability of the analysis
 
 ```{r include=FALSE}
@@ -676,6 +783,23 @@ conclusions_suitability_data <-
     ) |> 
   calculate_conclusion(grouping_var = confidence_in_approach, categorization_var = categorisation)
 ```
+
+**Table 1. The Distribution of the Number of Analyses for Studies**
+
+```{r echo=FALSE, message=FALSE}
+processed |>
+  dplyr::count(paper_id) |> 
+  dplyr::count(n, name = "N") |>
+  dplyr::rename(`Number of Completed Analyses` = n,
+                `Number of Studies` = N) |>
+  gt::gt() |>
+  gt::tab_style(
+    style = gt::cell_text(weight = "bold"),
+    locations = gt::cells_column_labels()
+  )
+```
+
+Although we invited more than 5 co-analysts to each of the 100 studies, due to drop-outs and peer evaluation exclusions the final number of completed analyses ranged between `r min(dplyr::count(processed, paper_id)$n)` and `r max(dplyr::count(processed, paper_id)$n)`. Table 1 shows the distribution of of the number of analyses for individual studies.
 
 The following Table 3 shows the percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by the analyst's level of confidence with the suitability of the analysis.
 
