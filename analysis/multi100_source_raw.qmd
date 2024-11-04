@@ -18,7 +18,7 @@ library(here)
 
 ```{r}
 # Uncomment this line if you would like to run the code and you need to connect R to your Drive
-# gs4_auth()
+#gs4_auth()
 ```
 
 ### Load custom functions
@@ -62,9 +62,16 @@ master <- read_sheet("https://docs.google.com/spreadsheets/d/1Er7k0INJJQ0Y6gqs0Y
     paper_id,
     `reproduction_type (OSF)`,
     `reproduction result (OSF)`,
-    `categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;`,
+    `categorization of the claims
+
+(1) same = same claim (does not mean they are literally the same, is possible that paticulars (e.g., numbers) are deleted from the claim);
+(2) similar = a closely related claim
+(3) part = new claim is part of the original claim
+(4) no = not the same claim`,
+    `Related_statistical_result
+
+M-S columns`,
     `original statistical result`,
-    `Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns`,
     Location_of_result_in_paper
   )
 
@@ -217,9 +224,16 @@ master_codebook <-
       variable_names == "paper_id" ~ "paper_id",
       variable_names == "reproduction_type (OSF)" ~ "reproduction_type_osf",
       variable_names == "reproduction result (OSF)" ~ "reproduction_result_osf",
-      variable_names == "categorization of the claims\n\n(1) same = same claim (does not mean they are literally the same, is possible, that numbers are deleted from new);\n(2) similar = analogous in meaning, but different angle - is is possible, that one is true, the other is not true\n(3) part = new claim is part of the original claim\n(2) no = not the same claim;" ~ "categorisation_of_claim",
+      variable_names == "categorization of the claims
+
+(1) same = same claim (does not mean they are literally the same, is possible that paticulars (e.g., numbers) are deleted from the claim);
+(2) similar = a closely related claim
+(3) part = new claim is part of the original claim
+(4) no = not the same claim" ~ "categorisation_of_claim",
       variable_names == "original statistical result" ~ "in_text_original_statistical_result",
-      variable_names == "Related_statistical_result\n\nZoli/Felix (Barna)\nM-S columns" ~ "related_original_statistical_result",
+      variable_names == "Related_statistical_result
+
+M-S columns" ~ "related_original_statistical_result",
       variable_names == "Location_of_result_in_paper" ~ "original_result_page_number"
     )
   )

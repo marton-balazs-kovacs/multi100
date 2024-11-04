@@ -113,6 +113,7 @@ calculate_tolerance_region_proportions <- function(data, threshold = NULL, weigh
 
 #' Create tolarence region plot
 plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE, y_lab = NULL, x_lab = NULL) {
+  #TYPO: TOLERANCE
   plot <-
     data %>% 
     # mutate(
