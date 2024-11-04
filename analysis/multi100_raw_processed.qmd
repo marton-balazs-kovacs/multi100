@@ -10,11 +10,13 @@ editor_options:
 
 ```{r}
 library(tidyverse)
+library(janitor)
 ```
 
 ### Load custom functions
 
 ```{r}
+here::i_am("R/utils.R")
 source(here::here("R/utils.R"))
 ```
 
@@ -1124,7 +1126,7 @@ peer_eval_changed <-
   pivot_wider(names_from = variable_name, values_from = value)
 ```
 
-According to the decision of the expert panel `r nrow(peer_eval_change)` decisions made by the peer evaluators were modified.
+According to the decision of the expert panel `r nrow(peer_eval_changed)` decisions made by the peer evaluators were modified.
 
 Save processed peer evaluation and peer evaluation review data separately.
 
