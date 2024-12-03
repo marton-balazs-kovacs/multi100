@@ -24,7 +24,9 @@ gs4_auth()
 ### Load custom functions
 
 ```{r}
-source(here::here("multi100/R/utils.R"))
+source(here::here("R/recode_colnames.R"))
+source(here::here("R/save_codebook.R"))
+source(here::here("R/utils.R"))
 ```
 
 ### Read data
@@ -369,153 +371,57 @@ non_detailed_responses_codebook <-
 Saving the codebook for the raw data.
 
 ```{r}
-task1_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_task1_raw_codebook.csv"))
+save_codebook(task1_codebook, here::here("data/raw", "multi100_task1_raw_codebook.csv"))
 
-task2_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_task2_raw_codebook.csv"))
+save_codebook(task2_codebook, here::here("data/raw", "multi100_task2_raw_codebook.csv"))
 
-all_people_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_all-people_raw_codebook.csv"))
+save_codebook(all_people_codebook, here::here("data/raw", "multi100_all-people_raw_codebook.csv"))
 
-all_paper_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_all-paper_raw_codebook.csv"))
+save_codebook(all_paper_codebook, here::here("data/raw", "multi100_all-paper_raw_codebook.csv"))
 
-master_codebook |>  
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_master_raw_codebook.csv"))
+save_codebook(master_codebook, here::here("data/raw", "multi100_master_raw_codebook.csv"))
 
-original_effect_sizes_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_original-effect-sizes_raw_codebook.csv"))
+save_codebook(original_effect_sizes_codebook, here::here("data/raw", "multi100_original-effect-sizes_raw_codebook.csv"))
 
-reanalyzed_effect_sizes_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
+save_codebook(reanalyzed_effect_sizes_codebook, here::here("data/raw", "multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
 
-peer_eval_codebook %>% 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) %>% 
-  readr::write_csv(here::here("multi100/data/raw/multi100_peer-eval_raw_codebook.csv"))
+save_codebook(peer_eval_codebook, here::here("data/raw", "multi100_peer-eval_raw_codebook.csv"))
 
-peer_eval_review_codebook |>  
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_peer-eval-review_raw_codebook.csv"))
+save_codebook(peer_eval_review_codebook, here::here("data/raw", "multi100_peer-eval-review_raw_codebook.csv"))
 
-analyst_payments_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_analyst-payments_raw_codebook.csv"))
+save_codebook(analyst_payments_codebook, here::here("data/raw", "multi100_analyst-payments_raw_codebook.csv"))
 
-claim_direction_review_codebook |> 
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_claim-direction-review_raw_codebook.csv"))
+save_codebook(claim_direction_review_codebook, here::here("data/raw", "multi100_claim-direction-review_raw_codebook.csv"))
 
-non_detailed_responses_codebook |>  
-  rename(
-    variable_name = new_names,
-    description = variable_names
-  ) |> 
-  readr::write_csv(here::here("multi100/data/raw/multi100_non-detailed-responses_raw_codebook.csv"))
+save_codebook(non_detailed_responses_codebook, here::here("data/raw", "multi100_non-detailed-responses_raw_codebook.csv"))
 ```
 
 ## Renaming variables
 
 ```{r}
-colnames(task1) <- dplyr::recode(
-  colnames(task1), 
-  !!!setNames(as.character(task1_codebook$new_names), task1_codebook$variable_names)
-)
+task1 <- recode_colnames(task1, task1_codebook)
 
-colnames(task2) <- dplyr::recode(
-  colnames(task2), 
-  !!!setNames(as.character(task2_codebook$new_names), task2_codebook$variable_names)
-)
+task2 <- recode_colnames(task2, task2_codebook)
 
-colnames(all_people) <- dplyr::recode(
-  colnames(all_people), 
-  !!!setNames(as.character(all_people_codebook$new_names), all_people_codebook$variable_names)
-)
+all_people <- recode_colnames(all_people, all_people_codebook)
 
-colnames(all_paper) <- dplyr::recode(
-  colnames(all_paper), 
-  !!!setNames(as.character(all_paper_codebook$new_names), all_paper_codebook$variable_names)
-)
+all_paper <- recode_colnames(all_paper, all_paper_codebook)
 
-colnames(master) <- dplyr::recode(
-  colnames(master), 
-  !!!setNames(as.character(master_codebook$new_names), master_codebook$variable_names)
-)
+master <- recode_colnames(master, master_codebook)
 
-colnames(original_effect_sizes) <- dplyr::recode(
-  colnames(original_effect_sizes), 
-  !!!setNames(as.character(original_effect_sizes_codebook$new_names), original_effect_sizes_codebook$variable_names)
-)
+original_effect_sizes <- recode_colnames(original_effect_sizes, original_effect_sizes_codebook)
 
-colnames(reanalyzed_effect_sizes) <- dplyr::recode(
-  colnames(reanalyzed_effect_sizes), 
-  !!!setNames(as.character(reanalyzed_effect_sizes_codebook$new_names), reanalyzed_effect_sizes_codebook$variable_names)
-)
+reanalyzed_effect_sizes <- recode_colnames(reanalyzed_effect_sizes, reanalyzed_effect_sizes_codebook)
 
-colnames(peer_eval) <- dplyr::recode(
-  colnames(peer_eval), 
-  !!!setNames(as.character(peer_eval_codebook$new_names), peer_eval_codebook$variable_names)
-)
+peer_eval <- recode_colnames(peer_eval, peer_eval_codebook)
 
-colnames(peer_eval_review) <- dplyr::recode(
-  colnames(peer_eval_review), 
-  !!!setNames(as.character(peer_eval_review_codebook$new_names), peer_eval_review_codebook$variable_names)
-)
+peer_eval_review <- recode_colnames(peer_eval_review, peer_eval_review_codebook)
 
-colnames(analyst_payments) <- dplyr::recode(
-  colnames(analyst_payments), 
-  !!!setNames(as.character(analyst_payments_codebook$new_names), analyst_payments_codebook$variable_names)
-)
+analyst_payments <- recode_colnames(analyst_payments, analyst_payments_codebook)
 
-colnames(claim_direction_review) <- dplyr::recode(
-  colnames(claim_direction_review), 
-  !!!setNames(as.character(claim_direction_review_codebook$new_names), claim_direction_review_codebook$variable_names)
-)
+claim_direction_review <- recode_colnames(claim_direction_review, claim_direction_review_codebook)
 
-colnames(non_detailed_responses) <- dplyr::recode(
-  colnames(non_detailed_responses), 
-  !!!setNames(as.character(non_detailed_responses_codebook$new_names), non_detailed_responses_codebook$variable_names)
-)
+non_detailed_responses <- recode_colnames(non_detailed_responses, non_detailed_responses_codebook)
 ```
 
 ## Dropping variables that contain personal information
@@ -576,27 +482,27 @@ reanalyzed_effect_sizes <-
 ## Save raw dataset
 
 ```{r}
-readr::write_csv(task1, here("multi100/data/raw/multi100_task1_raw_data.csv"))
+readr::write_csv(task1, here("data/raw/multi100_task1_raw_data.csv"))
 
-readr::write_csv(task2, here("multi100/data/raw/multi100_task2_raw_data.csv"))
+readr::write_csv(task2, here("data/raw/multi100_task2_raw_data.csv"))
 
-readr::write_csv(all_people, here("multi100/data/raw/multi100_all-people_raw_data.csv"))
+readr::write_csv(all_people, here("data/raw/multi100_all-people_raw_data.csv"))
 
-readr::write_csv(all_paper, here("multi100/data/raw/multi100_all-paper_raw_data.csv"))
+readr::write_csv(all_paper, here("data/raw/multi100_all-paper_raw_data.csv"))
 
-readr::write_csv(master, here("multi100/data/raw/multi100_master_raw_data.csv"))
+readr::write_csv(master, here("data/raw/multi100_master_raw_data.csv"))
 
-readr::write_csv(original_effect_sizes, here("multi100/data/raw/multi100_original-effect-sizes_raw_data.csv"))
+readr::write_csv(original_effect_sizes, here("data/raw/multi100_original-effect-sizes_raw_data.csv"))
 
-readr::write_csv(reanalyzed_effect_sizes, here("multi100/data/raw/multi100_reanalyzed-effect-sizes_raw_data.csv"))
+readr::write_csv(reanalyzed_effect_sizes, here("data/raw/multi100_reanalyzed-effect-sizes_raw_data.csv"))
 
-readr::write_csv(peer_eval, here("multi100/data/raw/multi100_peer-eval_raw_data.csv"))
+readr::write_csv(peer_eval, here("data/raw/multi100_peer-eval_raw_data.csv"))
 
-readr::write_csv(peer_eval_review, here("multi100/data/raw/multi100_peer-eval-review_raw_data.csv"))
+readr::write_csv(peer_eval_review, here("data/raw/multi100_peer-eval-review_raw_data.csv"))
 
-readr::write_csv(analyst_payments, here("multi100/data/raw/multi100_analyst-payments_raw_data.csv"))
+readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
 
-readr::write_csv(claim_direction_review, here("multi100/data/raw/multi100_claim-direction-review_raw_data.csv"))
+readr::write_csv(claim_direction_review, here("data/raw/multi100_claim-direction-review_raw_data.csv"))
 
-readr::write_csv(non_detailed_responses, here("multi100/data/raw/multi100_non-detailed-responses_raw_data.csv"))
+readr::write_csv(non_detailed_responses, here("data/raw/multi100_non-detailed-responses_raw_data.csv"))
 ```
