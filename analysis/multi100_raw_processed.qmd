@@ -10,13 +10,11 @@ editor_options:
 
 ```{r}
 library(tidyverse)
-library(janitor)
 ```
 
 ### Load custom functions
 
 ```{r}
-here::i_am("R/utils.R")
 source(here::here("R/utils.R"))
 ```
 
@@ -65,10 +63,9 @@ non_detailed_responses <- readr::read_csv(here::here("data/raw/multi100_non-deta
 
 ```{r}
 all_paper <-
-  all_paper %>% 
-  janitor::clean_names() %>% 
+  all_paper |> 
   # Excluding empty rows
-  filter(if_any(everything(), ~!is.na(.x))) %>% 
+  filter(if_any(everything(), ~!is.na(.x))) |> 
   mutate(
      # Remove leading and trailing spaces from paper_id
     paper_id = trimws(paper_id, "both"),
@@ -82,16 +79,16 @@ all_paper <-
 Check if all paper_id has a corresponding original_paper_reference.
 
 ```{r}
-all_paper %>% 
-  filter(is.na(original_paper_reference)) %>% 
+all_paper |> 
+  filter(is.na(original_paper_reference)) |> 
   nrow()
 ```
 
 Number of papers in all_paper based on paper_id, it should be a 100.
 
 ```{r}
-all_paper %>% 
-  distinct(paper_id) %>% 
+all_paper |> 
+  distinct(paper_id) |> 
   nrow()
 ```
 
@@ -100,17 +97,17 @@ all_paper %>%
 Check if analyst_id is unique to the person.
 
 ```{r}
-all_people %>% 
-  distinct(first_name, last_name, analyst_id) %>%  
-  group_by(first_name, last_name) %>% 
-  mutate(n_analyst_id = n()) %>% 
+all_people |> 
+  distinct(first_name, last_name, analyst_id) |>  
+  group_by(first_name, last_name) |> 
+  mutate(n_analyst_id = n()) |> 
   arrange(desc(n_analyst_id), last_name)
 ```
 
 Check who agreed to have their name attached to the analysis.
 
 ```{r}
-all_people %>% 
+all_people |> 
   count(name_attached_to_analysis)
 ```
 
@@ -120,7 +117,7 @@ Select needed variables.
 
 ```{r}
 original_effect_sizes <-
-  original_effect_sizes %>% 
+  original_effect_sizes |> 
   select(-original_materials)
 ```
 
@@ -130,11 +127,10 @@ We also convert all the original effect sizes positive.
 
 ```{r}
 original_effect_sizes <-
-  original_effect_sizes %>% 
+  original_effect_sizes |> 
   mutate(
-    original_correlation_coef = as.numeric(sub(",", ".", original_correlation_coef)),
-    original_cohens_d = as.numeric(sub(",", ".", original_cohens_d)),
-    original_cohens_d = abs(original_cohens_d)
+    original_correlation_coef = as.numeric(original_correlation_coef),
+    original_cohens_d = abs(as.numeric(original_cohens_d))
   )
 ```
 
@@ -144,7 +140,7 @@ Select variables needed.
 
 ```{r}
 reanalyzed_effect_sizes <-
-  reanalyzed_effect_sizes %>% 
+  reanalyzed_effect_sizes |> 
   select(
     analyst_id,
     paper_id,
@@ -168,9 +164,9 @@ reanalyzed_effect_sizes <-
 Check if there are duplicate responses in the reanalyzed effect sizes.
 
 ```{r}
-reanalyzed_effect_sizes %>% 
-  count(paper_id, analyst_id) %>% 
-  filter(n > 1) %>% 
+reanalyzed_effect_sizes |> 
+  count(paper_id, analyst_id) |> 
+  filter(n > 1) |> 
   arrange(desc(n))
 ```
 
@@ -178,7 +174,7 @@ Delete the duplicate response.
 
 ```{r}
 reanalyzed_effect_sizes <-
-  reanalyzed_effect_sizes %>% 
+  reanalyzed_effect_sizes |> 
   filter(!(analyst_id == "JX7YO" & paper_id == "Christensen_EurJournPersonality_2018_8R9d" & reanalysis_statistic_report == "0.132"))
 ```
 
@@ -188,14 +184,14 @@ Calculate the Cohen's ds for the reanalyses.
 reanalysis_vars <- c("reanalysis_type_of_statistic", "reanalysis_statistic_report", "reanalysis_model_sample_size", "reanalysis_degrees_of_freedom_1", "reanalysis_degrees_of_freedom_2")
 
 reanalyzed_effect_sizes <-
-  reanalyzed_effect_sizes %>% 
-  mutate(reanalysis_type_of_statistic = str_replace_all(reanalysis_type_of_statistic, "²", "2")) %>% 
+  reanalyzed_effect_sizes |> 
+  mutate(reanalysis_type_of_statistic = str_replace_all(reanalysis_type_of_statistic, "²", "2")) |> 
   mutate(
     across(
       all_of(reanalysis_vars),
       ~ if_else(reanalysis_es_missing == 1L, NA, .)
       )
-    ) %>% 
+    ) |> 
   mutate(
     across(
       all_of(c("reanalysis_statistic_report", "reanalysis_model_sample_size", "reanalysis_degrees_of_freedom_1", "reanalysis_degrees_of_freedom_2")),
@@ -238,10 +234,10 @@ Select variables needed.
 
 ```{r}
 analyst_payments <-
-  analyst_payments %>% 
+  analyst_payments |> 
   select(
     -first_name
-  ) %>% 
+  ) |> 
   # drop the last row since that is a summary
   slice(1:(n() - 1))
 ```
@@ -250,13 +246,14 @@ analyst_payments <-
 
 ```{r}
 task1 <- 
-  task1 %>% 
+  task1 |> 
   mutate(
     # add 'task1_submission_number' as a reference variable
-    task1_submission_number = 1:nrow(.),
+    task1_submission_number = 1:nrow(task1),
     # remove leading and trailing spaces from Analyst_ID and Paper_ID variables
     analyst_id = trimws(analyst_id, "both"),
     paper_id = trimws(paper_id, "both"),
+    # rewrite inference categorization labels
     task1_categorisation_plotting = case_when(
       task1_categorisation == "The results show evidence for the relationship/effect as described in the claim provided in your task" ~ "Same conclusion",
       task1_categorisation %in% c(
@@ -272,7 +269,7 @@ We are excluding the pilot responses. Analysts with analyst_id "8nJioy5V5B" and 
 
 ```{r}
 task1 <-
-  task1 %>% 
+  task1 |> 
   filter(analyst_id %ni% c("8nJioy5V5B", "z2u1wLLVu1"))
 ```
 
@@ -295,7 +292,7 @@ Correcting the erroneous paper_id's:
 
 ```{r}
 task1 <-
-  task1 %>% 
+  task1 |> 
   mutate(paper_id = case_when(
     paper_id == "XAS95 Raley_JournMarFam_2012_D2LY" ~ "Raley_JournMarFam_2012_D2LY",
     paper_id == "Rjp9" ~ "Jiang_AmJourPoliSci_2018_Rjp9",
@@ -313,11 +310,11 @@ Check how many analyses were submitted with '_2' ID's. Some analyst submitted mu
 
 ```{r}
 task1_multiple_analyses <- 
-  task1 %>% 
-  filter(str_detect(analyst_id, "_")) %>% 
-  select(analyst_id, paper_id) %>% 
-  arrange(analyst_id) %>% 
-  group_by(analyst_id) %>% 
+  task1 |> 
+  filter(str_detect(analyst_id, "_")) |> 
+  select(analyst_id, paper_id) |> 
+  arrange(analyst_id) |> 
+  group_by(analyst_id) |> 
   mutate(n = n())
 ```
 
@@ -327,7 +324,7 @@ We are removing '_2' from the end of analyst_id's in both Task 1 and Task 2. The
 
 ```{r}
 task1 <-
-  task1 %>% 
+  task1 |> 
   mutate(analyst_id = str_replace(analyst_id, "_2$", ""))
 ```
 
@@ -342,13 +339,13 @@ Check for duplicate responses.
 
 ```{r}
 task1_duplicates <-
-  task1 %>% 
-  group_by(paper_id, analyst_id) %>% 
-  mutate(n = n()) %>% 
-  filter(n > 1) %>% 
+  task1 |> 
+  group_by(paper_id, analyst_id) |> 
+  mutate(n = n()) |> 
+  filter(n > 1) |> 
   arrange(desc(n))
 
-task1_duplicates %>% 
+task1_duplicates |> 
   distinct(paper_id, analyst_id, n)
 ```
 
@@ -356,7 +353,7 @@ Attend to each of these cases manually. We will only keep the correct responses 
 
 ```{r}
 task1 <-
-  task1 %>% 
+  task1 |> 
   filter(
    # GNUQA_GROSSMAN
     # SN. 23 to be removed... responses largely identical, but the comments of the analyst indicate that SN. 24 is their preferred version
@@ -416,8 +413,8 @@ task1 <-
 Verify that there are no longer any duplicates.
 
 ```{r}
-task1 %>% 
-  count(paper_id, analyst_id) %>% 
+task1 |> 
+  count(paper_id, analyst_id) |> 
   filter(n > 1)
 ```
 
@@ -443,10 +440,10 @@ task1 <-
 
 ```{r}
 task2 <- 
-  task2 %>% 
+  task2 |> 
   mutate(
     # add 'task2_submission_number' as a reference variable
-    task2_submission_number = 1:nrow(.),
+    task2_submission_number = 1:nrow(task2),
     # remove leading and trailing spaces from Analyst_ID and Paper_ID variables
     analyst_id = trimws(analyst_id, "both"),
     # Remove '_2' from the 'analyst_id' variable
@@ -472,7 +469,7 @@ Replacing non-matching analyst_ids.
 
 ```{r}
 task2 <- 
-  task2 %>% 
+  task2 |> 
   mutate(analyst_id = case_when(
     # PGT48 should be PTG48
     analyst_id == "PGT48" ~ "PTG48",
@@ -511,7 +508,7 @@ Correcting the erroneous paper_id's:
 
 ```{r}
 task2 <-
-  task2 %>% 
+  task2 |> 
   mutate(paper_id = case_when(
     paper_id == "Tenye_EurSocioRev_2016_qXX2" ~ "Teney_EurSocioRev_2016_qXX2",
     paper_id == "qQ9Z" ~ "Desmond_Demography_2015_qQ9Z",
@@ -530,7 +527,7 @@ any(!(task2$paper_id %in% all_paper$paper_id))
 
 ```{r}
 task2 <-
-  task2 %>% 
+  task2 |> 
   mutate(paper_id = case_when(
     analyst_id == "JX7YO" & paper_id == "McLaren_WorldPolitics_2012_wRvv" ~ "Christensen_EurJournPersonality_2018_8R9d",
     TRUE ~ paper_id
@@ -541,13 +538,13 @@ Check for duplicate responses.
 
 ```{r}
 task2_duplicates <-
-  task2 %>% 
-  group_by(paper_id, analyst_id) %>% 
-  mutate(n = n()) %>% 
-  filter(n > 1) %>% 
+  task2 |> 
+  group_by(paper_id, analyst_id) |> 
+  mutate(n = n()) |> 
+  filter(n > 1) |> 
   arrange(desc(n))
 
-task2_duplicates %>% 
+task2_duplicates |> 
   distinct(paper_id, analyst_id, n)
 ```
 
@@ -557,20 +554,20 @@ Attend to each of these cases manually. Manual inspection of the duplicate respo
 
 ```{r}
 task2 <-
-  task2 %>% 
-  mutate(task2_timestamp = ymd_hms(task2_timestamp)) %>% 
+  task2 |> 
+  mutate(task2_timestamp = ymd_hms(task2_timestamp)) |> 
   group_by(analyst_id, paper_id) %>%
-  filter(task2_timestamp == max(task2_timestamp)) %>% 
+  filter(task2_timestamp == max(task2_timestamp)) |> 
   ungroup()
 ```
 
 Ensure that all the duplicates are gone.
 
 ```{r}
-task2 %>% 
-  group_by(paper_id, analyst_id) %>% 
-  mutate(n = n()) %>% 
-  filter(n > 1) %>% 
+task2 |> 
+  group_by(paper_id, analyst_id) |> 
+  mutate(n = n()) |> 
+  filter(n > 1) |> 
   arrange(desc(n))
 ```
 
@@ -588,8 +585,8 @@ setdiff(task2$analyst_id, task1$analyst_id)
 Check the number of distinct papers in task2.
 
 ```{r}
-task2 %>% 
-  distinct(paper_id) %>% 
+task2 |> 
+  distinct(paper_id) |> 
   nrow()
 ```
 
@@ -622,24 +619,24 @@ multi100_data <- inner_join(task1, task2, by = c("analyst_id", "paper_id"))
 Check the number of distinct papers based on paper_id after joining task1 and task2 responses. There should be a 100 distinct papers in the dataset.
 
 ```{r}
-multi100_data %>% 
-  distinct(paper_id) %>% 
+multi100_data |> 
+  distinct(paper_id) |> 
   nrow()
 ```
 
 Check number of analyses based on paper_id.
 
 ```{r}
-multi100_data %>% 
-  count(paper_id) %>% 
+multi100_data |> 
+  count(paper_id) |> 
   arrange(desc(n))
 ```
 
 Check if every analyses are unique.
 
 ```{r}
-multi100_data %>% 
-  count(paper_id, analyst_id) %>% 
+multi100_data |> 
+  count(paper_id, analyst_id) |> 
   filter(n > 1)
 ```
 
@@ -695,7 +692,7 @@ multi100_data <- left_join(multi100_data, analyst_payments, by = "analyst_id")
 
 ```{r}
 multi100_data <-
-  multi100_data %>% 
+  multi100_data |> 
   select(
     # id variables
     analyst_id, paper_id,
@@ -742,9 +739,9 @@ Add id_number to each analysis.
 
 ```{r}
 multi100_data <-
-  multi100_data %>% 
-  group_by(paper_id, analyst_id) %>% 
-  mutate(analysis_id = cur_group_id()) %>% 
+  multi100_data |> 
+  group_by(paper_id, analyst_id) |> 
+  mutate(analysis_id = cur_group_id()) |> 
   ungroup()
 ```
 
@@ -752,7 +749,7 @@ Change _experimental_or_observational_ values to explicit character type.
 
 ```{r}
 multi100_data <-
-  multi100_data %>% 
+  multi100_data |> 
   dplyr::mutate(
     experimental_or_observational = case_when(
       experimental_or_observational == 1L ~ "experimental",
@@ -762,11 +759,11 @@ multi100_data <-
   )
 ```
 
-See the analyses we have to remove based on the expert review of the peer evaluation.
+View the analyses we have to remove based on the expert review of the peer evaluation.
 
 ```{r}
-peer_eval_review %>% 
-  filter(expert_panel_decision == "Remove") %>% 
+peer_eval_review |> 
+  filter(expert_panel_decision == "Remove") |> 
   select(analyst_id, paper_id, expert_panel_decision)
 ```
 
@@ -802,7 +799,7 @@ Recoding free-text responses to gender.
 
 ```{r}
 multi100_data <-
-  multi100_data %>% 
+  multi100_data |> 
   mutate(
     gender = case_when(
       analyst_id == "EZI7J" ~ "Non-binary",
@@ -849,11 +846,11 @@ Create a simplified paper_id for the figures.
 
 ```{r}
 multi100_data <-
-  multi100_data %>% 
-  group_by(paper_id) %>% 
+  multi100_data |> 
+  group_by(paper_id) |> 
   mutate(
     simplified_paper_id = stringr::str_pad(dplyr::cur_group_id(), width = 3, pad = "0")
-  ) %>% 
+  ) |> 
   ungroup()
 ```
 
@@ -861,7 +858,7 @@ Change the direction of task2 effect sizes based on the direction of the reanaly
 
 ```{r}
 multi100_data <-
-  multi100_data %>% 
+  multi100_data |> 
   mutate(   
     # All the reanalysed effect sizes are negative where the reanalysed conclusion goes the opposite direction than the original
     reanalysis_cohens_d = if_else(direction_of_result == "Opposite as claimed by the original study",
@@ -901,7 +898,7 @@ Add peereval_submission_number.
 
 ```{r}
 peer_eval <-
-  peer_eval %>% 
+  peer_eval |> 
   mutate(
     peereval_submission_number = 1:nrow(peer_eval),
     # create eval_id which concatenates analyst_id, paper_id, and evaluator_id
@@ -913,7 +910,7 @@ We pay attention to the first 500 peer evaluations only.
 
 ```{r}
 peer_eval <- 
-  peer_eval %>% 
+  peer_eval |> 
   slice(1:500)
 ```
 
@@ -922,7 +919,7 @@ This is submission number 459.
 
 ```{r}
 peer_eval <- 
-  peer_eval %>% 
+  peer_eval |> 
   filter(peereval_submission_number != 459) # flag this to count it in the results paper
 ```
 
@@ -930,7 +927,7 @@ We changed non-unique analyst_ids in the main dataset (multi100_data), now we ch
 
 ```{r}
 peer_eval <-
-  peer_eval %>% 
+  peer_eval |> 
   mutate(analyst_id = case_when(
     analyst_id == "MX02W" ~ "EZI7J",
     TRUE ~ analyst_id
@@ -948,7 +945,7 @@ Check that all analyst_id's appear in multi100_data$analyst_id. If 'FALSE' then 
 ```{r}
 any(!peer_eval$analyst_id %in% multi100_data$analyst_id)
 
-peer_eval %>% 
+peer_eval |> 
   filter(!analyst_id %in% multi100_data$analyst_id)
 ```
 
@@ -1027,7 +1024,7 @@ Re-run code to produce eval_id.
 
 ```{r}
 peer_eval <-
-  peer_eval %>% 
+  peer_eval |> 
   mutate(
     eval_id = paste(analyst_id, paper_id, evaluator_id, sep = "_")
     )
@@ -1046,13 +1043,13 @@ Check and remove duplicate responses.
 
 ```{r}
 peer_eval_duplicates <-
-  peer_eval %>% 
-  group_by(eval_id) %>% 
-  mutate(n = n()) %>% 
-  filter(n > 1) %>% 
+  peer_eval |> 
+  group_by(eval_id) |> 
+  mutate(n = n()) |> 
+  filter(n > 1) |> 
   arrange(desc(n))
 
-peer_eval_duplicates %>% 
+peer_eval_duplicates |> 
   distinct(eval_id, n)
 ```
 
@@ -1067,11 +1064,10 @@ Duplicated peer evals are the following:
 * GHN4R_Menaldo_AmJourPoliSci_2016_Vx4e_WANJC: !SN. 465, 466
 
 Deleting duplicates.
-#TODO: DELTE by text id not by submission number.
 
 ```{r}
 peer_eval <-
-  peer_eval %>% 
+  peer_eval |> 
   filter(
     peereval_submission_number != 17,
     peereval_submission_number != 45,
@@ -1085,11 +1081,11 @@ peer_eval <-
   )
 ```
 
-Remove case where evaluator is also co-analyst (!SN. 462: WJVLO_Pastötter_Cognition_2013_EQxa_WJVLO). We decided to treat this responses as non-valid response and do not include it in the summary statistics for the peer evaluation in the results section of the paper.
+Remove case where evaluator reviewed their own analysis (!SN. 462: WJVLO_Pastötter_Cognition_2013_EQxa_WJVLO). We decided to treat this responses as non-valid response and do not include it in the summary statistics for the peer evaluation in the results section of the paper.
 
 ```{r}
 peer_eval <-
-  peer_eval %>% 
+  peer_eval |> 
   filter(peereval_submission_number != 462)
 ```
 
@@ -1097,7 +1093,7 @@ Count the number of times each paper_id and analyst_id appears in peer_eval.
 
 ```{r}
 peer_eval %>%
-  count(paper_id, analyst_id) %>% 
+  count(paper_id, analyst_id) |> 
   arrange(desc(n))
 ```
 
