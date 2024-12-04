@@ -469,7 +469,7 @@ effect_robustness_discipline_data <-
   calculate_estimate_range(grouping_var = paper_discipline)
 ```
 
-```{r generating effect_region_discipline_plot, include=FALSE}
+```{r generating effect_robustness_discipline_plot, include=FALSE}
 effect_robustness_discipline_plot <-
   plot_rain(data = effect_robustness_discipline_data,
             grouping_var = paper_discipline,
@@ -483,6 +483,31 @@ effect_robustness_discipline_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
+```
+
+```{r data processing for effect_region_studytype_plot}
+effect_region_studytype_data <- 
+  processed |> 
+  dplyr::mutate(experimental_or_observational = stringr::str_to_title(experimental_or_observational)) |> 
+  calculate_tolerance_region(grouping_var = experimental_or_observational, drop_missing = TRUE)
+```
+
+```{r generating effect_region_studytype_plot}
+effect_region_studytype_plot <-
+  plot_percentage(
+    data = effect_region_studytype_data,
+    grouping_var = experimental_or_observational,
+    categorization_var = is_within_region,
+    y_lab = "Percentage of re-analysis results",
+    x_lab = "Study type",
+    with_labels = TRUE,
+    rev_limits = FALSE
+  ) +
+  ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
+  )
+
+ggplot2::ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
 ```
 
 ```{r data processing for effect_robustness_studytype_plot, include=FALSE}
@@ -620,40 +645,6 @@ samplesize_region_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
-```
-
-```{r data processing for df_region_plot, include=FALSE}
-df_region_data <-
-  processed |>
-  dplyr::select(
-    paper_id,
-    analyst_id,
-    reanalysis_degrees_of_freedom_1,
-    reanalysis_degrees_of_freedom_2,
-    original_cohens_d,
-    reanalysis_cohens_d
-  ) |>
-  dplyr::mutate(
-    reanalysis_degrees_of_freedom_1 = dplyr::case_when(
-      !is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_2,
-      is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_1
-    )
-  ) |>
-  dplyr::select(-reanalysis_degrees_of_freedom_2) |>
-  dplyr::filter(
-    !is.na(original_cohens_d),!is.na(reanalysis_cohens_d),!is.na(reanalysis_degrees_of_freedom_1)
-  ) |>
-  dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.05,
-    tolarence_region_upper = original_cohens_d + 0.05,
-    is_within_region = dplyr::case_when(
-      reanalysis_cohens_d <= tolarence_region_lower |
-        reanalysis_cohens_d >= tolarence_region_upper ~ "No",
-      reanalysis_cohens_d >= tolarence_region_lower |
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Yes"
-    ),
-    is_within_region = factor(is_within_region, levels = c("Yes", "No"))
-  )
 ```
 
 ```{r generating df_region_plot, include=FALSE}
@@ -944,12 +935,6 @@ conclusions_analysis_data <-
 ```
 
 Across all individual re-analyses (n = `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(N)`), `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(percentage)` % of analyses were reported to arrive at the same conclusion as in the original investigation; `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(percentage)`% to no effects/inconclusive result, and `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(percentage)`% to the opposite effect as in the original investigation (Fig. 4a).
-
-```{r generating conclusion_main_robustness_plot, include=FALSE}
-conclusion_main_robustness_plot <- plot_conclusion_robustness(conclusions_main_robustness_data, robust)
-
-ggsave(here::here("figures/conclusion_main_robustness_plot.jpg"), conclusion_main_robustness_plot, dpi = 300)
-```
 
 ```{r generating conclusion_main_plot, include=FALSE}
 conclusion_main_plot <-
@@ -1254,51 +1239,6 @@ conclusions_samplesize_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
-```
-
-```{r generating conclusions_df_plot, include=FALSE}
-# Number of analysis where samplesize is present
-nrow(filter(processed, !is.na(reanalysis_model_sample_size)))
-# Number of analysis where df1 is present
-nrow(filter(processed, !is.na(reanalysis_degrees_of_freedom_1) | !is.na(reanalysis_degrees_of_freedom_2)))
-
-conclusions_df_plot <-
-  processed |>
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::select(paper_id,
-                analyst_id,
-                categorisation,
-                reanalysis_degrees_of_freedom_1,
-                reanalysis_degrees_of_freedom_2) |>
-  # It looks like of df2 is present than df2 belongs to the responses and df1 is for the parameters
-  dplyr::mutate(
-    reanalysis_degrees_of_freedom_1 = dplyr::case_when(
-      !is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_2,
-      is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_1
-    )
-  ) |> 
-  dplyr::select(-reanalysis_degrees_of_freedom_2) |> 
-  dplyr::filter(!is.na(reanalysis_degrees_of_freedom_1)) |>
-  dplyr::mutate(
-    categorisation = forcats::fct_relevel(
-      categorisation,
-      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-    )
-  ) |> 
-  plot_rain(
-    grouping_var = categorisation,
-    response_var = reanalysis_degrees_of_freedom_1,
-    x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
-    y_lab = "Log10 of degrees of freedom",
-    trans = "log10",
-    breaks = c(10, 100, 1000, 10000, 100000)
-  ) +
-  ggplot2::coord_flip() +
-    ggplot2::theme(
-    axis.title = element_text(size = 9)
-  )
-
-ggplot2::ggsave(here::here("figures/conclusions_df_plot.jpg"), conclusions_df_plot, dpi = 300)
 ```
 
 ```{r generating inferential_panel}

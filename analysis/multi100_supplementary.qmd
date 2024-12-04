@@ -1,0 +1,8 @@
+---
+title: "Supplementary information: Investigating the analytical robustness of the social and behavioural sciences"
+format: docx
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
