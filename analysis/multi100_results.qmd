@@ -4,6 +4,11 @@ format: docx
 editor: source
 editor_options: 
   chunk_output_type: console
+params:
+  within_tol_region_5_percentage: NULL
+  within_tol_region_20_percentage: NULL
+  conclusion_robust_100_percentage: NULL
+  conclusion_robust_80_percentage: NULL
 ---
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
@@ -64,9 +69,9 @@ processed |>
 ### TODO: solve the problem if using values here without calculating them again
 The same dataset can be analysed in different justifiable ways to answer the same research question, potentially challenging the robustness of empirical science. In this crowd initiative, we investigated the degree to which research findings in the social and behavioural sciences are contingent on analysts’ choices. To explore this question, we took a sample of 100 studies published between 2009 and 2018 in criminology, demography, economics and finance, management, marketing and organisational behaviour, political science, psychology, and sociology. For one claim of each study, at least five re-analysts were invited to independently re-analyze the original data.
 
-The statistical appropriateness of the re-analyses was assessed in peer evaluations and the robustness indicators were inspected along a range of research characteristics and study designs. Only `r dplyr::filter(ind_within_tol_reg, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |>  round(0)` % of the independent re-analyses yielded the same result (within a tolerance region of +/- 0.05 Cohen’s d) as the original report. Even with a four times broader tolerance region, this indicator did not go above `r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |> round(0)` %. 
+The statistical appropriateness of the re-analyses was assessed in peer evaluations and the robustness indicators were inspected along a range of research characteristics and study designs. Only `r params$within_tol_region_5_percentage` % of the independent re-analyses yielded the same result (within a tolerance region of +/- 0.05 Cohen’s d) as the original report. Even with a four times broader tolerance region, this indicator did not go above `r params$within_tol_region_20_percentage` %. 
 
-Regarding the conclusions drawn, only `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)` % of the studies remained analytically robust, meaning that all re-analysts reported evidence for the originally reported claim. Using a more liberal definition of robustness produced comparable result (`r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)`% when \>80% re-analysis agreement with the original conclusion defined analytical robustness).
+Regarding the conclusions drawn, only `r params$conclusion_robust_100_percentage` % of the studies remained analytically robust, meaning that all re-analysts reported evidence for the originally reported claim. Using a more liberal definition of robustness produced comparable result (`r params$conclusion_robust_80_percentage`% when \>80% re-analysis agreement with the original conclusion defined analytical robustness).
 
 This explorative study suggests that the common single-path analyses in social and behavioural research cannot be assumed to be robust to alternative — similarly justifiable — analyses. Therefore, we recommend the development and use of practices to explore and communicate this neglected source of uncertainty.
 
@@ -346,6 +351,9 @@ ind_within_tol_reg <-
   dplyr::filter(!is.na(is_within_region)) |> 
   calculate_percentage(is_within_region)
 
+# Calculate value for abstract
+params$within_tol_region_5_percentage <- dplyr::filter(ind_within_tol_reg, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |>  round(0)
+
 # +-0.2 threshold for tolerance region
 ind_within_tol_reg_20 <-
   processed |>
@@ -368,6 +376,9 @@ ind_within_tol_reg_20 <-
   # Exclude missing tolerance region decisions
   dplyr::filter(!is.na(is_within_region)) |> 
   calculate_percentage(is_within_region)
+
+# Calculate value for abstract
+params$within_tol_region_20_percentage <- dplyr::filter(ind_within_tol_reg_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |> round(0)
 
 # On the paper level
 effect_region_all_data <- 
@@ -910,8 +921,16 @@ conclusions_main_data <-
 
 # When threshold is 100% same conclusion for robust result
 conclusions_main_robustness_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 100)
+
+# Calculate value for abstract
+params$conclusion_robust_100_percentage <- filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)
+
 # When threshold is 80% same conclusion for robust result
 conclusions_main_robustness_80_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 80, operator = ">")
+
+# Calculate value for abstract
+params$conclusion_robust_80_percentage <- filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)
+
 # When threshold is 60% same conclusion for robust result
 conclusions_main_robustness_60_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 60, operator = ">")
 ```
