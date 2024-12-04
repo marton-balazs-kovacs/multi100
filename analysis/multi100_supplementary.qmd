@@ -6,3 +6,792 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Additional Results
+## General descriptives
+
+Responding to our recruitment call, 1141 researchers signed up to participate in our study. Of these volunteers, 459 signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
+
+Throughout the project, 509 re-analyses have been submitted. This number is higher than the number of re-analysts as some re-analysts volunteered to analyse more than one dataset.
+
+Out of the submitted analyses, 1 was omitted from the summary analysis as its analysis failed the peer evaluation, and an additional 4 analyses were excluded due to incomplete responses.
+
+As a result, we ended up with 504 re-analyses submitted by 457 re-analysts.
+
+Although we invited more than 5 re-analysts to work on each of the 100 studies, due to drop-outs and peer evaluation exclusions, the final number of completed analyses ranged between 3 and 7. Table S1 shows the distribution of the number of analyses for individual studies.
+
+__Table S1. \| The Distribution of the Number of Analyses for Studies__
+
+```{r echo=FALSE, message=FALSE}
+processed |>
+  dplyr::count(paper_id) |> 
+  dplyr::count(n, name = "N") |>
+  dplyr::rename(`Number of Completed Analyses` = n,
+                `Number of Studies` = N) |>
+  gt::gt() |>
+  gt::tab_style(
+    style = gt::cell_text(weight = "bold"),
+    locations = gt::cells_column_labels()
+  )
+```
+
+## Basic demographics of the re-analysts
+
+Out of all the re-analysts who submitted their work by the deadline, there were 23 professors, 41 associate professors, 105 assistant professors, 107 post-doctoral researchers, 122 doctoral students, 59 from other academic/research positions.
+
+The gender distribution of the re-analysts is as follows: 117 female, 332 male, 1 other, and 7 did not want to respond to this question.
+
+The age distribution of the re-analysts is depicted in Fig. S1: 375 young adults (<39 years); 81 middle-aged adults (40-59 years); and no older adults (>60 years).
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+age_plot <- 
+  age |>
+  ggplot2::ggplot() +
+  ggplot2::aes(x = age) +
+  ggplot2::geom_histogram(binwidth = 1) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, 40)) +
+  ggplot2::scale_x_continuous(
+    # limits = c(20, 55),
+    # breaks = c(20, 30, 40, 50, 60),
+    # labels = c("20", "30", "40", "50", "60")
+  ) +
+  ggplot2::labs(x = "Age (years)",
+       y = "Number of co-analysts") +
+  ggplot2::theme(
+    panel.grid = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line()
+  )
+
+ggplot2::ggsave(here::here("figures/demographic_age_plot.jpg"), age_plot, dpi = 300)
+
+age_plot
+```
+
+__Fig. S1 \| The distribution of the analysts’ age.__
+When an analyst submitted additional re-analyses with a higher reported age, we kept only their age at the time of their first submission. Moreover, one analyst was excluded because they did not disclose their age.
+
+Regarding the highest level of education, one re-analyst reported a high school diploma or equivalent, 18 re-analysts had a Bachelor’s degree or equivalent, 135 had a Master’s degree or equivalent, and 303 had a Doctoral degree or equivalent. In case the analysts completed more than one re-analysis and advanced in their studies by the time of their second analysis, we kept only their first response for this comparison.
+
+The country of residence of the re-analysts is shown on the map in Fig. S2. Regarding the continents, one re-analyst was from Africa, 27 were from Asia, 15 from Oceania, 296 from Europe, 112 from North America, and six were from South America.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+world_map <- 
+  ggplot2::map_data("world") |> 
+  dplyr::mutate(
+    subregion = dplyr::case_when(
+      subregion == "Hong Kong" ~ subregion,
+      TRUE ~ NA_character_
+    )
+  )
+
+country_map <- dplyr::left_join(world_map, country, by = c("region", "subregion"))
+
+country_map_plot <- 
+  country_map |> 
+  ggplot2::ggplot() +
+  ggplot2::aes(x = long, y = lat, group = group, fill = n) +
+  ggplot2::geom_polygon(color = "white", linewidth = 0.2) +
+  ggplot2::scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalyst") +
+  ggplot2::theme_void() +
+  ggplot2::theme(
+    legend.title = element_text(size = 6),
+    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")
+  )
+
+ggplot2::ggsave(here::here("figures/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
+
+country_map_plot
+```
+
+__Fig. S2 \| The analysts’ country of residence.__ 
+When an analyst submitted more than one re-analysis, and they moved between the submissions, we only kept their first response.
+
+We asked the re-analysts which discipline is the closest to their research area. The following Table S2 summarises the distribution of their disciplinary orientation. Re-analysts from Psychology and Economics disciplines participated in the highest ratio in this study.
+
+__Table 2. \| The Distribution of Co-analysts’ Disciplinary Orientation__
+
+```{r, echo=FALSE}
+analyst_discipline |>
+  dplyr::select(discipline, n, percentage) |>
+  dplyr::rename(Discipline = discipline,
+                Count = n,
+                Percentage = percentage) |>
+  gt::gt() |>
+  tab_style(style = gt::cell_text(weight = "bold"),
+            locations = gt::cells_column_labels()) |>
+  gt::tab_footnote(
+    "Note: Whenever the respondents provided more than one field we only kept their first responses."
+  )
+```
+
+The distribution of the years of experience with data analysis is depicted in Fig. S3. The median duration of experience with data analysis was eight years among our re-analysts.
+
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
+
+analyst_experience_years_data <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  # Dropped because of faulty response
+  dplyr::filter(analyst_id != "RTX71")
+
+analyst_experience_years_plot <-
+  analyst_experience_years_data |> 
+  ggplot2::ggplot() +
+  ggplot2::aes(x = years_of_experience) +
+  ggplot2::geom_histogram() +
+  ggplot2::scale_y_continuous(expand = c(0, 0)) +
+  ggplot2::labs(x = "Years of experience with data analysis",
+                y = "Number of co-analysts") +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggplot2::ggsave(here::here("figures/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
+
+analyst_experience_years_plot
+```
+
+__Fig. S3 \| The analysts’ years of experience with data analysis.__
+We only kept their first response when an analyst submitted additional re-analyses with a higher reported age.
+
+We asked our re-analysts how regularly they perform data analysis. Fig. S4 shows that the most frequent category was 2-3 times a week.
+
+```{r echo=FALSE, message=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
+
+analysis_frequency_count <-
+  processed |> 
+  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(analysis_frequency)
+
+# For this question we report the responses by analysis and not analyst 
+analysis_frequency_plot <-
+  analysis_frequency_count |>
+  dplyr::mutate(
+    analysis_frequency = dplyr::case_when(
+      analysis_frequency == "2-3 times a week" ~ "2-3 times\na week",
+      analysis_frequency == "Once every two weeks" ~ "Once every\ntwo weeks",
+      analysis_frequency == "Less than once a month" ~ "Less than\nonce a month",
+      TRUE ~ analysis_frequency
+    ),
+    analysis_frequency = as.factor(analysis_frequency),
+    analysis_frequency = forcats::fct_relevel(
+      analysis_frequency,
+      c(
+        "Daily",
+        "2-3 times\na week",
+        "Once a week",
+        "Once every\ntwo weeks",
+        "Once a month",
+        "Less than\nonce a month"
+      )
+    )
+  ) |>
+  ggplot2::ggplot() +
+  ggplot2::aes(x = analysis_frequency, y = n) +
+  ggplot2::geom_bar(stat = "identity") +
+  ggplot2::scale_y_continuous(expand = c(0, 0)) +
+  ggplot2::labs(x = "Frequency of doing data analysis",
+                y = "Number of co-analysts") +
+  ggplot2::theme(
+    panel.background = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line(color = "black"),
+    axis.text.x = ggplot2::element_text(size = 7)
+  )
+
+ggplot2::ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
+
+analysis_frequency_plot
+```
+
+We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution in Fig. S5 shows that the most prevalent answer was 8.
+
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
+
+analyst_experience_years_data <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  # Dropped because of faulty response
+  dplyr::filter(analyst_id != "RTX71")
+```
+
+```{r echo=FALSE, message=FALSE}
+analyst_experience_years_plot <-
+  analyst_experience_years_data |> 
+  ggplot2::ggplot() +
+  ggplot2::aes(x = years_of_experience) +
+  ggplot2::geom_histogram() +
+  ggplot2::scale_y_continuous(expand = c(0, 0)) +
+  ggplot2::labs(x = "Years of experience with data analysis",
+                y = "Number of co-analysts") +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggplot2::ggsave(here::here("figures/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
+
+analyst_experience_years_plot
+```
+
+__Fig. S5 \| The analysts’ self-rated level of expertise in data analysis.__
+When an analyst submitted more than one re-analysis, we only kept their first response.
+
+In 8.13% (41 out of 504) of the cases, the re-analysts were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
+
+All re-analysts reported that they had not communicated the details of their analysis with other re-analysts working with the same dataset.
+
+We asked the re-analysts what programming language/software/tool they used in their data analysis during Task 1 and Task 2. The following figure indicates that R (62.53%), STATA (16.86%), and SPSS (7.02%) were the most popular responses. Fig. S6 shows the distribution of these responses.
+
+```{r include=FALSE}
+software_data <-
+  processed |> 
+  dplyr::reframe(
+    software = c(task1_software, task2_software),
+    software = tolower(software),
+  ) |> 
+  separate_rows(software, sep = ",\\s*") |> 
+  mutate(
+    software = case_when(
+      software == "ms excel" ~ "excel",
+      software == "r markdown" ~ "rmarkdown",
+      software == "process v4.0 by hayes for r" ~ "process v4.0",
+      software == "jamovi 1.6.23.0" ~ "jamovi",
+      software == "jamovi 2.3.9" ~ "jamovi",
+      software == "text editor to look at the stata code of the original paper" ~ "text editor",
+      software == "text editor to read the stata code in the replication materials" ~ "text editor",
+      TRUE ~ software
+    )
+  ) |> 
+  calculate_percentage(software) |> 
+  arrange(desc(n)) |> 
+  mutate(
+    software = case_when(
+      software %in% c("r", "stata", "spss", "jasp") ~ toupper(software),
+      TRUE ~ stringr::str_to_title(software)
+    )
+  )
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#| label: fig-software
+#| fig-cap: "The figure shows which software the analysts used for their re-analysis tasks. In case an analyst completed multiple re-analyses or reported the use of multiple software we kept all their responses for this figure. The figure shows only software that was used by more than 1% of the analysts."
+
+software_plot <-
+  software_data |>
+  dplyr::filter(percentage > 1) |>
+  ggplot() +
+  aes(x = reorder(software, -percentage),
+      y = percentage) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(expand = c(0, 0),
+                     labels = scales::percent_format(scale = 1)) +
+  labs(y = "Percentage of co-analysts",
+       x = "Software") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggsave(here::here("figures/demographic_software_plot.jpg"), software_plot, dpi = 300)
+
+software_plot
+```
+
+__Fig. S6 \| The software the analysts used for their re-analysis tasks.__ 
+In case an analyst completed multiple re-analyses or reported using multiple software applications, we kept all their responses for this figure. The figure shows only software applications that were used by more than 1% of the analysts.
+
+## Descriptives of the statistical analyses
+
+A difference in Task 2 compared to Task 1 was that the re-analysts received some constraints for their analysis to focus on a single result in the original study (see Methods for more details).
+
+In Task 2, when we asked the re-analysts to present one main statistical result, in 97.62% of the analyses (492 out of 504), the conclusion was based on a p-value. A Bayes Factor was chosen in 2.38% of the cases (12 out of 504).
+
+For 47.82% (241 out of 504) of the analyses, the re-analysts reported having to make additional calculations in Task 2 compared to Task 1. In the remaining 52.18% (263 out of 504) of the cases, the re-analysts indicated that despite the requirements of the instructions, they could conduct the same analyses as in Task 1.
+
+In Task 2, 12.7% of the results (64 out of 504) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
+
+The re-analysts were asked to estimate their time spent performing Task 1 and Task 2 together. The median value of their response is 6 hours (Fig. S7).
+
+```{r include=FALSE}
+total_hours_data <-
+  processed |> 
+  filter(total_hours != 999)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+total_hours_plot <-
+  total_hours_data |>
+  ggplot() +
+  aes(x = total_hours) +
+  geom_histogram() +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Total hours spent on the analysis",
+       y = "Number of co-analysts") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
+
+total_hours_plot
+```
+
+__Fig. S7 \| The reported total hours the analyst spent on Task 1 and Task 2 together.__
+In case an analyst completed multiple re-analyses, we kept all their responses for this figure. One response was excluded due to being an outlier (999 hours).
+
+## Peer evaluation
+### Peer evaluators
+#### Basic demographics of the peer evaluators
+
+Fig. S8 shows that most peer evaluators have many years of experience with conducting statistical analysis.
+
+```{r include=FALSE}
+# Get peer evaluator demographic info from task1 and task2 survey results
+peer_evaluator_data <-
+  peer_eval |> 
+  distinct(evaluator_id) |> 
+  inner_join(processed, by = c("evaluator_id" = "analyst_id"))
+
+# Check if an evaluator has more than one analysis submitted
+peer_evaluator_data |> 
+  count(evaluator_id) |> 
+  arrange(desc(n))
+
+# Check if a peer evaluator has more than one evaluation submitted
+peer_eval |>
+  count(evaluator_id) |>
+  arrange(desc(n))
+```
+
+```{r include=FALSE}
+check_diff_response(peer_evaluator_data, evaluator_id, years_of_experience)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+peer_analyst_experience_years_data <-
+  peer_evaluator_data |>
+  dplyr::select(evaluator_id, years_of_experience, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(evaluator_id, task1_timestamp)
+
+peer_analyst_experience_years_plot <-
+  peer_analyst_experience_years_data |>
+  ggplot() +
+  aes(x = years_of_experience) +
+  geom_histogram() +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Years of experience",
+       y = "Number of peer evaluators") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggsave(here::here("figures/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
+
+peer_analyst_experience_years_plot
+```
+
+__Fig. S8 \| The peer evaluators’ years of experience with data analysis.__
+When a peer evaluator submitted more than one evaluation and a year passed between the responses, we kept only their first response.
+
+Fig. S9 indicates that peer evaluators regularly perform data analysis.
+
+__Fig. S9 \| The regularity that the peer evaluators perform data analysis.__
+
+```{r include=FALSE}
+check_diff_response(peer_evaluator_data, evaluator_id, analysis_frequency)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+peer_analysis_frequency_count <-
+  peer_evaluator_data |> 
+  dplyr::select(evaluator_id, paper_id, analysis_frequency, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = evaluator_id, time_var = task1_timestamp) |> 
+  count(analysis_frequency)
+
+# For this question we report the responses by analysis and not analyst 
+peer_analysis_frequency_plot <-
+  peer_analysis_frequency_count |>
+  mutate(
+    analysis_frequency = case_when(
+      analysis_frequency == "2-3 times a week" ~ "2-3 times\na week",
+      analysis_frequency == "Once every two weeks" ~ "Once every\ntwo weeks",
+      analysis_frequency == "Less than once a month" ~ "Less than\nonce a month",
+      TRUE ~ analysis_frequency
+    ),
+    analysis_frequency = as.factor(analysis_frequency),
+    analysis_frequency = fct_relevel(
+      analysis_frequency,
+      c(
+        "Daily",
+        "2-3 times\na week",
+        "Once a week",
+        "Once every\ntwo weeks",
+        "Once a month",
+        "Less than\nonce a month"
+      )
+    )
+  ) |>
+  ggplot() +
+  aes(x = analysis_frequency, y = n) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Frequency of doing data analysis",
+       y = "Number of peer evaluators") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    axis.text.x = element_text(size = 6)
+  )
+
+ggsave(here::here("figures/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
+
+peer_analysis_frequency_plot
+```
+
+Fig. S10 indicates that most peer evaluators rate themselves close to expert level in data analysis.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+peer_expertise_self_rating_data <-
+  peer_evaluator_data |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = evaluator_id, time_var = task1_timestamp) |>
+  count(expertise_self_rating) |> 
+  complete(expertise_self_rating, fill = list(n = 0))
+
+peer_expertise_self_rating_plot <-
+  peer_expertise_self_rating_data |>
+  mutate(
+    expertise_self_rating = case_when(
+      expertise_self_rating == 1 ~ "1\n(Beginner)",
+      expertise_self_rating == 10 ~ "10\n(Expert)",
+      TRUE ~ as.character(expertise_self_rating)
+    ),
+    expertise_self_rating = factor(
+      expertise_self_rating,
+      levels = c("1\n(Beginner)",
+                 as.character(2:9),
+                 "10\n(Expert)")
+    )
+  ) |>
+  tidyr::complete(expertise_self_rating, fill = list(n = 0)) |> 
+  ggplot() +
+  aes(x = expertise_self_rating, y = n) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Self-reported expertise rating",
+       y = "Number of peer evaluators") +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black")
+  )
+
+ggsave(here::here("figures/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
+
+peer_expertise_self_rating_plot
+```
+
+__Fig. S10 \| The peer evaluators’ self-rated level of expertise in data analysis.__
+When a peer evaluator submitted more than one re-analysis, we kept only their first response.
+
+## Peer evaluations
+### Descriptives of peer evaluations
+
+In total, we received 490 peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated, leaving us with a total of 489 peer evaluation reports on 73 different papers. After the panel members had reviewed the peer evaluations (see ‘Peer Evaluation: Review and Decisions’ for all decisions and reasoning behind each case), the final result of the peer evaluation was as follows:
+
+At the end of the peer evaluation process, one analysis was deemed to contain an unacceptable analysis pipeline. Therefore, we removed this single analysis from our results. For the remaining analyses, it was determined that all Task 1 and Task 2 analysis pipelines were acceptable. Furthermore, all remaining Task 1 conclusions were considered to follow from the results accurately, and the analysts’ self-categorization of the results was considered adequate.
+
+204 analytical reproducibility checks were successfully conducted, and mismatches were identified in 19 analyses. In all of these cases, we verified that the mismatches did not have a meaningful impact on the reported conclusion, categorisation, or effect size.
+
+## Robustness Analyses
+### Inferential robustness by the level of confidence with the suitability of the analysis
+
+Table S3 shows the percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by the analyst’s level of confidence with the suitability of the analysis.
+
+__Table S3. Inferential Robustness by the Level of Confidence with the Suitability of the Analysis__
+```{r echo=FALSE, message=FALSE}
+conclusions_suitability_data |>
+  dplyr::mutate(Count = paste(n, "/", N),
+                percentage = paste0(percentage, "%")) |>
+  dplyr::select(
+    `Confidence rating` = confidence_in_approach,
+    `Direction of the conclusion` = categorisation,
+    Count,
+    Percentage = percentage
+  ) |>
+  gt::gt() |>
+  gt::tab_style(
+    style = gt::cell_text(weight = "bold"),
+    locations = gt::cells_column_labels()
+  )
+```
+
+### Estimate robustness by the level of confidence with the suitability of the analysis
+
+Here (Table S4), we were interested to see whether these results show a different pattern when inspecting them as a function of the evaluators’ level of confidence in the suitability of the analysis.
+
+__Table S4. Estimate Robustness by the Level of Confidence with the Suitability of the Analysis__
+```{r echo=FALSE, message=FALSE}
+effect_region_suitability_data <- calculate_tolerance_region(data = processed, grouping_var = confidence_in_approach, drop_missing = TRUE) |> 
+  dplyr::mutate(
+        confidence_in_approach = dplyr::case_when(
+      confidence_in_approach == 1 ~ "1\nNot confident at all",
+      confidence_in_approach == 5 ~ "5\nVery confident",
+      TRUE ~ as.character(confidence_in_approach)
+      ),
+    confidence_in_approach = as.factor(confidence_in_approach),
+     is_within_region = dplyr::case_when(
+       is_within_region == "Within tolerance region" ~ "Yes",
+       is_within_region == "Outside of tolerance region" ~ "No",
+       TRUE ~ NA_character_
+     )
+  )
+
+effect_region_suitability_data |>
+  dplyr::mutate(Count = paste(n, "/", N),
+                percentage = paste0(round(percentage, 2), "%")) |>
+  dplyr::select(
+    `Confidence rating` = confidence_in_approach,
+    `Is the estimate within the tolerance region?` = is_within_region,
+    Count,
+    Percentage = percentage
+  ) |>
+  gt::gt() |>
+  gt::tab_style(
+    style = gt::cell_text(weight = "bold"),
+    locations = gt::cells_column_labels()
+  )
+```
+
+### Estimate robustness with alternative tolerance regions
+
+We learned that even with a 4 times broader tolerance region  (+/- 0.5 Cohen’s d), we would find that around 80% of the studies still show results outside of this region and around half of the individual reanalysis effect sizes are outside of this region (Fig. S11).
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+thresholds <- seq(0.01, 0.2, by = 0.001)
+
+threshold_robustness_plot_data <- map_df(thresholds, ~ calculate_tolerance_region_proportions(processed, threshold = .x, weight = NULL))
+
+threshold_robustness_plot_data <-
+  threshold_robustness_plot_data |> 
+  dplyr::mutate(
+    tolerance_region = threshold * 2
+  ) |> 
+    pivot_longer(
+    cols = c(analysis_percentage, paper_percentage),
+    names_to = "type",
+    values_to = "value",
+    names_prefix = "_percentage"
+  ) |> 
+  dplyr::mutate(
+    type =  stringr::str_replace(type, "_percentage", ""),
+    type = dplyr::case_when(
+      type == "analysis" ~ "Re-analysis effect sizes",
+      type == "paper" ~ "Studies"
+    )
+  )
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+threshold_robustness_plot <-
+  threshold_robustness_plot_data |> 
+  ggplot() +
+  aes(
+    x = tolerance_region,
+    y = value,
+    linetype = type
+  ) +
+  geom_vline(xintercept = 0.1, color = "#440154FF", linetype = "dashed") +
+  geom_line() +
+  scale_x_continuous(breaks = c(0.01, seq(0.05, 0.2, by = 0.05)) * 2, expand = c(0.05, 0)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  labs(
+    x = "Width of the Cohen's d tolerance region",
+    y = "Percentage within the tolerance region",
+    linetype = "Percentage of"
+  ) +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = c(0.8, 0.8)
+  )
+
+ggplot2::ggsave(here::here("figures/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
+
+threshold_robustness_plot
+```
+
+__Fig. S 11 \| Estimate robustness with different widths (+/-[0.01-0.20] Cohen’s d) of tolerance region.__
+
+Alternatively, we could define the tolerance region as a percentage of the given effect size. As an additional robustness test, we varied the tolerance region between +/-5% and +/-20%. Fig. S12 shows that there was barely any difference regarding the percentage of robust studies. 
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+weights <- seq(0.05, 0.2, by = 0.001)
+
+threshold_weighted_robustness_plot_data <- map_df(weights, ~ calculate_tolerance_region_proportions(processed, threshold = NULL, weight = .x))
+
+threshold_weighted_robustness_plot_data <-
+  threshold_weighted_robustness_plot_data |> 
+    pivot_longer(
+    cols = c(analysis_percentage, paper_percentage),
+    names_to = "type",
+    values_to = "value",
+    names_prefix = "_percentage"
+  ) |> 
+  dplyr::mutate(
+    type =  stringr::str_replace(type, "_percentage", ""),
+    type = dplyr::case_when(
+      type == "analysis" ~ "Re-analysis effect sizes",
+      type == "paper" ~ "Studies"
+    )
+  )
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+threshold_weighted_robustness_plot <-
+  threshold_weighted_robustness_plot_data |> 
+  ggplot() +
+  aes(
+    x = weight,
+    y = value,
+    linetype = type
+  ) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(0.05, 0.2, by = 0.05), labels = scales::percent_format(scale = 100), expand = c(0.05, 0)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  viridis::scale_fill_viridis(discrete = TRUE) +
+  labs(
+    x = "Percentage of original study's Cohen's d used\nto calculate tolerance region",
+    y = "Percentage within the tolerance region",
+    linetype = "Percentage of"
+  ) +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = c(0.8, 0.8)
+  )
+
+ggplot2::ggsave(here::here("figures/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
+
+threshold_weighted_robustness_plot
+```
+
+__Fig. S 12 \| Estimate robustness with different percentages (5-20%) of Cohen’s d as tolerance region.__
+
+## Additional analyses
+While Cohen’s d has the advantage of being easy to compute and comparable across different analyses, Kümpel and Hoffmann26 recently proposed the concept of generalised marginal effects (gMEs), an effect size metric that is both formally applicable and comparable across different statistical models. When standardised, the value of gMEs is equal to the value of Cohen’s d, where the latter effect size measure is strictly applicable. Otherwise, gME-values are very intuitive to interpret and communicate, as they give the average expected change of the target variable. We had not originally planned to calculate standardised gMEs, and, accordingly, did not collect all required analysis outputs to compute them across the board. Still, we calculated gMEs for a sample of our studies (n = 4) to showcase their potential for future multi-analyst studies (Fig. S13).
+
+```{r echo=FALSE}
+knitr::include_graphics(here::here("generalized Marginal Effects/gMEs.png"))
+```
+
+__Fig. S13 \|__ 
+For each original and re-analysis of papers 22, 40, 63, and 75, the figure shows a forest-density plot of non-standardized gME values, as defined by Kümpel and Hoffmann26. Specifically, the black dots give the point estimates of the average change in target expectation attributed to the regressor of interest by each analysis, whereas the thicker and thinner lines depict the 0.66 and 0.95 quantiles of the corresponding densities. Study numbers correspond to studies listed in Table S1.
+
+# Additional Details of Methods
+## Project contributors
+
+_Lead team:_ The project was coordinated by a lead team (consisting of Balazs Aczel, Barnabas Szaszi, Harry Clelland, Livia Kosa, Zoltan Torma, Felix Holzmeister, Marton Kovacs, and Gustav Nilsonne). The lead team was responsible for the development of the research methodology, preregistration of the project, overall analysis of the results, and preparation of a manuscript for publication. Furthermore, the lead team provided the materials to re-analysts and peer evaluators; and communicated with the project management team, the expert panel, re-analysts and peer evaluators to ensure that the project proceeded as intended.
+_Project management team:_ The project management team consisted of the SCORE team of the Center for Open Science and recruited research assistants. The project management team provided financial support, oversaw the legal and ethical aspects of the project, provided the infrastructure and support for data management, and supported the use of materials adopted from other SCORE projects.
+_Expert panel:_ A group of experts who have previously conducted multi-analyst studies and/or are experts of relevant methodology were invited to participate in the project as members of an expert panel. The panel’s task was to oversee the research plan and remain available to comment on methodological questions throughout the project. The list of expert panel members is available here. 
+_Re-analysts:_ Analysts who independently analysed the target datasets. 
+_Peer evaluators:_ Peer evaluators were also re-analysts who were asked to evaluate the completed analyses.
+
+# Materials
+## Study and claim selection
+
+__Fig. S14 \| The sampling process of scientific claims.__
+
+After selecting 100 studies from our collection (Fig. S14), we selected one empirical claim from each (see Method). We provided the re-analysts with the claims to test on the original datasets, but we did not give them specific research questions. Instead, we used the selected claims to focus the analysts on an underlying research question. We decided to follow this approach because the original papers almost never contained a well-formulated research question, and we judged that any of our attempts to translate the extracted claims to research questions would carry the danger of influencing the analysts by our own understanding.
+
+## Peer evaluations
+### Peer evaluators
+
+When volunteering to be a re-analyst in the project, researchers could indicate whether they would be willing to serve as peer evaluators as well. They were informed that peer evaluators could become co-authors of the resulting article and that they would be remunerated for their efforts. Peer evaluators were asked to deliver five evaluations by a predefined due date and will be paid a flat fee of $10 per evaluation as an incentive to comply with the agreement. 8 peer evaluators evaluated more than 5 ( 6-10) analyses and were paid accordingly.
+
+We originally aimed to recruit at least two peer evaluations for each re-analysis. Therefore, our aim was to reach a total of 100 x 5 x 2 = 1,000 evaluations. In reality, this plan turned out to be overly ambitious due to the very labour-intensive coordination and assessment work. Therefore, after the completion of an initial 507 peer evaluations, we judged that our sample could provide us with a rough estimate of the potentially unacceptable analyses and since we found this value relatively low (see Results), we ceased to continue with further peer evaluations. 
+
+### Peer Evaluation Procedure
+
+The peer evaluation procedure described below follows our preregistered protocol. All minor deviations are listed in the ‘Deviations from Preregistration’ document.
+
+In addition to completing a re-analysis, re-analysts who signed up to the Multi100 could opt-in to serve as a peer evaluator on the project. That is, the re-analyst who responded ‘Yes’ when asked “Are you interested in serving as an evaluator for this project?” was later approached to serve as peer evaluator. The role of a peer evaluator was to check the plausibility and legitimacy of an analysis based on a summary of the analysis submitted by the analyst. In order to successfully evaluate a given re-analysis, peer evaluators were provided with instructions and a summary of the re-analysts’ analysis (i.e., responses to their Task 1 and Task 2 post-analysis survey questions). A template of instructions is provided in the Figure below.
+
+_Peer evaluation task template sent out to all evaluators. Square brackets indicate variable information that is specific to the re-analysis being evaluated._
+
+## Main outputs of the peer evaluation
+
+Re-analyses were evaluated on five key metrics.
+
+First, peer evaluators judged whether the analysis pipeline of Task 1 was acceptable. That is, they judged whether it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Each re-analysis pipeline was rated as either (1) Unacceptable, (2) Acceptable but low quality, (3) Acceptable and medium quality, or (4) Acceptable and high quality. In cases where the analysis pipeline was deemed unacceptable, evaluators provided their reasoning via an open text box.
+
+Second, peer evaluators judged whether the conclusion provided in Task 1 adequately followed from the results of the analysis. Each conclusion was rated as either (1) It adequately follows from the results of the analysis, or (2) It does not follow adequately from the results of the analysis. In cases where the conclusion was judged not to follow adequately from the results, evaluators provided their reasoning via an open text box.
+
+Third, peer evaluators judged whether the analyst’s categorisation of the Task 1 result was adequate. For example, regarding an analyst who has claimed that the results of their analysis show evidence in favour of the original effect/relationship, the evaluator considered whether this judgment is adequate. Each categorisation was rated as either (1) Adequate, or (2) Inadequate. Given that the analyst’s categorisation of the results is tied to their conclusion, there was no open text box provided for inadequate ratings.
+
+Fourth, peer evaluators judged whether the analysis pipeline of Task 2 was acceptable. That is, they judged whether it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Each re-analysis pipeline was rated as either (1) Unacceptable, (2) Acceptable but low quality, (3) Acceptable and medium quality, (4) Acceptable and high quality, or (5) Incomplete or missing analysis. In cases where the analysis pipeline was deemed unacceptable, evaluators provided their reasoning via an open text box.
+
+Finally, peer evaluators could optionally complete a code reproducibility check. They were asked whether any mismatches were found between the executed code and the reported results. For each analysis, the evaluator indicated either (1) I didn’t try to execute it, (2) I tried but didn’t manage to execute it, (3) I executed it and I found no mismatches, or (4) I executed it and I found mismatches. In cases where mismatches were found, evaluators described the nature of these mismatches via an open text box.
+
+Accordingly, the Task 1 analysis pipeline was rated as ‘Unacceptable’ in 8 cases, the Task 1 conclusion was judged not to follow adequately from the results in 27 cases, the Task 1 self-categorization of the result was rated as ‘inadequate’ in 38 cases, the Task 2 analysis pipeline was rated as ‘unacceptable’ in 18 cases, the Task 2 analysis pipeline was judged as ‘incomplete or missing’ in 21 cases, and the code reproducibility checks revealed 19 mismatches.
+
+## Review of the peer evaluation reports
+
+To identify potential errors or misunderstandings in the peer evaluations, each issue raised (above) by a peer evaluator was reviewed by a member of the expert panel who considered the information provided by the peer evaluator and, where necessary, contrasted it with the information provided by the re-analyst. For each issue, the panel member reviewed the evaluators’ initial categorisation and their reasoning. Note that our aim in the project was to explore the sensitivity of analytical results to the analytical choices of the re-analysts. Hence, during the process of peer evaluation, our goal was not to ensure that each analysis pipeline consisted of the most ideal steps from every possible perspective but to ensure that the steps of the analyses were within the variations that could be considered appropriate by the scientific community in addressing the given analytical task. For that reason, during the review of the peer evaluations, the expert panel member left the ratings of the peer evaluators ‘Unacceptable’ only if the analyst made one or more mistakes that could be objectively judged as incorrect. For all the other cases where the peer-evaluator categorised the analysis pipeline ‘Unacceptable’ based on non-objective reasoning (e.g., not adding control variables or controlling for another variable), the expert panel member adjusted the rating from ‘Unacceptable’ to ‘Acceptable but low quality’. We aimed to remove re-analyses from the dataset, which was judged as ‘Unacceptable’.
+
+As a consequence of the full peer evaluation review, one analysis was rejected. What follows is a summary of revisions made to peer evaluator’s initial ratings as an outcome of the peer evaluation review.
+
+Following the Task 1 analysis pipeline review, ratings of ‘(1) Unacceptable’ (n = 7) were revised to ‘(2) Acceptable but low quality’. Following the Task 1 conclusion review, ratings of ‘(2) It does not follow adequately from the results of the analysis’ (n = 25) were revised to ‘(1) It follows adequately from the results of the analysis’.
+
+Following the Task 1 categorization review, ratings of ‘(2) Inadequate’ (n = 36) were revised to ‘(1) Adequate’. In many cases, evaluators made their judgment of ‘inadequate’ on the basis of their Task 1 conclusion rating. Put simply, evaluators often considered the categorisation of results to be inadequate when they also judged that the conclusion does not follow from the results. It was often the case that verifying the legitimacy of the Task 1 conclusion also verified the legitimacy of the Task 1 categorisation. 
+
+Following the Task 2 analysis pipeline review, all initial ratings of ‘(1) Unacceptable’ (n = 17) were revised to ‘(2) Acceptable but low quality’. Ratings of ‘(5) Incomplete or missing analysis’ (n = 21) were also revised. Many of these ratings were made simply because the re-analysts’ Task 1 submission also satisfied the requirements of Task 2 (i.e., the paper-specific instructions given in Task 2 had already been adhered to in Task 1), and as a result, no further analysis was needed. For each case, the panel verified that the analyst had reported their test statistic appropriately in the Task 2 survey response and that their analysis files had been uploaded to the OSF as requested. 
+
+Finally, no changes were made to initial ratings following the review of code mismatches. In the cases where evaluators reported ‘(4) I executed it and found mismatches’ (n = 19), the panel verified that the mismatches did not have a meaningful impact on the re-analyst’s reported conclusion, categorisation, or effect size.
+The issues raised by the peer evaluators and the decisions of the expert panel are documented in full in the ‘Peer Evaluation: Review and Decisions’ supplement. This document also contains the panel’s reasoning in each case.
+
+### Resulting actions
+
+Re-analyses: Rejected re-analyses were excluded from overall data analyses. Those re-analysts with no accepted analyses were not co-authors on the resulting publication unless they earned it by completing peer evaluations.
+
+## Analysis methods
+### Marginal Effect sizes
+
+The generalised Marginal Effects (gMEs) were calculated as specified by definition 3 of Kümpel and Hoffmann (2022). Specifically, the calculation of means was based on the empirical distribution of the data each analyst used to fit a given model or compute a test statistic. The standardised gME values were obtained by dividing each gME point estimate by the standard deviation of the target variable. To facilitate this calculation, it was necessary to replicate the analysis code of each analyst and extract the data after preprocessing as well as draws from the posterior distribution or, alternatively, point estimates and variance-covariance matrices (for details see Kümpel & Hoffmann, 2022). Where applicable, precisely in a single instance, t-test analyses were redone by fitting a simple linear regression model, i.e., a linear regression with a single independent variable.
+
+## Project timeline
+The main milestones of the project were
+
+Start of the project Feb 10, 2021
+
+Recruitment of expert panel Feb 24, 2021
+
+Start of re-analyst recruitment Jan 21, 2022
+
+Start of re-analyses Nov 19, 2022
+
+Completion of the project Oct 22, 2024
