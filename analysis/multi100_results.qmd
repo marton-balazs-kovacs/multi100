@@ -19,7 +19,8 @@ library(grid)
 library(patchwork)
 
 # Load custom functions
-source(here::here("R/utils.R"))
+script_files <- list.files(here::here("R"), pattern = "\\.R$", full.names = TRUE)
+walk(script_files, source)
 
 # Read processed data files
 processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
@@ -388,7 +389,7 @@ within_tolerance_region <-
   dplyr::mutate(
     N = sum(n),
     relative_frequency = n / N,
-    percentage = round(relative_frequency * 100)
+    percentage = round(relative_frequency * 100, 2)
     )
 
 effect_region_all_data_20 <- 
@@ -681,7 +682,7 @@ ggsave(here::here("figures/estimate_panel.png"), estimate_panel, width = 30, hei
 __Fig. 2 \| Analytical robustness of the statistical results.__
 __a,__ Effect size of the original analysis (black square; all represented as positive values) and the effect sizes of the re-analyses (green dot) for each study after conversions to Cohen’s d. The figure displays 447 re-analysis effect size estimates. For 57 re-analyses, the reported effect size was not convertible to Cohen’s d. Furthermore, the figure does not show 5 re-analysed effect sizes outside the \[-5,5\] range. For the seven studies listed at the bottom of the figure, we could not determine the original effect size due to missing information (for details see Supplementary information). Study numbers correspond to studies listed in [https://osf.io/mkwhn](). The studies are ordered by the size of the original effect size. __b,__ Proportion of effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The studies are ordered by the displayed proportion. __c,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by major disciplines. The figure displays the count of re-analyses next to each discipline name. __d,__ Distributions of effect size estimate ranges (lowest to highest) calculated per study for each major discipline. __e,__ Proportion of re-analysis results falling within or outside of the tolerance region of the original results of the studies by study type. The figure displays the count of re-analyses next to each discipline name. __f,__ Distribution of effect size estimate ranges (lowest to highest) calculated per study for observational and experimental studies. __g,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by self-rated expertise (on a scale from 1 (Beginner) to 10 (Expert)). __h,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by declared familiarity with the study. __i,__ Distribution of sample sizes separately for re-analysis effect sizes falling within or outside of the tolerance region of the original results. In this figure, we could not include those studies where the original effect sizes were missing, and cases where the re-analysis effect size or sample size were missing (for details see Supplement).
 
-We found that only in `r dplyr::filter(within_tolerance_region, robust == "Inferentially robust") |> dplyr::pull(percentage)` % of the studies for which we could obtain the original effect size (`r dplyr::filter(within_tolerance_region, robust == "Inferentially robust") |> dplyr::pull(n)` out of `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(N)`) , were all re-analysis effect sizes inside the tolerance region (+/- 0.05 Cohen’s d) of the result of the original study (Fig. 2a). Out of the `r dplyr::distinct(ind_within_tol_reg, N) |> dplyr::pull(N)` available re-analysis effect sizes, `r dplyr::filter(ind_within_tol_reg, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)` % were inside the tolerance region. As a robustness test of our analysis, we explored the degree to which we would observe different results with different tolerance regions.
+We found that only in `r dplyr::filter(within_tolerance_region, robust == "Inferentially robust") |> dplyr::pull(percentage)`% of the studies for which we could obtain the original effect size (`r dplyr::filter(within_tolerance_region, robust == "Inferentially robust") |> dplyr::pull(n)` out of `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(N)`) , were all re-analysis effect sizes inside the tolerance region (+/- 0.05 Cohen’s d) of the result of the original study (Fig. 2a). Out of the `r dplyr::distinct(ind_within_tol_reg, N) |> dplyr::pull(N)` available re-analysis effect sizes, `r dplyr::filter(ind_within_tol_reg, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)` % were inside the tolerance region. As a robustness test of our analysis, we explored the degree to which we would observe different results with different tolerance regions.
 
 We learned that even with a four times broader tolerance region (+/- 0.20 Cohen’s d), in only 20% of the studies were all corresponding re-analysis result inside the tolerance region. Further, out of the available 417 reanalysis effect sizes `r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Within tolerance region") |> dplyr::pull(n)`) were inside of this region (Fig. S11).
 
@@ -1406,7 +1407,7 @@ The goal of peer evaluation in this project was to assess whether the applied an
 The peer evaluation phase did not address potential errors in translating the description of the analytic methodology into analysis scripts. To mitigate potential gross errors in the analysis, peer evaluators were provided with a thorough and standardised description of the results and conclusions obtained using the described analysis, including sample sizes, the effect size, the test statistic, and degrees of freedom, etc. From the description of the dataset, the description of the analysis, and the reported results and conclusions, peer evaluators were able to identify potential flaws in the implementation of the analysis that could stem from errors and/or mismatches.
 
 ## Assignment of analyses to peer evaluators
-
+# HERE  but seven cases (i.e., 98.6% of peer evaluations were carried out on a dataset that was different to the dataset they analysed themselves)
 When assigning the volunteering peer evaluators to analyses, the initial rule was that they should not evaluate any re-analyses conducted on datasets they have re-analysed as a re-analyst. In practice, for logistical reasons, this rule was applied in all but seven cases (i.e., 98.6% of peer evaluations were carried out on a dataset that was different to the dataset they analysed themselves). They were asked to choose to evaluate those analyses where they see the greatest relevance of their expertise. If after choosing a study to evaluate, a peer evaluator did not feel sufficiently skilled/experienced to judge whether the proposed analysis is acceptable, he/she was told not to fill out our template and should return the re-analysis to the pool and choose a new one.
 
 ## Peer Evaluation Procedure
