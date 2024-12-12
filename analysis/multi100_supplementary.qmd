@@ -6,18 +6,105 @@ editor_options:
   chunk_output_type: console
 ---
 
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+# Load packages
+library(tidyverse)
+library(ggrain)
+library(maps)
+library(mapdata)
+library(countrycode)
+library(raster)
+library(gt)
+library(grid)
+library(patchwork)
+
+# Load custom functions
+source(here::here("R/utils.R"))
+
+# Read processed data files
+processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
+
+peer_eval <- readr::read_csv(here::here("data/processed/multi100_peer-eval_processed_data.csv"))
+
+peer_eval_not_reviewed <- readr::read_csv(here::here("data/processed/multi100_peer-eval-not-reviewed_processed_data.csv"))
+
+peer_eval_review <- readr::read_csv(here::here("data/processed/multi100_peer-eval-review_processed_data.csv"))
+
+## Transform datafiles for analysis 
+# Add number of evaluations per analysis
+peer_eval <-
+  peer_eval |>
+  dplyr::group_by(paper_id, analyst_id) |>
+  dplyr::mutate(n_peer_evals = dplyr::n()) |>
+  dplyr::ungroup()
+
+all_people <- readr::read_csv(here::here("data/processed/multi100_all-people_processed_data.csv"))
+
+# Transforming the timestamp to date type from character
+processed <-
+  processed |>
+  dplyr::mutate(
+    task1_timestamp = lubridate::ymd_hms(task1_timestamp))
+
+# Table of long paper ids and simplified paper ids
+processed |> 
+  dplyr::distinct(simplified_paper_id, paper_id) |> 
+  dplyr::arrange(simplified_paper_id)
+```
+
 # Additional Results
 ## General descriptives
 
-Responding to our recruitment call, 1141 researchers signed up to participate in our study. Of these volunteers, 459 signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
+```{r include=FALSE}
+analyst_signed_up <-
+  all_people |>
+  dplyr::mutate(first_name = tolower(first_name),
+                last_name = tolower(last_name)) |>
+  dplyr::distinct(first_name, last_name, .keep_all = T) |>
+  dplyr::filter(disclosure_agreement == "I agree")
 
-Throughout the project, 509 re-analyses have been submitted. This number is higher than the number of re-analysts as some re-analysts volunteered to analyse more than one dataset.
+analyst_submitted <-
+  processed |>
+  dplyr::distinct(analyst_id) |>
+  nrow()
+```
 
-Out of the submitted analyses, 1 was omitted from the summary analysis as its analysis failed the peer evaluation, and an additional 4 analyses were excluded due to incomplete responses.
+Responding to our recruitment call, `r nrow(analyst_signed_up)` researchers signed up to participate in our study. Of these volunteers, `r `r nrow(analyst_signed_up)`` signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
 
-As a result, we ended up with 504 re-analyses submitted by 457 re-analysts.
+```{r include=FALSE}
+n_analysis <-
+  processed |> 
+  nrow()
+```
 
-Although we invited more than 5 re-analysts to work on each of the 100 studies, due to drop-outs and peer evaluation exclusions, the final number of completed analyses ranged between 3 and 7. Table S1 shows the distribution of the number of analyses for individual studies.
+Throughout the project, `r n_analysis` re-analyses have been submitted. This number is higher than the number of re-analysts as some re-analysts volunteered to analyse more than one dataset.
+
+```{r include=FALSE}
+n_failed_peer <-
+  processed |>
+  dplyr::filter(!peer_eval_pass | !incomplete_response_pass) |>
+  nrow()
+```
+
+Out of the submitted analyses, `r nrow(dplyr::filter(processed, !peer_eval_pass))` was omitted from the summary analysis as its analysis failed the peer evaluation, and an additional `r nrow(dplyr::filter(processed, !incomplete_response_pass))` analyses were excluded due to incomplete responses.
+
+```{r include=FALSE}
+# Excluding analyst who failed the peer evaluation from the rest of the analysis
+processed <-
+  processed |> 
+  dplyr::filter(peer_eval_pass & incomplete_response_pass)
+```
+
+```{r include=FALSE}
+final_n_analyst <-
+  processed |> 
+  dplyr::distinct(analyst_id) |> 
+  nrow()
+```
+
+As a result, we ended up with `r nrow(processed)` re-analyses submitted by `r final_n_analyst` re-analysts.
+
+Although we invited more than 5 re-analysts to work on each of the 100 studies, due to drop-outs and peer evaluation exclusions, the final number of completed analyses ranged between `r min(dplyr::count(processed, paper_id)$n)` and `r max(dplyr::count(processed, paper_id)$n)` Table S1 shows the distribution of the number of analyses for individual studies.
 
 __Table S1. \| The Distribution of the Number of Analyses for Studies__
 
@@ -36,11 +123,76 @@ processed |>
 
 ## Basic demographics of the re-analysts
 
-Out of all the re-analysts who submitted their work by the deadline, there were 23 professors, 41 associate professors, 105 assistant professors, 107 post-doctoral researchers, 122 doctoral students, 59 from other academic/research positions.
+```{r include=FALSE}
+# Checking if analysts consistently reported their current position
+check_diff_response(processed, analyst_id, current_position_grouped)
 
-The gender distribution of the re-analysts is as follows: 117 female, 332 male, 1 other, and 7 did not want to respond to this question.
+position <-
+  processed |>
+  dplyr::select(analyst_id,
+                paper_id,
+                current_position_grouped,
+                task1_timestamp) |>
+  # Keeping only the first response per analyst
+  keep_first_response(analyst_id, task1_timestamp) |>
+  count(current_position_grouped) |>
+  rename(position = current_position_grouped) |>
+  mutate(position = factor(
+    position,
+    levels = c(
+      "Professor",
+      "Associate Professor",
+      "Assistant Professor",
+      "Post-Doc Researcher",
+      "Doctoral Student",
+      "Other academic/research position"
+    )
+  ))
+```
 
-The age distribution of the re-analysts is depicted in Fig. S1: 375 young adults (<39 years); 81 middle-aged adults (40-59 years); and no older adults (>60 years).
+Out of all the re-analysts who submitted their work by the deadline, there were `r dplyr::filter(position, position == "Professor") |> dplyr::pull(n)` professors, `r dplyr::filter(position, position == "Associate Professor") |> dplyr::pull(n)` associate professors, `r filter(position, position == "Assistant Professor") |> dplyr::pull(n)` assistant professors, `r dplyr::filter(position, position == "Post-Doc Researcher") |> dplyr::pull(n)` post-doctoral researchers, `r dplyr::filter(position, position == "Doctoral Student") |> dplyr::pull(n)` doctoral students, `r dplyr::filter(position, position == "Other academic/research position") |> dplyr::pull(n)` from other academic/research positions. 
+
+```{r include=FALSE}
+check_diff_response(processed, analyst_id, gender)
+
+gender <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, gender, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(gender)
+```
+
+The gender distribution of the re-analysts is as follows: `r dplyr::filter(gender, gender == "Female") |> dplyr::pull(n)` female, `r dplyr::filter(gender, gender == "Male") |> dplyr::pull(n)` male, `r dplyr::filter(gender, gender == "Non-binary") |> dplyr::pull(n)` other, and `r dplyr::filter(gender, gender == "Prefer not to say") |> dplyr::pull(n)` didn't want to respond to this question.
+
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = age)
+
+age <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, age, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  # Filter erroneous data
+  dplyr::filter(age != "00") |> 
+  dplyr::mutate(age = as.numeric(age))
+  
+age_group <-
+  age |> 
+  dplyr::mutate(
+    age_group = dplyr::case_when(
+      age <= 39 ~ "young",
+      age >= 40 | age <= 59 ~ "middle",
+      age >= 60 ~ "old",
+      TRUE ~ NA_character_
+    ),
+    age_group = factor(age_group, levels = c("young", "middle", "old"))
+    ) |> 
+  dplyr::count(age_group) |> 
+  tidyr::complete(age_group, fill = list(n = 0))
+```
+
+The age distribution of the re-analysts is depicted in Fig. S1: `r dplyr::filter(age_group, age_group == "young") |> dplyr::pull(n)` young adults (-39 years); `r dplyr::filter(age_group, age_group == "middle") |> dplyr::pull(n)` middle-aged adults (40-59 years); and no older adults (60- years).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 age_plot <- 
@@ -70,9 +222,61 @@ age_plot
 __Fig. S1 \| The distribution of the analysts’ age.__
 When an analyst submitted additional re-analyses with a higher reported age, we kept only their age at the time of their first submission. Moreover, one analyst was excluded because they did not disclose their age.
 
-Regarding the highest level of education, one re-analyst reported a high school diploma or equivalent, 18 re-analysts had a Bachelor’s degree or equivalent, 135 had a Master’s degree or equivalent, and 303 had a Doctoral degree or equivalent. In case the analysts completed more than one re-analysis and advanced in their studies by the time of their second analysis, we kept only their first response for this comparison.
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = education_level)
 
-The country of residence of the re-analysts is shown on the map in Fig. S2. Regarding the continents, one re-analyst was from Africa, 27 were from Asia, 15 from Oceania, 296 from Europe, 112 from North America, and six were from South America.
+education <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, education_level, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(education_level) |> 
+  dplyr::rename(education = education_level)
+```
+
+Regarding the highest level of education, `r dplyr::filter(education, education == "High-school diploma or equivalent") |> dplyr::pull(n)` re-analyst reported a high school diploma or equivalent, `r dplyr::filter(education, education == "Bachelor's degree or equivalent") |> dplyr::pull(n)` re-analysts had a Bachelor’s degree or equivalent, `r dplyr::filter(education, education == "Master's degree or equivalent") |> dplyr::pull(n)` had a Master’s degree or equivalent, and `r dplyr::filter(education, education == "Doctoral degree or equivalent") |> dplyr::pull(n)` had a Doctoral degree or equivalent. In case the analysts completed more than one re-analysis and advanced in their studies by the time of their second analysis, we kept only their first response for this comparison.
+
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = country_of_residence)
+
+country_data <- raster::ccodes()
+
+country <- 
+  processed |>
+  dplyr::select(analyst_id, paper_id, country_of_residence, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(country_of_residence) |> 
+  dplyr::rename(region = country_of_residence) |> 
+  # Modify country names to fit the worldmap data
+  dplyr::mutate(
+    subregion = dplyr::case_when(
+      region == "Hong Kong (China)" ~ "Hong Kong",
+      TRUE ~ NA_character_
+    ),
+    region = dplyr::case_when(
+      region == "Hong Kong (China)" ~ "China",
+      region == "United States" ~ "USA",
+      region == "United Kingdom" ~ "UK",
+      TRUE ~ region
+    ),
+    continent = countrycode::countrycode(region, "country.name", "continent"),
+    iso3_code = countrycode::countrycode(region, "country.name", "iso3c")
+  ) |> 
+  dplyr::left_join(dplyr::select(country_data, ISO3, UNREGION1), by = c("iso3_code" = "ISO3"))
+
+continent <-
+  country |> 
+  dplyr::group_by(continent) |> 
+  dplyr::summarise(N = sum(n))
+
+region <-
+  country |> 
+  dplyr::group_by(UNREGION1) |> 
+  dplyr::summarise(N = sum(n))
+```
+
+The country of residence of the re-analysts is shown on the map in Fig. S2. Regarding the continents,  `r dplyr::filter(continent, continent == "Africa") |> dplyr::pull(N)` re-analyst was from Africa, `r dplyr::filter(continent, continent == "Asia") |> dplyr::pull(N)` were from Asia, `r dplyr::filter(continent, continent == "Oceania") |> dplyr::pull(N)` from Oceania, `r dplyr::filter(continent, continent == "Europe") |> dplyr::pull(N)` from Europe, `r dplyr::filter(region, UNREGION1 == "Northern America") |> dplyr::pull(N)` from North America, and `r dplyr::filter(region, UNREGION1 %in% c("Central America", "South America")) |> dplyr::summarise(sum(N)) |> dplyr::pull("sum(N)")` were from South America.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 world_map <- 
@@ -106,7 +310,20 @@ country_map_plot
 __Fig. S2 \| The analysts’ country of residence.__ 
 When an analyst submitted more than one re-analysis, and they moved between the submissions, we only kept their first response.
 
-We asked the re-analysts which discipline is the closest to their research area. The following Table S2 summarises the distribution of their disciplinary orientation. Re-analysts from Psychology and Economics disciplines participated in the highest ratio in this study.
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = primary_discipline)
+
+analyst_discipline <- 
+  processed |>
+  dplyr::select(analyst_id, paper_id, primary_discipline, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  calculate_percentage(response_var = primary_discipline) |>
+  dplyr::rename(discipline = primary_discipline) |> 
+  dplyr::arrange(dplyr::desc(dplyr::if_else(discipline == "Other", -Inf, percentage)))
+```
+
+We asked the re-analysts which discipline is the closest to their research area. The following Table S2 summarises the distribution of their disciplinary orientation. Re-analysts from `r dplyr::slice(analyst_discipline, 1) |> dplyr::pull(discipline)` and `r dplyr::slice(analyst_discipline, 2) |> dplyr::pull(discipline)` disciplines participated in the highest ratio in this study.
 
 __Table 2. \| The Distribution of Co-analysts’ Disciplinary Orientation__
 
@@ -124,7 +341,19 @@ analyst_discipline |>
   )
 ```
 
-The distribution of the years of experience with data analysis is depicted in Fig. S3. The median duration of experience with data analysis was eight years among our re-analysts.
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
+
+analyst_experience_years_data <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  # Dropped because of faulty response
+  dplyr::filter(analyst_id != "RTX71")
+```
+
+The distribution of the years of experience with data analysis is depicted in Fig. S3. The median duration of experience with data analysis was `r median(analyst_experience_years_data$years_of_experience)` years among our re-analysts.
 
 ```{r include=FALSE}
 check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
@@ -159,7 +388,18 @@ analyst_experience_years_plot
 __Fig. S3 \| The analysts’ years of experience with data analysis.__
 We only kept their first response when an analyst submitted additional re-analyses with a higher reported age.
 
-We asked our re-analysts how regularly they perform data analysis. Fig. S4 shows that the most frequent category was 2-3 times a week.
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
+
+analysis_frequency_count <-
+  processed |> 
+  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  dplyr::count(analysis_frequency)
+```
+
+We asked our re-analysts how regularly they perform data analysis. Fig. S4 shows that the most frequent category was `r dplyr::filter(analysis_frequency_count, n == max(n)) |> dplyr::pull(analysis_frequency)`.
 
 ```{r echo=FALSE, message=FALSE}
 check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
@@ -212,7 +452,15 @@ ggplot2::ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), a
 analysis_frequency_plot
 ```
 
-We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution in Fig. S5 shows that the most prevalent answer was 8.
+```{r include=FALSE}
+expertise_self_rating_data <-
+  processed |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |>
+  dplyr::count(expertise_self_rating)
+```
+
+We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution in Fig. S5 shows that the most prevalent answer was `r dplyr::filter(expertise_self_rating_data, n == max(n)) |> dplyr::pull(expertise_self_rating)`.
 
 ```{r include=FALSE}
 check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
@@ -249,11 +497,52 @@ analyst_experience_years_plot
 __Fig. S5 \| The analysts’ self-rated level of expertise in data analysis.__
 When an analyst submitted more than one re-analysis, we only kept their first response.
 
-In 8.13% (41 out of 504) of the cases, the re-analysts were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
+```{r include=FALSE}
+familiar_with_paper_data <-
+  calculate_percentage(processed, familiar_with_paper)
+```
+
+In `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(percentage)` % (`r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(n)` out of `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(N)`) of the cases, the re-analysts were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
+
+
+```{r include=FALSE}
+processed |> 
+  count(communication_check)
+```
 
 All re-analysts reported that they had not communicated the details of their analysis with other re-analysts working with the same dataset.
 
-We asked the re-analysts what programming language/software/tool they used in their data analysis during Task 1 and Task 2. The following figure indicates that R (62.53%), STATA (16.86%), and SPSS (7.02%) were the most popular responses. Fig. S6 shows the distribution of these responses.
+```{r include=FALSE}
+software_data <-
+  processed |> 
+  dplyr::reframe(
+    software = c(task1_software, task2_software),
+    software = tolower(software),
+  ) |> 
+  separate_rows(software, sep = ",\\s*") |> 
+  mutate(
+    software = case_when(
+      software == "ms excel" ~ "excel",
+      software == "r markdown" ~ "rmarkdown",
+      software == "process v4.0 by hayes for r" ~ "process v4.0",
+      software == "jamovi 1.6.23.0" ~ "jamovi",
+      software == "jamovi 2.3.9" ~ "jamovi",
+      software == "text editor to look at the stata code of the original paper" ~ "text editor",
+      software == "text editor to read the stata code in the replication materials" ~ "text editor",
+      TRUE ~ software
+    )
+  ) |> 
+  calculate_percentage(software) |> 
+  arrange(desc(n)) |> 
+  mutate(
+    software = case_when(
+      software %in% c("r", "stata", "spss", "jasp") ~ toupper(software),
+      TRUE ~ stringr::str_to_title(software)
+    )
+  )
+```
+
+We asked the re-analysts what programming language/software/tool they used in their data analysis during Task 1 and Task 2. The following figure indicates that `r slice(software_data, 1) |> pull(software)` (`r slice(software_data, 1) |> pull(percentage)`%), `r slice(software_data, 2) |> pull(software)` (`r slice(software_data, 2) |> pull(percentage)`%), and `r slice(software_data, 3) |> pull(software)` (`r slice(software_data, 3) |> pull(percentage)`%) were the most popular responses. Fig. S6 shows the distribution of these responses.
 
 ```{r include=FALSE}
 software_data <-
@@ -318,19 +607,34 @@ In case an analyst completed multiple re-analyses or reported using multiple sof
 
 A difference in Task 2 compared to Task 1 was that the re-analysts received some constraints for their analysis to focus on a single result in the original study (see Methods for more details).
 
-In Task 2, when we asked the re-analysts to present one main statistical result, in 97.62% of the analyses (492 out of 504), the conclusion was based on a p-value. A Bayes Factor was chosen in 2.38% of the cases (12 out of 504).
+```{r include=FALSE}
+p_value_or_bayes_data <-
+  calculate_percentage(processed, p_value_or_bayes)
+```
 
-For 47.82% (241 out of 504) of the analyses, the re-analysts reported having to make additional calculations in Task 2 compared to Task 1. In the remaining 52.18% (263 out of 504) of the cases, the re-analysts indicated that despite the requirements of the instructions, they could conduct the same analyses as in Task 1.
+In Task 2, when we asked the re-analysts to present one main statistical result, in `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(percentage)`% of the analyses (`r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(N)`), the conclusion was based on a p-value. A Bayes Factor was chosen in `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(percentage)`% of the cases (`r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(N)`).
 
-In Task 2, 12.7% of the results (64 out of 504) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
+```{r include=FALSE}
+additional_calculations_data <-
+  calculate_percentage(processed, additional_calculations)
+```
 
-The re-analysts were asked to estimate their time spent performing Task 1 and Task 2 together. The median value of their response is 6 hours (Fig. S7).
+For `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(N)`) of the analyses, the re-analysts reported having to make additional calculations in Task 2 compared to Task 1. In the remaining `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(N)`) of the cases, the re-analysts indicated that despite the requirements of the instructions, they could conduct the same analyses as in Task 1.
+
+```{r include=FALSE}
+direction_of_result_data <- 
+  calculate_percentage(processed, direction_of_result)
+```
+
+In Task 2, `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(percentage)`% of the results (`r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(n)` out of `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(N)`) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
 
 ```{r include=FALSE}
 total_hours_data <-
   processed |> 
   filter(total_hours != 999)
 ```
+
+The re-analysts were asked to estimate their time spent performing Task 1 and Task 2 together. The median value of their response is `r median(total_hours_data$total_hours)` hours (Fig. S7).
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 total_hours_plot <-
@@ -518,11 +822,35 @@ When a peer evaluator submitted more than one re-analysis, we kept only their fi
 ## Peer evaluations
 ### Descriptives of peer evaluations
 
-In total, we received 490 peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated, leaving us with a total of 489 peer evaluation reports on 73 different papers. After the panel members had reviewed the peer evaluations (see ‘Peer Evaluation: Review and Decisions’ for all decisions and reasoning behind each case), the final result of the peer evaluation was as follows:
+```{r include=FALSE}
+# Number of peer evaluations
+# One response was excluded in multi100_raw_processed because the evaluator did not provide the analyst_id
+nrow(peer_eval_not_reviewed)
+nrow(peer_eval)
+```
+
+In total, we received `r nrow(peer_eval_not_reviewed) + 1` peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated, leaving us with a total of `r nrow(peer_eval_not_reviewed)` peer evaluation reports on `r nrow(distinct(peer_eval_not_reviewed, paper_id))`73 different papers. After the panel members had reviewed the peer evaluations (see ‘Peer Evaluation: Review and Decisions’ for all decisions and reasoning behind each case), the final result of the peer evaluation was as follows:
+
+```{r include=FALSE}
+dplyr::count(peer_eval, task1_pipeline_acceptable)
+dplyr::count(peer_eval, task1_conclusion_follows_results)
+dplyr::count(peer_eval, task2_pipeline_acceptable)
+```
 
 At the end of the peer evaluation process, one analysis was deemed to contain an unacceptable analysis pipeline. Therefore, we removed this single analysis from our results. For the remaining analyses, it was determined that all Task 1 and Task 2 analysis pipelines were acceptable. Furthermore, all remaining Task 1 conclusions were considered to follow from the results accurately, and the analysts’ self-categorization of the results was considered adequate.
 
-204 analytical reproducibility checks were successfully conducted, and mismatches were identified in 19 analyses. In all of these cases, we verified that the mismatches did not have a meaningful impact on the reported conclusion, categorisation, or effect size.
+```{r include=FALSE}
+reproducibility_checks_data <-
+  peer_eval |> 
+  calculate_percentage(any_code_mismatches)
+
+reproducibility_checks_n <-
+  reproducibility_checks_data |> 
+  filter(any_code_mismatches %in% c("(3) I executed it and I found no mismatches", "(4) I executed it and I found mismatches")) |> 
+  summarise(n_reproducibility_checks = sum(n))
+```
+
+`r reproducibility_checks_n` analytical reproducibility checks were successfully conducted, and mismatches were identified in `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)` analyses. In all of these cases, we verified that the mismatches did not have a meaningful impact on the reported conclusion, categorisation, or effect size.
 
 ## Robustness Analyses
 ### Inferential robustness by the level of confidence with the suitability of the analysis
@@ -531,6 +859,20 @@ Table S3 shows the percentage of same conclusion, no effect/inconclusive, and op
 
 __Table S3. Inferential Robustness by the Level of Confidence with the Suitability of the Analysis__
 ```{r echo=FALSE, message=FALSE}
+conclusions_suitability_data <- 
+  processed |> 
+  dplyr::rename(categorisation = task1_categorisation_plotting) |>
+  dplyr::mutate(
+    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
+    confidence_in_approach = dplyr::case_when(
+      confidence_in_approach == 1 ~ "1\nNot confident at all",
+      confidence_in_approach == 5 ~ "5\nVery confident",
+      TRUE ~ as.character(confidence_in_approach)
+      ),
+    confidence_in_approach = as.factor(confidence_in_approach)
+    ) |> 
+  calculate_conclusion(grouping_var = confidence_in_approach, categorization_var = categorisation)
+
 conclusions_suitability_data |>
   dplyr::mutate(Count = paste(n, "/", N),
                 percentage = paste0(percentage, "%")) |>
@@ -745,6 +1087,13 @@ _Peer evaluation task template sent out to all evaluators. Square brackets indic
 
 ## Main outputs of the peer evaluation
 
+```{r include=FALSE}
+count(peer_eval_not_reviewed, task1_pipeline_acceptable)
+count(peer_eval_not_reviewed, task1_conclusion_follows_results)
+count(peer_eval_not_reviewed, task1_categorisation_is_accurate)
+count(peer_eval_not_reviewed, task2_pipeline_acceptable)
+```
+
 Re-analyses were evaluated on five key metrics.
 
 First, peer evaluators judged whether the analysis pipeline of Task 1 was acceptable. That is, they judged whether it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Each re-analysis pipeline was rated as either (1) Unacceptable, (2) Acceptable but low quality, (3) Acceptable and medium quality, or (4) Acceptable and high quality. In cases where the analysis pipeline was deemed unacceptable, evaluators provided their reasoning via an open text box.
@@ -757,7 +1106,7 @@ Fourth, peer evaluators judged whether the analysis pipeline of Task 2 was accep
 
 Finally, peer evaluators could optionally complete a code reproducibility check. They were asked whether any mismatches were found between the executed code and the reported results. For each analysis, the evaluator indicated either (1) I didn’t try to execute it, (2) I tried but didn’t manage to execute it, (3) I executed it and I found no mismatches, or (4) I executed it and I found mismatches. In cases where mismatches were found, evaluators described the nature of these mismatches via an open text box.
 
-Accordingly, the Task 1 analysis pipeline was rated as ‘Unacceptable’ in 8 cases, the Task 1 conclusion was judged not to follow adequately from the results in 27 cases, the Task 1 self-categorization of the result was rated as ‘inadequate’ in 38 cases, the Task 2 analysis pipeline was rated as ‘unacceptable’ in 18 cases, the Task 2 analysis pipeline was judged as ‘incomplete or missing’ in 21 cases, and the code reproducibility checks revealed 19 mismatches.
+Accordingly, the Task 1 analysis pipeline was rated as ‘Unacceptable’ in `r nrow(filter(peer_eval_not_reviewed, task1_pipeline_acceptable == "(1) Unacceptable"))` cases, the Task 1 conclusion was judged not to follow adequately from the results in `r nrow(filter(peer_eval_not_reviewed, task1_conclusion_follows_results == "(2) It does not follow adequately from the results of the analysis"))` cases, the Task 1 self-categorization of the result was rated as ‘inadequate’ in `r nrow(filter(peer_eval_not_reviewed, task1_categorisation_is_accurate == "(2) Inadequate"))` cases, the Task 2 analysis pipeline was rated as ‘unacceptable’ in `r nrow(filter(peer_eval_not_reviewed, task2_pipeline_acceptable == "(1) Unacceptable"))` cases, the Task 2 analysis pipeline was judged as ‘incomplete or missing’ in `r nrow(filter(peer_eval_not_reviewed, task2_pipeline_acceptable == "(5) Incomplete or missing analysis"))` cases, and the code reproducibility checks revealed `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)` mismatches.
 
 ## Review of the peer evaluation reports
 
@@ -765,13 +1114,23 @@ To identify potential errors or misunderstandings in the peer evaluations, each 
 
 As a consequence of the full peer evaluation review, one analysis was rejected. What follows is a summary of revisions made to peer evaluator’s initial ratings as an outcome of the peer evaluation review.
 
-Following the Task 1 analysis pipeline review, ratings of ‘(1) Unacceptable’ (n = 7) were revised to ‘(2) Acceptable but low quality’. Following the Task 1 conclusion review, ratings of ‘(2) It does not follow adequately from the results of the analysis’ (n = 25) were revised to ‘(1) It follows adequately from the results of the analysis’.
+```{r include=FALSE}
+# peer eval data before changing the responses based on the review but after excluding the one analysis
+peer_eval_after_exclusion <- 
+  peer_eval_not_reviewed |>
+  dplyr::filter(!(analyst_id == "NSDML" &
+                  paper_id == "PALER_AmPoliSciRev_2013_Pxp7"))
+# Number of task1_analysis_pipeline remaining unacceptable after the review of peer evaluations
+nrow(filter(peer_eval, task1_pipeline_acceptable == "(1) Unacceptable"))
+```
 
-Following the Task 1 categorization review, ratings of ‘(2) Inadequate’ (n = 36) were revised to ‘(1) Adequate’. In many cases, evaluators made their judgment of ‘inadequate’ on the basis of their Task 1 conclusion rating. Put simply, evaluators often considered the categorisation of results to be inadequate when they also judged that the conclusion does not follow from the results. It was often the case that verifying the legitimacy of the Task 1 conclusion also verified the legitimacy of the Task 1 categorisation. 
+Following the Task 1 analysis pipeline review, ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. Following the Task 1 conclusion review, ratings of ‘(2) It does not follow adequately from the results of the analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_conclusion_follows_results == "(2) It does not follow adequately from the results of the analysis"))`) were revised to ‘(1) It follows adequately from the results of the analysis’.
 
-Following the Task 2 analysis pipeline review, all initial ratings of ‘(1) Unacceptable’ (n = 17) were revised to ‘(2) Acceptable but low quality’. Ratings of ‘(5) Incomplete or missing analysis’ (n = 21) were also revised. Many of these ratings were made simply because the re-analysts’ Task 1 submission also satisfied the requirements of Task 2 (i.e., the paper-specific instructions given in Task 2 had already been adhered to in Task 1), and as a result, no further analysis was needed. For each case, the panel verified that the analyst had reported their test statistic appropriately in the Task 2 survey response and that their analysis files had been uploaded to the OSF as requested. 
+Following the Task 1 categorization review, ratings of ‘(2) Inadequate’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_categorisation_is_accurate == "(2) Inadequate"))`) were revised to ‘(1) Adequate’. In many cases, evaluators made their judgment of ‘inadequate’ on the basis of their Task 1 conclusion rating. Put simply, evaluators often considered the categorisation of results to be inadequate when they also judged that the conclusion does not follow from the results. It was often the case that verifying the legitimacy of the Task 1 conclusion also verified the legitimacy of the Task 1 categorisation. 
 
-Finally, no changes were made to initial ratings following the review of code mismatches. In the cases where evaluators reported ‘(4) I executed it and found mismatches’ (n = 19), the panel verified that the mismatches did not have a meaningful impact on the re-analyst’s reported conclusion, categorisation, or effect size.
+Following the Task 2 analysis pipeline review, all initial ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. Ratings of ‘(5) Incomplete or missing analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(5) Incomplete or missing analysis"))`) were also revised. Many of these ratings were made simply because the re-analysts’ Task 1 submission also satisfied the requirements of Task 2 (i.e., the paper-specific instructions given in Task 2 had already been adhered to in Task 1), and as a result, no further analysis was needed. For each case, the panel verified that the analyst had reported their test statistic appropriately in the Task 2 survey response and that their analysis files had been uploaded to the OSF as requested. 
+
+Finally, no changes were made to initial ratings following the review of code mismatches. In the cases where evaluators reported ‘(4) I executed it and found mismatches’ (n = `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)`), the panel verified that the mismatches did not have a meaningful impact on the re-analyst’s reported conclusion, categorisation, or effect size.
 The issues raised by the peer evaluators and the decisions of the expert panel are documented in full in the ‘Peer Evaluation: Review and Decisions’ supplement. This document also contains the panel’s reasoning in each case.
 
 ### Resulting actions
@@ -786,12 +1145,8 @@ The generalised Marginal Effects (gMEs) were calculated as specified by definiti
 ## Project timeline
 The main milestones of the project were
 
-Start of the project Feb 10, 2021
-
-Recruitment of expert panel Feb 24, 2021
-
-Start of re-analyst recruitment Jan 21, 2022
-
-Start of re-analyses Nov 19, 2022
-
-Completion of the project Oct 22, 2024
+* Start of the project Feb 10, 2021
+* Recruitment of expert panel Feb 24, 2021
+* Start of re-analyst recruitment Jan 21, 2022
+* Start of re-analyses Nov 19, 2022
+* Completion of the project Oct 22, 2024
