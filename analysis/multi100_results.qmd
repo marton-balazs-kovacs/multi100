@@ -682,9 +682,6 @@ familiar_with_paper_data <-
 Re-analyzing published studies entails a potential risk of bias if the re-analysts' familiarity with a given study influences their choice of analysis. Re-analysts reported that they were familiar with the original study in less than `r dplyr::filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> dplyr::pull(percentage)`% of cases. Moreover, there was no more than `r dplyr::filter(effect_region_familiarity_data, is_within_region == "Within tolerance region") |> summarize(diff = ceiling(percentage[1] - percentage[2])) |> dplyr::pull(diff)`% difference in robustness between those who were and those who were not familiar with the original study (Fig. 2h). For both groups, more than two-thirds of the estimates fell outside our tolerance region. Finally, we were interested to see whether these robustness results would show a different pattern when considering sample size, as one could assume that studies with larger sample sizes, thus statistical degrees of freedom, could offer more robust results. Fig. 2i does not support this assumption as the density distributions of the sample sizes for results that are within and outside of the tolerance region are virtually the same. Therefore, studies with large sample sizes are not immune to analytical variability.
 
 ```{r data processing for effec_size_corr_plot, include=FALSE}
-# Based on: https://github.com/CenterForOpenScience/rpp
-colors <- c("Original" = "#440154FF", "Replication" = "#FDE725FF")
-
 effec_size_corr_plot_data <-
   reanalysis_data |>
   dplyr::filter(!is.na(effect_size)) |>
@@ -698,72 +695,19 @@ round(median(effec_size_corr_plot_data$original_cohens_d), 2)
 # Mean
 round(mean(effec_size_corr_plot_data$effect_size), 2)
 round(mean(effec_size_corr_plot_data$original_cohens_d), 2)
-
-# Fit the linear model
-lm_fit <- lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data)
-
-# Extract slope
-beta <- coef(lm_fit)[2]
 ```
 
 ```{r generating effec_size_corr_plot, include=FALSE}
-scatter <-
-  effec_size_corr_plot_data |> 
-  ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
-  geom_point(color = "Grey30",
-             shape = 21,
-             alpha = .8) +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    color = "black",
-    alpha = 0.2
-  ) +
-  annotate("text", x = 4.7, y = 4, label = bquote(italic(beta) == .(round(beta, 2))), size = 4, color = "black") +
-  geom_rug(
-    aes(color = "Original"),
-    size = 1,
-    sides = "b",
-    alpha = .6
-  ) +
-  geom_rug(
-    aes(color = "Replication"),
-    size = 1,
-    sides = "l",
-    alpha = .6
-  ) +
-  scale_color_manual(values = colors) + 
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  geom_abline(intercept = 0,
-              slope = 1,
-              color = "Grey60") +
-  scale_x_continuous(
-    limits = c(0, 5),
-    breaks = c(0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
-  ) +
-  scale_y_continuous(
-    limits = c(-5, 5),
-     breaks = c(-5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
-  ) +
-  labs(
-    x = expression("Original effect size in Cohen's " * italic("d")),
-    y = expression("Re-analysis effect size in Cohen's " * italic("d"))
-  ) +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    legend.position = "none",
-    axis.title = element_text(size = 25),
-    axis.text = element_text(size = 20)
-    )
-
-effec_size_corr_plot <- ggExtra::ggMarginal(scatter, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
+effec_size_corr_plot <- plot_effect_size_correlation(effec_size_corr_plot_data, x_limits = c(0, 5), y_limits = c(-5, 5), annotate_positions = c(4.7, 4))
 
 # Save plot
-ggplot2::ggsave(here::here("figures/effec_size_corr_plot.jpg"), plot = effec_size_corr_plot,
-                width = 13, height = 10,
-       dpi = 300)
+ggplot2::ggsave(
+  here::here("figures/effec_size_corr_plot.jpg"),
+  plot = effec_size_corr_plot,
+  width = 13,
+  height = 10,
+  dpi = 300
+)
 
 effec_size_corr_plot
 ```
@@ -773,72 +717,19 @@ effec_size_corr_plot_data_zoomed <-
   effec_size_corr_plot_data |> 
   dplyr::filter(effect_size <= 1 & effect_size >= -1) |>
   dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1)
-
-# Fit the linear model
-lm_fit_zoomed <- lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data_zoomed)
-
-# Extract slope
-beta_zoomed <- coef(lm_fit_zoomed)[2]
 ```
 
 ```{r generating effec_size_corr_plot_zoomed, include=FALSE}
-scatter_zoomed <-
-  effec_size_corr_plot_data_zoomed |> 
-  ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
-  geom_point(color = "Grey30",
-             shape = 21,
-             alpha = .8) +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    color = "black",
-    alpha = 0.2
-  ) +
-  annotate("text", x = 0.97, y = 0.8, label = bquote(italic(beta) == .(round(beta_zoomed, 2))), size = 4, color = "black") +
-  geom_rug(
-    aes(color = "Original"),
-    size = 1,
-    sides = "b",
-    alpha = .6
-  ) +
-  geom_rug(
-    aes(color = "Replication"),
-    size = 1,
-    sides = "l",
-    alpha = .6
-  ) +
-  scale_color_manual(values = colors) + 
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  geom_abline(intercept = 0,
-              slope = 1,
-              color = "Grey60") +
-  scale_x_continuous(
-    limits = c(0, 1),
-    breaks = c(0, .5, 1)
-  ) +
-  scale_y_continuous(
-    limits = c(-1, 1),
-     breaks = c(-1, -0.5, 0, .5, 1)
-  ) +
-  labs(
-    x = expression("Original effect size in Cohen's " * italic("d")),
-    y = expression("Re-analysis effect size in Cohen's " * italic("d"))
-  ) +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    legend.position = "none",
-    axis.title = element_text(size = 25),
-    axis.text = element_text(size = 20)
-    )
-
-effec_size_corr_plot_zoomed <- ggExtra::ggMarginal(scatter_zoomed, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
+effec_size_corr_plot_zoomed <- plot_effect_size_correlation(effec_size_corr_plot_data_zoomed, x_limits = c(0, 1), y_limits = c(-1, 1), annotate_positions = c(0.97, 0.8))
 
 # Save plot
-ggplot2::ggsave(here::here("figures/effec_size_corr_plot_zoomed.jpg"), plot = effec_size_corr_plot_zoomed,
-                width = 13, height = 10,
-       dpi = 300)
+ggplot2::ggsave(
+  here::here("figures/effec_size_corr_plot_zoomed.jpg"),
+  plot = effec_size_corr_plot_zoomed,
+  width = 13,
+  height = 10,
+  dpi = 300
+)
 
 effec_size_corr_plot_zoomed
 ```
