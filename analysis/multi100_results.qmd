@@ -160,7 +160,7 @@ First, we explored the degree to which the reanalyses arrived to the same statis
 
 A challenge in any multi-analyst project is to find a common metric that allows the results of the different analyses to be compared. A practical solution is to transform the reported point estimates into a common effect size measure. Although these transformations have limitations and their calculation relies on assumptions that may not hold in all considered analysis settings25–28, for the sake of comparability we decided to compute Cohen’s d for each re-analysis, wherever it was feasible. (For an alternative approach, see Additional Results in the Supplementary information.) In our preregistration, we defined that we consider two results qualitatively the same when their effect sizes are within our tolerance region: +/- 0.05 Cohen’s d, but we provide analyses with alternative tolerance regions in the next paragraph. Our results revealed how far the new estimates were from the original ones (Fig. 2a) and how often the effect sizes of the re-analyses fell within this tolerance region (Fig. 2b).
 
-```{r data processing for effect_main_plot, include=FALSE}
+```{r data processing for tolerance_region_main_plot, include=FALSE}
 # Number of cases where the original effect size is missing
 missing_original_n <-
   processed |> 
@@ -257,11 +257,8 @@ excluded_es <-
   summarise(excluded_list = glue::glue_collapse(excluded, sep = "; "))
 ```
 
-```{r generating effect_main_plot, include=FALSE}
-# Colors
-# color_vector <- setNames(c("#F8766D", "#CD9600", "#7CAE00", "#00BE67", "#00BFC4", "#00A9FF", "#C77CFF"), paste0("re-analysis_", sprintf("%02d", 1:7)))
-
-effect_main_plot <-
+```{r generating tolerance_region_main_plot, include=FALSE}
+tolerance_region_main_plot <-
   reanalysis_data |> 
   dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
   ggplot2::ggplot() +
@@ -311,79 +308,58 @@ effect_main_plot <-
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
-ggplot2::ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_plot,
+ggplot2::ggsave(here::here("figures/tolerance_region_main_plot.jpg"), plot = tolerance_region_main_plot,
        width = 12, height = 13,
        dpi = 300)
 ```
 
-```{r data processing for effect_region_all_plot, include=FALSE}
+```{r calculating analysis level tolerance regions, include=FALSE}
 # On the individual analysis level
 # +-0.05 threshold for tolerance region
-ind_within_tol_reg <-
+analysis_level_tolerance_region <-
   processed |>
   dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) |>
-  dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.05,
-    tolarence_region_upper = original_cohens_d + 0.05,
-    is_within_region = dplyr::case_when(
-      reanalysis_cohens_d >= tolarence_region_lower &
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Within tolerance region",
-      reanalysis_cohens_d < tolarence_region_lower |
-        reanalysis_cohens_d > tolarence_region_upper ~ "Outside of tolerance region",
-      is.na(reanalysis_cohens_d) ~ "Missing"
-    ),
-    is_within_region = factor(
-      is_within_region,
-      levels = c("Within tolerance region", "Outside of tolerance region")
-    )
-  ) |> 
-  # Exclude missing tolerance region decisions
-  dplyr::filter(!is.na(is_within_region)) |> 
+  calculate_tolerance_region(threshold = 0.05) |> 
+  # Exclude missing re-analysis effect sizes
+  dplyr::filter(is_within_region != "Missing") |>
   calculate_percentage(is_within_region)
 
 # Calculate value for abstract
-within_tol_region_5_percentage <- dplyr::filter(ind_within_tol_reg, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |>  round(0)
+analysis_level_within_tolerance_region_5 <- dplyr::filter(analysis_level_tolerance_region, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |>  round(0)
 
 # +-0.2 threshold for tolerance region
-ind_within_tol_reg_20 <-
+analysis_level_tolerance_region_20 <-
   processed |>
   dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) |>
-  dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.2,
-    tolarence_region_upper = original_cohens_d + 0.2,
-    is_within_region = dplyr::case_when(
-      reanalysis_cohens_d >= tolarence_region_lower &
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Within tolerance region",
-      reanalysis_cohens_d < tolarence_region_lower |
-        reanalysis_cohens_d > tolarence_region_upper ~ "Outside of tolerance region",
-      is.na(reanalysis_cohens_d) ~ "Missing"
-    ),
-    is_within_region = factor(
-      is_within_region,
-      levels = c("Within tolerance region", "Outside of tolerance region")
-    )
-  ) |> 
-  # Exclude missing tolerance region decisions
-  dplyr::filter(!is.na(is_within_region)) |> 
+  calculate_tolerance_region(threshold = 0.2) |> 
+  # Exclude missing re-analysis effect sizes
+  dplyr::filter(is_within_region != "Missing") |> 
   calculate_percentage(is_within_region)
 
 # Calculate value for abstract
-within_tol_region_20_percentage <- dplyr::filter(ind_within_tol_reg_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |> round(0)
+analysis_level_within_tolerance_region_20 <- dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |> round(0)
+```
 
+```{r data processing for tolerance_region_all_plot, include=FALSE}
 # On the paper level
-effect_region_all_data <- 
+# +-0.05 threshold for tolerance region
+# Calculate the percentage of re-analysis effect sizes within the tolerance region by study
+tolerance_region_all_data <-
   processed |> 
-  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T) |> 
+  summarize_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T, threshold = 0.05) |> 
   mutate(
     simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
   )
+```
 
-within_tolerance_region <-
-  effect_region_all_data |> 
+```{r calculating paper level inferential robustness based on tolerance regions, include = FALSE}
+# Calculate the robustness of the re-analysis effect size on the paper level by the tolerance region
+paper_level_inferential_robustness <-
+  tolerance_region_all_data |> 
   dplyr::group_by(simplified_paper_id) |> 
   dplyr::summarise(
-    robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust")
-    ) |> 
+    robust = if_else(any(is_within_region == "Within tolerance region" & freq == 1), "Inferentially robust", "Inferentially not Robust")
+    ) |>
   dplyr::ungroup() |> 
   dplyr::count(robust) |> 
   dplyr::mutate(
@@ -392,62 +368,64 @@ within_tolerance_region <-
     percentage = round(relative_frequency * 100, 2)
     )
 
-effect_region_all_data_20 <- 
+# +-0.2 threshold for tolerance region
+tolerance_region_all_20_data <-
   processed |> 
-  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T, weight = 0.2) |> 
+  summarize_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T, threshold = 0.2) |> 
   mutate(
     simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
   )
 
-within_tolerance_region_20 <-
-  effect_region_all_data_20 |> 
+# Calculate the robustness of the re-analysis effect size on the paper level by the tolerance region
+paper_level_inferential_robustness_20 <-
+  tolerance_region_all_20_data |> 
   dplyr::group_by(simplified_paper_id) |> 
   dplyr::summarise(
-    robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust")
-    ) |> 
+    robust = if_else(any(is_within_region == "Within tolerance region" & freq == 1), "Inferentially robust", "Inferentially not Robust")
+    ) |>
   dplyr::ungroup() |> 
   dplyr::count(robust) |> 
   dplyr::mutate(
     N = sum(n),
     relative_frequency = n / N,
-    percentage = round(relative_frequency * 100)
+    percentage = round(relative_frequency * 100, 2)
     )
 ```
 
-```{r generating effect_region_all_plot, include=FALSE}
+```{r generating tolerance_region_all_plot, include=FALSE}
 # TODO: replace this function and delete it from utils
-effect_region_all_plot <- plot_tolarence_region(data = effect_region_all_data, grouping_var = simplified_paper_id, y_lab = "Study number", x_lab = "Percentage of reanalysis results") +
+tolerance_region_all_plot <- plot_tolarence_region(data = tolerance_region_all_data, grouping_var = simplified_paper_id, y_lab = "Study number", x_lab = "Percentage of reanalysis results") +
   ggplot2::theme(
     axis.title = ggplot2::element_text(size = 15),
     legend.text = ggplot2::element_text(size = 10),
     axis.text.x = ggplot2::element_text(size = 13)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
+ggplot2::ggsave(here::here("figures/tolerance_region_all_plot.jpg"), tolerance_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
 ```
 
-```{r data processing for effect_region_discipline_plot, include=FALSE}
+```{r data processing for tolerance_region_discipline_plot, include=FALSE}
 processed |> 
   dplyr::distinct(paper_id, .keep_all = T) |> 
   dplyr::count(paper_discipline) |> 
   dplyr::arrange(n)
 
-effect_region_discipline_data <- 
+tolerance_region_discipline_data <- 
   processed |> 
   dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |>
   dplyr::mutate(paper_discipline = stringr::str_to_title(paper_discipline)) |> 
   # Exclude missing values
-  calculate_tolerance_region(
+  summarize_tolerance_region(
     grouping_var = paper_discipline,
-    drop_missing = TRUE
-    # weight = 0.2
+    drop_missing = TRUE,
+    threshold = 0.05
     )
 ```
 
-```{r generating effect_region_discipline_plot, include=FALSE}
-effect_region_discipline_plot <-
+```{r generating tolerance_region_discipline_plot, include=FALSE}
+tolerance_region_discipline_plot <-
   plot_percentage(
-    data = effect_region_discipline_data,
+    data = tolerance_region_discipline_data,
     grouping_var = paper_discipline,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
@@ -459,20 +437,20 @@ effect_region_discipline_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/tolerance_region_discipline_plot.jpg"), tolerance_region_discipline_plot, dpi = 300)
 ```
 
-```{r data processing for effect_robustness_discipline_plot, include=FALSE}
-effect_robustness_discipline_data <-
+```{r data processing for estimate_range_discipline_plot, include=FALSE}
+estimate_range_discipline_data <-
   processed |> 
   dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
   dplyr::mutate(paper_discipline = stringr::str_to_title(paper_discipline)) |> 
   calculate_estimate_range(grouping_var = paper_discipline)
 ```
 
-```{r generating effect_robustness_discipline_plot, include=FALSE}
-effect_robustness_discipline_plot <-
-  plot_rain(data = effect_robustness_discipline_data,
+```{r generating estimate_range_discipline_plot, include=FALSE}
+estimate_range_discipline_plot <-
+  plot_rain(data = estimate_range_discipline_data,
             grouping_var = paper_discipline,
             response_var = estimate_range,
             x_lab = "Disciplines",
@@ -483,20 +461,20 @@ effect_robustness_discipline_plot <-
     axis.title = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/estimate_range_discipline_plot.jpg"), estimate_range_discipline_plot, dpi = 300)
 ```
 
-```{r data processing for effect_region_studytype_plot, include=FALSE}
-effect_region_studytype_data <- 
+```{r data processing for tolerance_region_studytype_plot, include=FALSE}
+tolerance_region_studytype_data <- 
   processed |> 
   dplyr::mutate(experimental_or_observational = stringr::str_to_title(experimental_or_observational)) |> 
-  calculate_tolerance_region(grouping_var = experimental_or_observational, drop_missing = TRUE)
+  summarize_tolerance_region(grouping_var = experimental_or_observational, drop_missing = TRUE, threshold = 0.05)
 ```
 
-```{r generating effect_region_studytype_plot, include=FALSE}
-effect_region_studytype_plot <-
+```{r generating tolerance_region_studytype_plot, include=FALSE}
+tolerance_region_studytype_plot <-
   plot_percentage(
-    data = effect_region_studytype_data,
+    data = tolerance_region_studytype_data,
     grouping_var = experimental_or_observational,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
@@ -508,19 +486,19 @@ effect_region_studytype_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/tolerance_region_studytype_plot.jpg"), tolerance_region_studytype_plot, dpi = 300)
 ```
 
-```{r data processing for effect_robustness_studytype_plot, include=FALSE}
-effect_robustness_studytype_data <-
+```{r data processing for estimate_range_studytype_plot, include=FALSE}
+estimate_range_studytype_data <-
   processed |> 
   dplyr::mutate(experimental_or_observational = stringr::str_to_title(experimental_or_observational)) |> 
   calculate_estimate_range(grouping_var = experimental_or_observational)
 ```
 
-```{r generating effect_robustness_studytype_plot, include=FALSE}
-effect_robustness_studytype_plot <- plot_rain(
-  data = effect_robustness_studytype_data,
+```{r generating estimate_range_studytype_plot, include=FALSE}
+estimate_range_studytype_plot <- plot_rain(
+  data = estimate_range_studytype_data,
   grouping_var = experimental_or_observational,
   response_var = estimate_range,
   x_lab = "Study type",
@@ -534,34 +512,37 @@ effect_robustness_studytype_plot <- plot_rain(
     axis.text = element_text(size = 7)
   )
 
-ggplot2::ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/estimate_range_studytype_plot.jpg"), estimate_range_studytype_plot, dpi = 300)
 ```
 
-```{r data processing for effect_region_expertise_plot, include=FALSE}
+```{r data processing for tolerance_region_expertise_plot, include=FALSE}
 processed |> 
   dplyr::distinct(expertise_self_rating)
 
-effect_region_expertise_data <- 
-  processed |> 
+tolerance_region_expertise_data <-
+  processed |>
   dplyr::mutate(
     expertise_self_rating = case_when(
       expertise_self_rating == 1 ~ "1\n(Beginner)",
       expertise_self_rating == 10 ~ "10\n(Expert)",
       TRUE ~ as.character(expertise_self_rating)
     ),
-    expertise_self_rating = factor(expertise_self_rating, levels = c(
-      "1\n(Beginner)",
-      as.character(2:9),
-      "10\n(Expert)")
+    expertise_self_rating = factor(
+      expertise_self_rating,
+      levels = c("1\n(Beginner)",
+                 as.character(2:9),
+                 "10\n(Expert)")
     )
-  ) |> 
-  calculate_tolerance_region(grouping_var = expertise_self_rating, drop_missing = TRUE)
+  ) |>
+  summarize_tolerance_region(grouping_var = expertise_self_rating,
+                             drop_missing = TRUE,
+                             threshold = 0.05)
 ```
 
-```{r generating effect_region_expertise_plot, include=FALSE}
-effect_region_expertise_plot <-
+```{r generating tolerance_region_expertise_plot, include=FALSE}
+tolerance_region_expertise_plot <-
   plot_height(
-    data = effect_region_expertise_data,
+    data = tolerance_region_expertise_data,
     grouping_var = expertise_self_rating,
     categorization_var = is_within_region,
     y_lab = "Number of re-analyses",
@@ -571,19 +552,25 @@ effect_region_expertise_plot <-
     with_sum = FALSE
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300,
+ggplot2::ggsave(here::here("figures/tolerance_region_expertise_plot.jpg"), tolerance_region_expertise_plot, dpi = 300,
                 # width = 8, height = 6
                 )
 ```
 
-```{r data processing for effect_region_familiarity_plot, include=FALSE}
-effect_region_familiarity_data <- calculate_tolerance_region(data = processed, grouping_var = familiar_with_paper, drop_missing = TRUE)
+```{r data processing for tolerance_region_familiarity_plot, include=FALSE}
+tolerance_region_familiarity_data <-
+  summarize_tolerance_region(
+    data = processed,
+    grouping_var = familiar_with_paper,
+    drop_missing = TRUE,
+    threshold = 0.05
+  )
 ```
 
-```{r generating effect_region_familiarity_plot, include=FALSE}
-effect_region_familiarity_plot <-
+```{r generating tolerance_region_familiarity_plot, include=FALSE}
+tolerance_region_familiarity_plot <-
   plot_percentage(
-    data = effect_region_familiarity_data,
+    data = tolerance_region_familiarity_data,
     grouping_var = familiar_with_paper,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis\nresults",
@@ -598,11 +585,11 @@ effect_region_familiarity_plot <-
     unit = "pt"
   ))
 
-ggplot2::ggsave(here::here("figures/effect_region_familiarity_plot.jpg"), effect_region_familiarity_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/tolerance_region_familiarity_plot.jpg"), tolerance_region_familiarity_plot, dpi = 300)
 ```
 
-```{r data processing for samplesize_region_plot, include=FALSE}
-samplesize_region_data <-
+```{r data processing for tolerance_region_samplesize_plot, include=FALSE}
+tolerance_region_samplesize_data <-
   processed |>
   dplyr::select(
     paper_id,
@@ -611,28 +598,23 @@ samplesize_region_data <-
     original_cohens_d,
     reanalysis_cohens_d
   ) |>
+  calculate_tolerance_region(threshold = 0.05) |> 
+  dplyr::filter(
+    !is.na(reanalysis_model_sample_size),
+    is_within_region != "Missing") |> 
   dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.05,
-    tolarence_region_upper = original_cohens_d + 0.05,
     is_within_region = dplyr::case_when(
-      reanalysis_cohens_d <= tolarence_region_lower |
-        reanalysis_cohens_d >= tolarence_region_upper ~ "No",
-      reanalysis_cohens_d >= tolarence_region_lower |
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Yes",
-      is.na(reanalysis_cohens_d) ~ "Missing"
+      is_within_region == "Within tolerance region" ~ "Yes",
+      is_within_region == "Outside of tolerance region" ~ "No",
     ),
     is_within_region = factor(is_within_region, levels = c("Yes", "No"))
-  ) |> 
-  dplyr::filter(
-    !is.na(original_cohens_d),
-    !is.na(reanalysis_model_sample_size),
-    is_within_region != "Missing")
+  )
 ```
 
-```{r generating samplesize_region_plot, include=FALSE}
-samplesize_region_plot <-
+```{r generating tolerance_region_samplesize_plot, include=FALSE}
+tolerance_region_samplesize_plot <-
   plot_rain(
-    data = samplesize_region_data,
+    data = tolerance_region_samplesize_data,
     grouping_var = is_within_region,
     response_var = reanalysis_model_sample_size,
     y_lab = "Sample size",
@@ -645,7 +627,7 @@ samplesize_region_plot <-
     axis.title.x = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/tolerance_region_samplesize_plot.jpg"), tolerance_region_samplesize_plot, dpi = 300)
 ```
 
 ```{r generating estimate_panel, echo=FALSE}
@@ -655,19 +637,19 @@ ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samples
 #| fig-dpi: 300
 
 main_section <- 
-  effect_main_plot +
-  effect_region_all_plot +
+  tolerance_region_main_plot +
+  tolerance_region_all_plot +
   plot_layout(widths = c(2, 1))
 
 # Define the remaining plots section
 small_plot_section <-
   (
-    effect_region_discipline_plot |
-      effect_robustness_discipline_plot 
+    tolerance_region_discipline_plot |
+      estimate_range_discipline_plot 
   ) /
-  ( effect_region_studytype_plot | effect_robustness_studytype_plot) /
-  (effect_region_expertise_plot |
-     effect_region_familiarity_plot | samplesize_region_plot) +
+  ( tolerance_region_studytype_plot | estimate_range_studytype_plot) /
+  (tolerance_region_expertise_plot |
+     tolerance_region_familiarity_plot | tolerance_region_samplesize_plot) +
   plot_layout(ncol = 1, nrow = 3)
 
 # Combine the main section and the remaining plots section
@@ -682,9 +664,9 @@ ggsave(here::here("figures/estimate_panel.png"), estimate_panel, width = 30, hei
 __Fig. 2 \| Analytical robustness of the statistical results.__
 __a,__ Effect size of the original analysis (black square; all represented as positive values) and the effect sizes of the re-analyses (green dot) for each study after conversions to Cohen’s d. The figure displays 447 re-analysis effect size estimates. For 57 re-analyses, the reported effect size was not convertible to Cohen’s d. Furthermore, the figure does not show 5 re-analysed effect sizes outside the \[-5,5\] range. For the seven studies listed at the bottom of the figure, we could not determine the original effect size due to missing information (for details see Supplementary information). Study numbers correspond to studies listed in [https://osf.io/mkwhn](). The studies are ordered by the size of the original effect size. __b,__ Proportion of effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The studies are ordered by the displayed proportion. __c,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by major disciplines. The figure displays the count of re-analyses next to each discipline name. __d,__ Distributions of effect size estimate ranges (lowest to highest) calculated per study for each major discipline. __e,__ Proportion of re-analysis results falling within or outside of the tolerance region of the original results of the studies by study type. The figure displays the count of re-analyses next to each discipline name. __f,__ Distribution of effect size estimate ranges (lowest to highest) calculated per study for observational and experimental studies. __g,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by self-rated expertise (on a scale from 1 (Beginner) to 10 (Expert)). __h,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by declared familiarity with the study. __i,__ Distribution of sample sizes separately for re-analysis effect sizes falling within or outside of the tolerance region of the original results. In this figure, we could not include those studies where the original effect sizes were missing, and cases where the re-analysis effect size or sample size were missing (for details see Supplement).
 
-We found that only in `r dplyr::filter(within_tolerance_region, robust == "Inferentially robust") |> dplyr::pull(percentage)`% of the studies for which we could obtain the original effect size (`r dplyr::filter(within_tolerance_region, robust == "Inferentially robust") |> dplyr::pull(n)` out of `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(N)`) , were all re-analysis effect sizes inside the tolerance region (+/- 0.05 Cohen’s d) of the result of the original study (Fig. 2a). Out of the `r dplyr::distinct(ind_within_tol_reg, N) |> dplyr::pull(N)` available re-analysis effect sizes, `r dplyr::filter(ind_within_tol_reg, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)` % were inside the tolerance region. As a robustness test of our analysis, we explored the degree to which we would observe different results with different tolerance regions.
+We found that only in `r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially robust") |> dplyr::pull(percentage)`% of the studies for which we could obtain the original effect size (`r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially robust") |> dplyr::pull(n)` out of `r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially not Robust") |> dplyr::pull(N)`) , were all re-analysis effect sizes inside the tolerance region (+/- 0.05 Cohen’s d) of the result of the original study (Fig. 2a). Out of the `r dplyr::distinct(analysis_level_tolerance_region, N) |> dplyr::pull(N)` available re-analysis effect sizes, `r dplyr::filter(analysis_level_tolerance_region, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)` % were inside the tolerance region. As a robustness test of our analysis, we explored the degree to which we would observe different results with different tolerance regions.
 
-We learned that even with a four times broader tolerance region (+/- 0.20 Cohen’s d), in only 20% of the studies were all corresponding re-analysis result inside the tolerance region. Further, out of the available 417 reanalysis effect sizes `r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Within tolerance region") |> dplyr::pull(n)`) were inside of this region (Fig. S11).
+We learned that even with a four times broader tolerance region (+/- 0.20 Cohen’s d), in only `r dplyr::filter(paper_level_inferential_robustness_20, robust == "Inferentially robust") |> dplyr::pull(percentage)`% of the studies were all corresponding re-analysis result inside the tolerance region. Further, out of the available `r dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(N)` reanalysis effect sizes `r dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(n)`) were inside of this region (Fig. S11).
 
 Alternatively, we could define the tolerance region as the percentage of the given effect size. As a further robustness test, we varied the tolerance region between +/-5% and +/-20% but it barely made any difference regarding the percentage of robust studies (Fig. S12).
 
@@ -1441,7 +1423,7 @@ All analysis codes serving this project are available at [https://github.com/mar
 # Abstract
 The same dataset can be analysed in different justifiable ways to answer the same research question, potentially challenging the robustness of empirical science. In this crowd initiative, we investigated the degree to which research findings in the social and behavioural sciences are contingent on analysts’ choices. To explore this question, we took a sample of 100 studies published between 2009 and 2018 in criminology, demography, economics and finance, management, marketing and organisational behaviour, political science, psychology, and sociology. For one claim of each study, at least five re-analysts were invited to independently re-analyze the original data.
 
-The statistical appropriateness of the re-analyses was assessed in peer evaluations and the robustness indicators were inspected along a range of research characteristics and study designs. Only `r within_tol_region_5_percentage` % of the independent re-analyses yielded the same result (within a tolerance region of +/- 0.05 Cohen’s d) as the original report. Even with a four times broader tolerance region, this indicator did not go above `r within_tol_region_20_percentage` %. 
+The statistical appropriateness of the re-analyses was assessed in peer evaluations and the robustness indicators were inspected along a range of research characteristics and study designs. Only `r analysis_level_within_tolerance_region_5` % of the independent re-analyses yielded the same result (within a tolerance region of +/- 0.05 Cohen’s d) as the original report. Even with a four times broader tolerance region, this indicator did not go above `r analysis_level_within_tolerance_region_20` %. 
 
 Regarding the conclusions drawn, only `r conclusion_robust_100_percentage` % of the studies remained analytically robust, meaning that all re-analysts reported evidence for the originally reported claim. Using a more liberal definition of robustness produced comparable result (`r conclusion_robust_80_percentage`% when \>80% re-analysis agreement with the original conclusion defined analytical robustness).
 

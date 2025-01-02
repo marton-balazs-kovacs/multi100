@@ -2,10 +2,6 @@
 plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE, y_lab = NULL, x_lab = NULL) {
   plot <-
     data %>% 
-    # mutate(
-    #   {{grouping_var}} := as.factor({{grouping_var}}),
-    #   {{grouping_var}} := fct_reorder({{grouping_var}}, percentage)
-    # ) %>% 
     ggplot2::ggplot() +
     ggplot2::aes(
       x = percentage,
@@ -26,19 +22,16 @@ plot_tolarence_region <- function(data, grouping_var, with_labels = FALSE, y_lab
     ggplot2::labs(
       x = x_lab,
       y = y_lab,
-      # fill = "Within region"
     ) +
     ggplot2::guides(color = "none") +
     ggplot2::theme(
       axis.ticks = ggplot2::element_blank(),
-      # axis.title.y = element_blank(),
       legend.position = "bottom",
       legend.box = "horizontal",
       legend.title = element_blank(),
       plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
       panel.grid = ggplot2::element_blank(),
       panel.background = ggplot2::element_blank(),
-      # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
   
   if (with_labels) {

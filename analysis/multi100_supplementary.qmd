@@ -19,7 +19,8 @@ library(grid)
 library(patchwork)
 
 # Load custom functions
-source(here::here("R/utils.R"))
+script_files <- list.files(here::here("R"), pattern = "\\.R$", full.names = TRUE)
+walk(script_files, source)
 
 # Read processed data files
 processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))

@@ -27,7 +27,7 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
     ggplot2::ggplot() +
     ggplot2::aes(
       x = label,
-      y = relative_frequency,
+      y = freq,
       fill = {{ categorization_var }}
     ) +
     ggplot2::geom_bar(
