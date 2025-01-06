@@ -28,7 +28,7 @@ calculate_tolerance_region_proportions <- function(data, threshold = NULL, weigh
     dplyr::group_by(simplified_paper_id) %>% 
     add_percentage(n) |> 
     dplyr::summarise(
-      robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust"),
+      robust = if_else(any(is_within_region == "Within tolerance region" & freq == 1), "Inferentially robust", "Inferentially not Robust"),
       robust = factor(robust, levels = c("Inferentially robust", "Inferentially not Robust"))
     ) |> 
     dplyr::ungroup() |> 

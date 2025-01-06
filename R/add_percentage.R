@@ -1,6 +1,6 @@
 # Function to calculate frequency and percentage
 add_percentage <- function(data, count_var) {
-  data %>%
+  data |> 
     dplyr::mutate(
       N = sum({{count_var}}),
       freq = {{count_var}} / N,

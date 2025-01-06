@@ -361,12 +361,7 @@ paper_level_inferential_robustness <-
     robust = if_else(any(is_within_region == "Within tolerance region" & freq == 1), "Inferentially robust", "Inferentially not Robust")
     ) |>
   dplyr::ungroup() |> 
-  dplyr::count(robust) |> 
-  dplyr::mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = round(relative_frequency * 100, 2)
-    )
+  calculate_percentage(robust)
 
 # +-0.2 threshold for tolerance region
 tolerance_region_all_20_data <-
@@ -384,16 +379,10 @@ paper_level_inferential_robustness_20 <-
     robust = if_else(any(is_within_region == "Within tolerance region" & freq == 1), "Inferentially robust", "Inferentially not Robust")
     ) |>
   dplyr::ungroup() |> 
-  dplyr::count(robust) |> 
-  dplyr::mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = round(relative_frequency * 100, 2)
-    )
+  calculate_percentage(robust)
 ```
 
 ```{r generating tolerance_region_all_plot, include=FALSE}
-# TODO: replace this function and delete it from utils
 tolerance_region_all_plot <- plot_tolarence_region(data = tolerance_region_all_data, grouping_var = simplified_paper_id, y_lab = "Study number", x_lab = "Percentage of reanalysis results") +
   ggplot2::theme(
     axis.title = ggplot2::element_text(size = 15),
@@ -679,7 +668,7 @@ familiar_with_paper_data <-
   calculate_percentage(processed, familiar_with_paper)
 ```
 
-Re-analyzing published studies entails a potential risk of bias if the re-analysts' familiarity with a given study influences their choice of analysis. Re-analysts reported that they were familiar with the original study in less than `r dplyr::filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> dplyr::pull(percentage)`% of cases. Moreover, there was no more than `r dplyr::filter(effect_region_familiarity_data, is_within_region == "Within tolerance region") |> summarize(diff = ceiling(percentage[1] - percentage[2])) |> dplyr::pull(diff)`% difference in robustness between those who were and those who were not familiar with the original study (Fig. 2h). For both groups, more than two-thirds of the estimates fell outside our tolerance region. Finally, we were interested to see whether these robustness results would show a different pattern when considering sample size, as one could assume that studies with larger sample sizes, thus statistical degrees of freedom, could offer more robust results. Fig. 2i does not support this assumption as the density distributions of the sample sizes for results that are within and outside of the tolerance region are virtually the same. Therefore, studies with large sample sizes are not immune to analytical variability.
+Re-analyzing published studies entails a potential risk of bias if the re-analysts' familiarity with a given study influences their choice of analysis. Re-analysts reported that they were familiar with the original study in less than `r dplyr::filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> dplyr::pull(percentage)`% of cases. Moreover, there was no more than `r dplyr::filter(tolerance_region_familiarity_data, is_within_region == "Within tolerance region") |> summarize(diff = ceiling(percentage[1] - percentage[2])) |> dplyr::pull(diff)`% difference in robustness between those who were and those who were not familiar with the original study (Fig. 2h). For both groups, more than two-thirds of the estimates fell outside our tolerance region. Finally, we were interested to see whether these robustness results would show a different pattern when considering sample size, as one could assume that studies with larger sample sizes, thus statistical degrees of freedom, could offer more robust results. Fig. 2i does not support this assumption as the density distributions of the sample sizes for results that are within and outside of the tolerance region are virtually the same. Therefore, studies with large sample sizes are not immune to analytical variability.
 
 ```{r data processing for effec_size_corr_plot, include=FALSE}
 effec_size_corr_plot_data <-
@@ -770,8 +759,6 @@ The thin diagonal line represents an ideal case when the re-analysis effect size
 
 ## Do different analysts arrive at the same conclusions as the original study analysts?
 
-Another focal question of our study was whether the re-analysts arrive at the same qualitative conclusions as the original study analysts. To answer this question, we asked the re-analysts to implement any statistical re-analysis they deemed most appropriate to test the original claim using the original data, with the goal of arriving at a single conclusion. 
-
 ```{r include=FALSE}
 # Distinct values of task1_categorisation
 distinct(processed, task1_categorisation)
@@ -779,32 +766,28 @@ distinct(processed, task1_categorisation_plotting)
 
 conclusions_main_data <- 
   processed |> 
-  rename(categorisation = task1_categorisation_plotting) |> 
-  mutate(
-    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) |> 
-  calculate_conclusion(grouping_var = simplified_paper_id, categorization_var = categorisation) |>
+  calculate_conclusion(grouping_var = simplified_paper_id) |>
   mutate(
     simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(categorisation == "Same conclusion", percentage, NA), .desc = FALSE, .na_rm = TRUE)
   )
 
 # When threshold is 100% same conclusion for robust result
-conclusions_main_robustness_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 100)
+conclusions_main_robustness_data <- summarize_conclusion_robustness(data = processed, threshold = 100, operator = "==")
 
 # Calculate value for abstract
 conclusion_robust_100_percentage <- filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)
 
 # When threshold is 80% same conclusion for robust result
-conclusions_main_robustness_80_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 80, operator = ">")
+conclusions_main_robustness_80_data <- summarize_conclusion_robustness(data = processed, threshold = 80, operator = ">")
 
 # Calculate value for abstract
 conclusion_robust_80_percentage <- filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)
 
 # When threshold is 60% same conclusion for robust result
-conclusions_main_robustness_60_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 60, operator = ">")
+conclusions_main_robustness_60_data <- summarize_conclusion_robustness(data = processed, threshold = 60, operator = ">")
 ```
 
-Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed claims, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)` % were robust to independent re-analysis, such that all re-analysts reported that they found evidence for the originally reported claim. With a more liberal definition of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)` % when \>80% re-analysis agreement with the original conclusion defined analytical robustness. 
+Another focal question of our study was whether the re-analysts arrive at the same qualitative conclusions as the original study analysts. To answer this question, we asked the re-analysts to implement any statistical re-analysis they deemed most appropriate to test the original claim using the original data, with the goal of arriving at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed claims, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)` % were robust to independent re-analysis, such that all re-analysts reported that they found evidence for the originally reported claim. With a more liberal definition of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)` % when \>80% re-analysis agreement with the original conclusion defined analytical robustness. 
 
 ```{r include=FALSE}
 conclusions_analysis_data <- 
@@ -813,13 +796,7 @@ conclusions_analysis_data <-
   mutate(
     categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
     ) |> 
-  count(categorisation) |> 
-  ungroup() |> 
-  mutate(
-    N = sum(n),
-    freq = n / N,
-    percentage = round(freq * 100, 2)
-  )
+  calculate_percentage(categorisation)
 ```
 
 Across all individual re-analyses (n = `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(N)`), `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(percentage)` % of analyses were reported to arrive at the same conclusion as in the original investigation; `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(percentage)`% to no effects/inconclusive result, and `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(percentage)`% to the opposite effect as in the original investigation (Fig. 4a).
@@ -855,17 +832,13 @@ conclusions_discipline_data <-
   processed |> 
   dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
   dplyr::mutate(paper_discipline = str_to_title(paper_discipline)) |> 
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::mutate(
-    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) |> 
-  calculate_conclusion(grouping_var = paper_discipline, categorization_var = categorisation)
+  calculate_conclusion(grouping_var = paper_discipline)
 
 conclusions_discipline_robustness_data <- 
   processed |> 
   dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
   dplyr::mutate(paper_discipline = str_to_title(paper_discipline)) |> 
-  calculate_conclusion_robustness(grouping_var = paper_discipline, categorization_var = task1_categorisation_plotting)
+  summarize_conclusion_robustness(grouping_var = paper_discipline, threshold = 100, operator = "==")
 ```
 
 ```{r generating conclusions_discipline_robustness_plot, include=FALSE}
@@ -910,20 +883,13 @@ ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusio
 ```{r data processing for conclusions_studytype_robustness_plot, include=FALSE}
 conclusions_studytype_data <-
   processed |>
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::mutate(categorisation = forcats::fct_relevel(
-    categorisation,
-    c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-  )) |>
-  calculate_conclusion(grouping_var = experimental_or_observational,
-                       categorization_var = categorisation) |>
+  calculate_conclusion(grouping_var = experimental_or_observational) |>
   dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational))
 
 conclusions_studytype_robustness_data <-
   processed |>
   dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational)) |>
-  calculate_conclusion_robustness(grouping_var = experimental_or_observational,
-                                  categorization_var = task1_categorisation_plotting) |>
+  summarize_conclusion_robustness(grouping_var = experimental_or_observational, threshold = 100, operator = "==") |>
   dplyr::ungroup()
 ```
 
@@ -980,13 +946,8 @@ ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusion
 ```{r data processing for conclusions_expertise_plot, include=FALSE}
 conclusions_expertise_data <-
   processed |>
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  calculate_conclusion(grouping_var = expertise_self_rating, categorization_var = categorisation) |> 
+  calculate_conclusion(grouping_var = expertise_self_rating) |> 
   dplyr::mutate(
-    categorisation = forcats::fct_relevel(
-      categorisation,
-      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-    ),
     expertise_self_rating = dplyr::case_when(
       expertise_self_rating == 1 ~ "1\n(Beginner)",
       expertise_self_rating == 10 ~ "10\n(Expert)",
@@ -1034,20 +995,25 @@ peer_eval_subset_task1_data <-
 
 count(peer_eval_subset_task1_data, common_task1_acceptable)
   
-peer_eval_subset_task1_data <- 
-  peer_eval_subset_task1_data |> 
-  dplyr::filter(common_task1_acceptable != "(2) Acceptable but low quality") |> 
-  left_join(dplyr::select(processed, paper_id, analyst_id, task1_categorisation_plotting), by = c("paper_id", "analyst_id")) |> 
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
+peer_eval_subset_task1_data <-
+  peer_eval_subset_task1_data |>
+  dplyr::filter(common_task1_acceptable != "(2) Acceptable but low quality") |>
+  left_join(
+    dplyr::select(
+      processed,
+      paper_id,
+      analyst_id,
+      task1_categorisation_plotting
+    ),
+    by = c("paper_id", "analyst_id")
+  ) |>
   dplyr::mutate(
     common_task1_acceptable = dplyr::case_when(
       common_task1_acceptable == "(3) Acceptable and medium quality" ~ "Acceptable and medium quality",
       common_task1_acceptable == "(4) Acceptable and high quality" ~ "Acceptable and high quality"
-    ),
-    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) |> 
-  calculate_conclusion(grouping_var = common_task1_acceptable,
-                       categorization_var = categorisation)
+    )
+  ) |>
+  calculate_conclusion(grouping_var = common_task1_acceptable)
 ```
 
 ```{r generating peer_eval_subset_task1_plot, include=FALSE}
@@ -1071,12 +1037,10 @@ ggsave(here::here("figures/peer_eval_subset_task1_plot.jpg"), peer_eval_subset_t
 ```{r data processing for conclusions_familiarity_plot, include=FALSE}
 conclusions_familiarity_data <- 
   processed |> 
-  rename(categorisation = task1_categorisation_plotting) |>
   mutate(
-    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
     familiar_with_paper = as.factor(familiar_with_paper)
     ) |> 
-  calculate_conclusion(grouping_var = familiar_with_paper, categorization_var = categorisation)
+  calculate_conclusion(grouping_var = familiar_with_paper)
 ```
 
 ```{r generating conclusions_familiarity_plot, include=FALSE}
@@ -1105,7 +1069,6 @@ conclusions_samplesize_plot <-
                 analyst_id,
                 categorisation,
                 reanalysis_model_sample_size) |>
-  # TODO: There are missing sample size values what to do with them?
   dplyr::filter(!is.na(reanalysis_model_sample_size)) |>
   dplyr::mutate(
     categorisation = forcats::fct_relevel(
@@ -1129,7 +1092,7 @@ conclusions_samplesize_plot <-
 ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
 ```
 
-```{r generating inferential_panel, include=FALSE}
+```{r generating inferential_panel, echo=FALSE, message=FALSE, warning=FALSE}
 #| fig-width: 22
 #| fig-height: 14
 #| out-width: 100%
@@ -1160,7 +1123,7 @@ ggsave(here::here("figures/inferential_panel.png"), inferential_panel, width = 2
 __Fig. 4 \| Analytical robustness of the conclusions.__
 __a,__ Proportion of same conclusion, no effect/inconclusive results, and opposite direction conclusions for each study. Study numbers correspond to studies listed in [https://osf.io/mkwhn](). __b,__ Proportion of inferentially robust results (i.e., all re-analyses arrived at the same conclusion for the given study) by major disciplines (more than 10 studies in our collection: Economics, Political Science, and Psychology). __c,__ Proportion of same effect, no effect/inconclusive results, and conclusions in the opposite direction of the original studies by major discipline. The number of re-analyses is displayed below each discipline. __d,__ Proportion of inferentially robust results by study design (experimental vs. observational). The number of re-analyses is given below each study design. __e,__ Proportion of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by study type (experimental, observational). __f,__ Proportion of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by self-rated expertise (on a scale of 1 (Beginner) to 10 (Expert)). __g,__ Proportion of inferentially robust studies by the acceptability of the analysis pipelines according to the peer evaluators. For this figure, we included only studies with more than one peer evaluation and where the peer evaluators agreed on their rating. The figure shows only the rating options with 5 or more re-analyses in that category. _h,_ Proportion of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by declared familiarity with the study. __i,__ Distribution of the sample size of the re-analyses resulting in the same conclusion, no effect/inconclusive, and opposite effects. Sample size values were available for 345 re-analyses.
 
-We were interested to see whether these results show a different pattern when inspecting them along the earlier mentioned aspects of the analyses. Fig. 4b and Fig. 4c present the proportions of robustness of the conclusions in the listed disciplines. Just as for the case of analyses of robustness of the statistical results, the listed disciplines do not manifest large differences in robustness of the conclusions, whereas their robustness may be greatly influenced by the study designs most common in each field. Fig. 4d supports this notion as it indicates that nearly half of the conclusions from experimental studies remained robust upon independent re-analysis, whereas less than one-third of observational studies yielded robust conclusions. Moreover, Fig. 4e indicates that, although for both study designs the majority of the re-analyses reached the same conclusions as the original study, the figure was `r dplyr::filter(conclusions_studytype_data, categorisation == "Same conclusion") |> summarize(diff = ceiling(percentage[1] - percentage[2])) |> dplyr::pull(diff)` % higher for the experimental studies than for observational studies. Just as for the robustness of the results, we can ask whether the deviation from the originally reported claim in terms of conclusions is explained by re-analysts’ lack of analytical expertise. Fig. 4f shows no support for this conjecture when evaluating the pattern of results as a function of self-reported statistical expertise. The same conjecture can be assessed by considering the quality of the submitted statistical analyses that were evaluated by peer evaluators on a subset of the analyses (see Methods). Fig. 4g shows that the proportion of inferentially robust conclusions is numerically larger for analyses that were rated as medium-quality by peer evaluators than for analyses that were rated as high-quality. Whether this pattern was a result of noise, or whether more sophisticated analyses are characterized by greater heterogeneity in approaches and results should be the topic of future metascientific projects.
+We were interested to see whether these results show a different pattern when inspecting them along the earlier mentioned aspects of the analyses. Fig. 4b and Fig. 4c present the proportions of robustness of the conclusions in the listed disciplines. Just as for the case of analyses of robustness of the statistical results, the listed disciplines do not manifest large differences in robustness of the conclusions, whereas their robustness may be greatly influenced by the study designs most common in each field. Fig. 4d supports this notion as it indicates that nearly half of the conclusions from experimental studies remained robust upon independent re-analysis, whereas less than one-third of observational studies yielded robust conclusions. Moreover, Fig. 4e indicates that, although for both study designs the majority of the re-analyses reached the same conclusions as the original study, the figure was `r dplyr::filter(conclusions_studytype_data, categorisation == "Same conclusion") |> summarize(diff = ceiling(percentage[1] - percentage[2])) |> dplyr::pull(diff)`% higher for the experimental studies than for observational studies. Just as for the robustness of the results, we can ask whether the deviation from the originally reported claim in terms of conclusions is explained by re-analysts’ lack of analytical expertise. Fig. 4f shows no support for this conjecture when evaluating the pattern of results as a function of self-reported statistical expertise. The same conjecture can be assessed by considering the quality of the submitted statistical analyses that were evaluated by peer evaluators on a subset of the analyses (see Methods). Fig. 4g shows that the proportion of inferentially robust conclusions is numerically larger for analyses that were rated as medium-quality by peer evaluators than for analyses that were rated as high-quality. Whether this pattern was a result of noise, or whether more sophisticated analyses are characterized by greater heterogeneity in approaches and results should be the topic of future metascientific projects.
 
 Just as for the analyses of the robustness of the statistical results, we were interested to see whether these results show a different pattern when inspecting them as a function of analysts’ prior familiarity with the dataset. Although those familiar with the original study did report the same conclusion in a higher proportion than those who were not familiar, `r dplyr::filter(conclusions_familiarity_data, familiar_with_paper == "Yes", categorisation == "No effect/inconclusive") |> dplyr::pull(percentage)`% of their re-analyses still indicated a conclusion different from the original one (Fig. 4h).
 
