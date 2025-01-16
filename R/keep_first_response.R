@@ -1,7 +1,7 @@
 #' Keep the first response
 #' 
 #' @description The function checks for multiple responses with a given id and flags and keeps only
-#' the first response.
+#' the first response based on a time variable.
 keep_first_response <- function(data, id_var, time_var) {
   data %>%
     dplyr::group_by({{id_var}}) %>% 

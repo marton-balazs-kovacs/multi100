@@ -25,6 +25,8 @@ walk(script_files, source)
 # Read processed data files
 processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
 
+demographic_information <- readr::read_csv(here::here("data/processed/multi100_demographic-information_data.csv"))
+
 peer_eval <- readr::read_csv(here::here("data/processed/multi100_peer-eval_processed_data.csv"))
 
 peer_eval_not_reviewed <- readr::read_csv(here::here("data/processed/multi100_peer-eval-not-reviewed_processed_data.csv"))

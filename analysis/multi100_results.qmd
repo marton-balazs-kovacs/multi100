@@ -41,12 +41,6 @@ peer_eval <-
 
 all_people <- readr::read_csv(here::here("data/processed/multi100_all-people_processed_data.csv"))
 
-# Transforming the timestamp to date type from character
-processed <-
-  processed |>
-  dplyr::mutate(
-    task1_timestamp = lubridate::ymd_hms(task1_timestamp))
-
 # Table of long paper ids and simplified paper ids
 processed |> 
   dplyr::distinct(simplified_paper_id, paper_id) |> 

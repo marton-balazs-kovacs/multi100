@@ -128,7 +128,7 @@ task1_codebook <-
       variable_names == "1.6. What is the highest level of education that you have completed?" ~ "education_level",
       variable_names == "1.7 Country of residence" ~ "country_of_residence",
       variable_names == "1.8. Which discipline is the closest to your research area?" ~ "analyst_discipline",
-      variable_names == "primary_discipline" ~ "primary_discipline", 
+      variable_names == "primary_discipline" ~ "primary_discipline",
       variable_names == "1.9. What keywords would best describe the topics of your own research?" ~ "keywords",
       variable_names == "1.10. How many years of experience do you have in data analysis?" ~ "years_of_experience",
       variable_names == "1.11. How regularly do you perform data analysis?" ~ "analysis_frequency",
@@ -258,7 +258,6 @@ reanalyzed_effect_sizes_codebook <-
       variable_names == "Analysis_Number" ~ "analysis_number",
       variable_names == "Task1_Analysis_Report" ~ "task1_analysis_report",
       variable_names == "Task2_Analysis_Report" ~ "task2_analysis_report",
-      # TODO: consider using table name prefix for all variables
       variable_names == "Type_of_Statistic" ~ "type_of_statistic",
       variable_names == "Statistic_Report" ~ "statistic_report",
       variable_names == "Model_Degrees_of_Freedom" ~ "model_degrees_of_freedom",
@@ -368,34 +367,6 @@ non_detailed_responses_codebook <-
   )
 ```
 
-Saving the codebook for the raw data.
-
-```{r}
-save_codebook(task1_codebook, here::here("data/raw", "multi100_task1_raw_codebook.csv"))
-
-save_codebook(task2_codebook, here::here("data/raw", "multi100_task2_raw_codebook.csv"))
-
-save_codebook(all_people_codebook, here::here("data/raw", "multi100_all-people_raw_codebook.csv"))
-
-save_codebook(all_paper_codebook, here::here("data/raw", "multi100_all-paper_raw_codebook.csv"))
-
-save_codebook(master_codebook, here::here("data/raw", "multi100_master_raw_codebook.csv"))
-
-save_codebook(original_effect_sizes_codebook, here::here("data/raw", "multi100_original-effect-sizes_raw_codebook.csv"))
-
-save_codebook(reanalyzed_effect_sizes_codebook, here::here("data/raw", "multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
-
-save_codebook(peer_eval_codebook, here::here("data/raw", "multi100_peer-eval_raw_codebook.csv"))
-
-save_codebook(peer_eval_review_codebook, here::here("data/raw", "multi100_peer-eval-review_raw_codebook.csv"))
-
-save_codebook(analyst_payments_codebook, here::here("data/raw", "multi100_analyst-payments_raw_codebook.csv"))
-
-save_codebook(claim_direction_review_codebook, here::here("data/raw", "multi100_claim-direction-review_raw_codebook.csv"))
-
-save_codebook(non_detailed_responses_codebook, here::here("data/raw", "multi100_non-detailed-responses_raw_codebook.csv"))
-```
-
 ## Renaming variables
 
 ```{r}
@@ -424,18 +395,117 @@ claim_direction_review <- recode_colnames(claim_direction_review, claim_directio
 non_detailed_responses <- recode_colnames(non_detailed_responses, non_detailed_responses_codebook)
 ```
 
+## Saving private demographic information separately
+
+We are saving the analysts' demographic information separately from their identifying information.
+
+```{r}
+demographic_information <-
+  task1 |>
+  # Create a group identifier based on analyst_id
+  group_by(analyst_id) %>%
+  mutate(anon_id = cur_group_id()) %>%
+  ungroup() %>%
+  dplyr::select(
+    anon_id,
+    current_position,
+    current_position_grouped,
+    age,
+    gender,
+    education_level,
+    country_of_residence,
+    primary_discipline,
+    keywords
+  ) |>
+  # Shuffle the rows order
+  dplyr::slice_sample(n = nrow(.))
+```
+
+Creating a codebook for the demographic information.
+
+```{r}
+demographic_information_codebook <-
+  task1_codebook |>
+  dplyr::filter(
+    new_names  %in% c(
+      "current_position",
+      "current_position_grouped",
+      "age",
+      "gender",
+      "education_level",
+      "country_of_residence",
+      "primary_discipline",
+      "keywords"
+    )
+  )
+```
+
+Taking out these columns from the `task1` dataset and the `task1_codebook`.
+
+```{r}
+task1 <- 
+  task1 |> 
+  dplyr::select(-current_position_grouped, -age, -gender, -education_level, -country_of_residence, -primary_discipline, -keywords)
+
+task1_codebook <-
+  task1_codebook |>
+  dplyr::filter(
+    new_names  %ni% c(
+      "current_position",
+      "current_position_grouped",
+      "age",
+      "gender",
+      "education_level",
+      "country_of_residence",
+      "primary_discipline",
+      "keywords"
+    )
+  )
+```
+
+## Saving the codebooks
+Saving the codebook for the raw data.
+
+```{r}
+save_codebook(task1_codebook, here::here("data/raw", "multi100_task1_raw_codebook.csv"))
+
+save_codebook(demographic_information_codebook, here::here("data/raw", "multi100_demographic-information_raw_codebook.csv"))
+
+save_codebook(task2_codebook, here::here("data/raw", "multi100_task2_raw_codebook.csv"))
+
+save_codebook(all_people_codebook, here::here("data/raw", "multi100_all-people_raw_codebook.csv"))
+
+save_codebook(all_paper_codebook, here::here("data/raw", "multi100_all-paper_raw_codebook.csv"))
+
+save_codebook(master_codebook, here::here("data/raw", "multi100_master_raw_codebook.csv"))
+
+save_codebook(original_effect_sizes_codebook, here::here("data/raw", "multi100_original-effect-sizes_raw_codebook.csv"))
+
+save_codebook(reanalyzed_effect_sizes_codebook, here::here("data/raw", "multi100_reanalyzed-effect-sizes_raw_codebook.csv"))
+
+save_codebook(peer_eval_codebook, here::here("data/raw", "multi100_peer-eval_raw_codebook.csv"))
+
+save_codebook(peer_eval_review_codebook, here::here("data/raw", "multi100_peer-eval-review_raw_codebook.csv"))
+
+save_codebook(analyst_payments_codebook, here::here("data/raw", "multi100_analyst-payments_raw_codebook.csv"))
+
+save_codebook(claim_direction_review_codebook, here::here("data/raw", "multi100_claim-direction-review_raw_codebook.csv"))
+
+save_codebook(non_detailed_responses_codebook, here::here("data/raw", "multi100_non-detailed-responses_raw_codebook.csv"))
+```
+
 ## Dropping variables that contain personal information
 
-Some variables contain personal information that we cannot share openly. We will drop these variables here for the further analysis.
+Some variables contain personal information that we cannot share openly. We will drop these variables here for the further analysis. We also drop `task1_comments` and `task2_comments` that include free-text comments to the organizers by the analysts.
 
 ```{r}
 task1 <- 
   task1 |>  
-  select(-email)
+  select(-email, -task1_comments)
 
 task2 <- 
   task2 |> 
-  select(-email)
+  select(-email, -task2_comments)
 
 all_people <- 
   all_people |> 
@@ -484,6 +554,8 @@ reanalyzed_effect_sizes <-
 ```{r}
 readr::write_csv(task1, here("data/raw/multi100_task1_raw_data.csv"))
 
+readr::write_csv(demographic_information, here("data/raw/multi100_demographic-information_data.csv"))
+
 readr::write_csv(task2, here("data/raw/multi100_task2_raw_data.csv"))
 
 readr::write_csv(all_people, here("data/raw/multi100_all-people_raw_data.csv"))
@@ -500,7 +572,8 @@ readr::write_csv(peer_eval, here("data/raw/multi100_peer-eval_raw_data.csv"))
 
 readr::write_csv(peer_eval_review, here("data/raw/multi100_peer-eval-review_raw_data.csv"))
 
-readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
+# We are not sharing this information openly
+# readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
 
 readr::write_csv(claim_direction_review, here("data/raw/multi100_claim-direction-review_raw_data.csv"))
 

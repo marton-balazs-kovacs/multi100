@@ -3,4 +3,5 @@
 .RData
 .Ruserdata
 data/
-analysis/multi100_source_raw.qmd
+data/raw/multi100_analyst-payments_raw_data.csv
+data/processed/multi100_analyst-payments_processed_data.csv

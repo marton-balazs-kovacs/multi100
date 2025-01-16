@@ -16,6 +16,8 @@ library(tidyverse)
 
 ```{r}
 source(here::here("R/utils.R"))
+source(here::here("R/standard_correlation_coefficient.R"))
+source(here::here("R/cohens_d.R"))
 ```
 
 ## Read data
@@ -24,11 +26,13 @@ source(here::here("R/utils.R"))
 # Task1 form responses
 task1 <- readr::read_csv(here::here("data/raw/multi100_task1_raw_data.csv"))
 
+# Demographic information
+demographic_information <- readr::read_csv(here::here("data/raw/multi100_demographic-information_data.csv"))
+
 # Task2 form responses
 task2 <- readr::read_csv(here::here("data/raw/multi100_task2_raw_data.csv"))
 
 # 'all_people' data (to be used for checking that ID's match)
-# TODO: ADD source CODE
 all_people <- readr::read_csv(here::here("data/raw/multi100_all-people_raw_data.csv"))
 
 # 'all_paper' meta-information on all papers analyzed
@@ -48,9 +52,6 @@ peer_eval <- readr::read_csv(here::here("data/raw/multi100_peer-eval_raw_data.cs
 
 # Peer evaluation review data
 peer_eval_review <- readr::read_csv(here::here("data/raw/multi100_peer-eval-review_raw_data.csv"))
-
-# Analyst payments data
-analyst_payments <- readr::read_csv(here::here("data/raw/multi100_analyst-payments_raw_data.csv"))
 
 # Reviewing the direction of the claims in task2
 claim_direction_review <- readr::read_csv(here::here("data/raw/multi100_claim-direction-review_raw_data.csv"))
@@ -226,20 +227,6 @@ reanalyzed_effect_sizes <-
     # Taking the absolute value of every effect size
     reanalysis_cohens_d = abs(reanalysis_cohens_d)
   )
-```
-
-## analyst_payments
-
-Select variables needed.
-
-```{r}
-analyst_payments <-
-  analyst_payments |> 
-  select(
-    -first_name
-  ) |> 
-  # drop the last row since that is a summary
-  slice(1:(n() - 1))
 ```
 
 ## task1
@@ -682,12 +669,6 @@ anti_join(multi100_data, reanalyzed_effect_sizes, by = c("paper_id", "analyst_id
 multi100_data <- left_join(multi100_data, reanalyzed_effect_sizes, by = c("paper_id", "analyst_id"))
 ```
 
-## Merge analyst payments
-
-```{r}
-multi100_data <- left_join(multi100_data, analyst_payments, by = "analyst_id")
-```
-
 ## Select and re-order variables
 
 ```{r}
@@ -703,7 +684,7 @@ multi100_data <-
     # timestamps
     signup_timestamp, task1_timestamp, task2_timestamp, 
     # demographic information
-    current_position_grouped, age, gender, education_level, country_of_residence, primary_discipline, keywords,
+    # current_position_grouped, age, gender, education_level, country_of_residence, primary_discipline, keywords,
     # experience with analysis
     experience_conducting_analyses, years_of_experience, analysis_frequency, expertise_self_rating, total_hours,
     # familiarity and discussion of the paper
@@ -717,7 +698,7 @@ multi100_data <-
     original_correlation_coef, original_cohens_d, original_effect_size_available, original_reproduction_outcome,
     # task1 responses (some of the variables were included before)
     task1_software, task1_analysis_report, task1_conclusion, task1_categorisation, task1_categorisation_plotting, confidence_in_approach,
-    data_suitability, task1_comments, instructions_given,
+    data_suitability, instructions_given,
     # task2 responses (some of the variables were included before)
     task2_software, task2_analysis_report,
     # the cleaned versions of these variables are included with reanalaysis_ suffix
@@ -727,13 +708,46 @@ multi100_data <-
     # model_degrees_of_freedom,
     p_value_or_bayes,
     p_value_report, task2_conclusion, direction_of_result, same_statistical_result_as_task1,
-    additional_calculations, task2_comments,
+    additional_calculations,
     # reproduced effect sizes
-    reanalysis_es_missing, reanalysis_es_missing_reason, reanalysis_type_of_statistic, reanalysis_statistic_report, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2, reanalysis_model_sample_size, reanalysis_correlation_coef, reanalysis_cohens_d,
-    # analysis payment
-    n_analyses, n_peer_evals, analyses_payment, peer_eval_payment, sum_payment
+    reanalysis_es_missing, reanalysis_es_missing_reason, reanalysis_type_of_statistic, reanalysis_statistic_report, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2, reanalysis_model_sample_size, reanalysis_correlation_coef, reanalysis_cohens_d
     )
 ```
+
+## Cleaning demographic information dataset
+
+Recoding free-text responses to gender in the demographic information.
+
+```{r}
+demographic_information <-
+  demographic_information |> 
+  mutate(
+    gender = case_when(
+      gender == "Nonbinary" ~ "Non-binary",
+      TRUE ~ gender
+    )
+  )
+```
+
+Recode the free-text responses to the education question in the demographic information.
+
+```{r}
+demographic_information <- 
+  demographic_information |> 
+  mutate(
+    education_level = case_when(
+      education_level == "ABD in PhD program" ~ "Master's degree or equivalent",
+      education_level == "Doctoral candidate and master's degree" ~ "Master's degree or equivalent",
+      education_level == "Finished PhD school, but hasn't gone through the thesis defence yet" ~ "Master's degree or equivalent",
+      education_level == "high-school diploma" ~ "High-school diploma or equivalent",
+      education_level == "Postdoc" ~ "Doctoral degree or equivalent",
+      education_level == "Habilitation (post- doctoral degree)" ~ "Doctoral degree or equivalent",
+      TRUE ~ education_level
+    )
+  )
+```
+
+## Cleaning merged dataset
 
 Add id_number to each analysis.
 
@@ -791,37 +805,6 @@ multi100_data <-
       analyst_id == "YZDX0" &
         paper_id == "Lu_JournLabEco_2015_vaWE" ~ FALSE,
       TRUE ~ TRUE
-    )
-  )
-```
-
-Recoding free-text responses to gender.
-
-```{r}
-multi100_data <-
-  multi100_data |> 
-  mutate(
-    gender = case_when(
-      analyst_id == "EZI7J" ~ "Non-binary",
-      TRUE ~ gender
-    )
-  )
-```
-
-Recode the free-text responses to the education question.
-
-```{r}
-multi100_data <- 
-  multi100_data |> 
-  mutate(
-    education_level = case_when(
-      education_level == "ABD in PhD program" ~ "Master's degree or equivalent",
-      education_level == "Doctoral candidate and master's degree" ~ "Master's degree or equivalent",
-      education_level == "Finished PhD school, but hasn't gone through the thesis defence yet" ~ "Master's degree or equivalent",
-      education_level == "high-school diploma" ~ "High-school diploma or equivalent",
-      education_level == "Postdoc" ~ "Doctoral degree or equivalent",
-      education_level == "Habilitation (post- doctoral degree)" ~ "Doctoral degree or equivalent",
-      TRUE ~ education_level
     )
   )
 ```
@@ -888,8 +871,6 @@ readr::write_csv(master, here::here("data/processed/multi100_master_processed_da
 readr::write_csv(original_effect_sizes, here::here("data/processed/multi100_original_effect-sizes_processed_data.csv"))
 
 readr::write_csv(reanalyzed_effect_sizes, here::here("data/processed/multi100_reanalyzed_effect-sizes_processed_data.csv"))
-
-readr::write_csv(analyst_payments, here::here("data/processed/multi100_analyst-payments_processed_data.csv"))
 ```
 
 ## Peer evaluation data
@@ -1132,5 +1113,7 @@ write_csv(peer_eval_changed, here::here("data/processed/multi100_peer-eval_proce
 write_csv(peer_eval, here::here("data/processed/multi100_peer-eval-not-reviewed_processed_data.csv"))
 
 write_csv(peer_eval_review, here::here("data/processed/multi100_peer-eval-review_processed_data.csv"))
+
+write_csv(demographic_information, here::here("data/processed/multi100_demographic-information_data.csv"))
 ```
 
