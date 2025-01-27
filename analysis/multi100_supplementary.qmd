@@ -214,7 +214,7 @@ age_plot <-
     axis.line = ggplot2::element_line()
   )
 
-ggplot2::ggsave(here::here("figures/demographic_age_plot.jpg"), age_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/supplement/demographic_age_plot.jpg"), age_plot, dpi = 300)
 
 age_plot
 ```
@@ -300,7 +300,7 @@ country_map_plot <-
     plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")
   )
 
-ggplot2::ggsave(here::here("figures/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/supplement/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
 
 country_map_plot
 ```
@@ -378,7 +378,7 @@ analyst_experience_years_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggplot2::ggsave(here::here("figures/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/supplement/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
 
 analyst_experience_years_plot
 ```
@@ -447,7 +447,7 @@ analysis_frequency_plot <-
     axis.text.x = ggplot2::element_text(size = 7)
   )
 
-ggplot2::ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
+ggplot2::ggsave(here::here("figures/supplement/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
 
 analysis_frequency_plot
 ```
@@ -491,7 +491,7 @@ expertise_self_rating_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
+ggsave(here::here("figures/supplement/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
 
 expertise_self_rating_plot
 ```
@@ -597,7 +597,7 @@ software_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures/demographic_software_plot.jpg"), software_plot, dpi = 300)
+ggsave(here::here("figures/supplement/demographic_software_plot.jpg"), software_plot, dpi = 300)
 
 software_plot
 ```
@@ -653,7 +653,7 @@ total_hours_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
+ggsave(here::here("figures/supplement/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
 
 total_hours_plot
 ```
@@ -710,7 +710,7 @@ peer_analyst_experience_years_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
+ggsave(here::here("figures/supplement/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
 
 peer_analyst_experience_years_plot
 ```
@@ -770,7 +770,7 @@ peer_analysis_frequency_plot <-
     axis.text.x = element_text(size = 6)
   )
 
-ggsave(here::here("figures/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
+ggsave(here::here("figures/supplement/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
 
 peer_analysis_frequency_plot
 ```
@@ -813,7 +813,7 @@ peer_expertise_self_rating_plot <-
     axis.line = element_line(color = "black")
   )
 
-ggsave(here::here("figures/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
+ggsave(here::here("figures/supplement/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
 
 peer_expertise_self_rating_plot
 ```
@@ -985,7 +985,7 @@ threshold_robustness_plot <-
     legend.position = c(0.8, 0.8)
   )
 
-ggplot2::ggsave(here::here("figures/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
+ggplot2::ggsave(here::here("figures/supplement/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
 
 threshold_robustness_plot
 ```
@@ -1041,7 +1041,7 @@ threshold_weighted_robustness_plot <-
     legend.position = c(0.8, 0.8)
   )
 
-ggplot2::ggsave(here::here("figures/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
+ggplot2::ggsave(here::here("figures/supplement/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
 
 threshold_weighted_robustness_plot
 ```
