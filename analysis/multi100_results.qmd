@@ -1,12 +1,12 @@
 ---
-title: "Results"
+title: "Investigating the analytical robustness of the social and behavioural sciences"
 format: docx
 editor: source
 editor_options: 
   chunk_output_type: console
 ---
 
-```{r include=FALSE, message=FALSE, warning=FALSE}
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
 # Load packages
 library(tidyverse)
 library(ggrain)
@@ -15,10 +15,12 @@ library(mapdata)
 library(countrycode)
 library(raster)
 library(gt)
+library(grid)
 library(patchwork)
 
 # Load custom functions
-source(here::here("R/utils.R"))
+script_files <- list.files(here::here("R"), pattern = "\\.R$", full.names = TRUE)
+walk(script_files, source)
 
 # Read processed data files
 processed <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
@@ -39,598 +41,67 @@ peer_eval <-
 
 all_people <- readr::read_csv(here::here("data/processed/multi100_all-people_processed_data.csv"))
 
-# Transforming the timestamp to date type from character
-processed <-
-  processed |>
-  dplyr::mutate(
-    task1_timestamp = lubridate::ymd_hms(task1_timestamp))
-
 # Table of long paper ids and simplified paper ids
 processed |> 
   dplyr::distinct(simplified_paper_id, paper_id) |> 
   dplyr::arrange(simplified_paper_id)
 ```
 
-```{r include=FALSE}
+```{r checks, include=FALSE}
 # Check if the analyst_id's are always unique to one person
 processed |>
   dplyr::distinct(first_name, last_name, analyst_id) |>
   dplyr::group_by(first_name, last_name) |>
   dplyr::mutate(n_analyst_id = dplyr::n()) |>
   dplyr::arrange(dplyr::desc(n_analyst_id))
-
-# Check if there are peer evaluators who evaluated an analysis for the same paper they analyzed
-peer_eval |> 
-  dplyr::select(evaluator_id, paper_id) |> 
-  rename(evaluator_paper_id = paper_id) |>
-  left_join(distinct(processed, paper_id, analyst_id), by = c("evaluator_id" = "analyst_id"), relationship = "many-to-many") |> 
-  mutate(match = case_when(
-    paper_id == evaluator_paper_id ~ TRUE,
-    paper_id != evaluator_paper_id ~ FALSE
-  )) |> 
-  filter(match)
 ```
 
-## General descriptives
+Over the past decade, social and behavioural scientists have been striving to enhance the robustness, objectivity, and replicability of their findings through systemic reforms in the conduct and communication of empirical research. Practices such as preregistration1, registered reports2, multisite replications3, analytical reproducibility checks4,5, and automated result validation techniques6 have been investigated and recommended to produce robust and replicable findings. An important aspect of robustness has yet to be systematically charted across these sciences: the contingency of the results on researchers’ analytical choices.
 
-```{r include=FALSE}
-analyst_signed_up <-
-  all_people |>
-  dplyr::mutate(first_name = tolower(first_name),
-                last_name = tolower(last_name)) |>
-  dplyr::distinct(first_name, last_name, .keep_all = T) |>
-  dplyr::filter(disclosure_agreement == "I agree")
+In a typical research pipeline, the collected empirical data are analysed by a single analyst or team and the published report presents a conclusion based on one analytical path, occasionally accompanied by a few robustness tests. The peer review process aims to ensure that the analysis approach meets the statistical and field-specific standards. However, this procedure does not ascertain whether justifiable alternative analytical choices could have led to different results.
 
-analyst_submitted <-
-  processed |>
-  dplyr::distinct(analyst_id) |>
-  nrow()
-```
+Theories and empirical designs rarely constrain analysts to a single analytical path. Many degrees of freedom exist in how researchers operationalise their variables, process their data, construct their statistical model, select algorithms and software for model estimation, and define their inference criteria; whether they follow frequentist, Bayesian, or likelihoodist analytical approaches; use machine learning, or conduct computational modelling to answer the same research question7,8. This inherent freedom of the analyst constitutes the so-called analytical variability contained within empirical projects, a key component in the robustness of statistical results. Fig. 1 lists some sources of analytical variability that can manifest themselves in analysts’ statistical results and the conclusions drawn from the results.
 
-As a response to our recruitment call, `r nrow(analyst_signed_up)` researchers signed up to participate in our study. Out of these volunteers, `r analyst_submitted` signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
+One way to explore analytical variability is to employ a multiverse methodology9,10 in which the analyst conducts all combinations of analytic choices they are able to generate across a wide range of reasonable scenarios. Alternatively, in the multi-analyst approach, multiple analysts analyse the data following their best judgement. The latter approach requires more organisation, but it takes advantage of alternative expert perspectives without combinatory expansion of the number of results. A multi-analyst approach also examines naturally occurring variation, empirically answering the counterfactual question of what might have happened if another investigator had pursued the same hypothesis using the same data.
 
-```{r include=FALSE}
-n_analysis <-
-  processed |> 
-  nrow()
-```
+Multi-analyst projects11–24 have provided some evidence of the extent to which analysts’ individual choices influence the results and conclusions. From economics to neuroscience, these explorations demonstrated that the robustness of empirical findings can be compromised by researcher degrees of freedom25. Even conservative estimates suggest that the variability in effect estimates attributable to analytical heterogeneity substantially exceeds the variability one would expect due to sampling error26.
 
-Throughout the project, `r n_analysis` re-analyses have been submitted. This number is higher than the number of co-analysts as some co-analysts volunteered to analyse more than one dataset.
+Do we know how robust published findings are to analytical choices across social and behavioural sciences? One could argue that multi-analyst projects so far were purposefully conducted in research areas with little consensus on the best analytical approach or were motivated to demonstrate the potential effect of analytical choices and, therefore, may represent rare cases where alternative analyses produce important differences in results. For example, perhaps the datasets selected contained more complex sets of researcher choices than the norm. Differences between academic methodologies and fields also seem plausible - for example, the relatively simple experiments sometimes used in social psychology and behavioural economics may contain fewer analytic decisions than the complex longitudinal observational datasets used in macroeconomics and finance, and thus be more robust in general22. To the extent that this is the case, the findings from the existing multi-analyst projects could be biased towards worst-case scenarios and the traditional analytical practice and review system may not require fundamental adjustments. If, on the other hand, observed results are contingent on the analyst's choices across fields, methodologies, and types of datasets, then the scientific literature could be less robust than is often assumed. If so, the general practices of how we conduct, report, and review empirical analyses should be reformed to address this source of uncertainty.
 
-```{r include=FALSE}
+```{r number of analysis who failed peer evaluation, include=FALSE}
 n_failed_peer <-
   processed |>
   dplyr::filter(!peer_eval_pass | !incomplete_response_pass) |>
   nrow()
 ```
 
-Out of the submitted analyses `r nrow(dplyr::filter(processed, !peer_eval_pass))` of them was omitted from the summary analysis as its analysis failed the peer evaluation and an additional `r nrow(dplyr::filter(processed, !incomplete_response_pass))` analyses were excluded due to incomplete responses.
-
-```{r include=FALSE}
+```{r excluding analyst who failed peer evaluation, include=FALSE}
 # Excluding analyst who failed the peer evaluation from the rest of the analysis
 processed <-
   processed |> 
   dplyr::filter(peer_eval_pass & incomplete_response_pass)
 ```
 
-```{r include=FALSE}
+```{r number of analysis, include=FALSE}
+n_analysis <-
+  processed |> 
+  nrow()
+```
+
+```{r number of analyst, include=FALSE}
 final_n_analyst <-
   processed |> 
   dplyr::distinct(analyst_id) |> 
   nrow()
 ```
 
-As a result, we ended up with `r nrow(processed)` re-analyses, submitted by `r final_n_analyst` co-analysts.
+After conducting `r n_analysis` re-analyses with the involvement of `r final_n_analyst` independent re-analysts on a selection of 100 social and behavioural studies, we conducted strictly explorative analyses on the results in order to describe the patterns in our findings. Inspecting the results along different research characteristics and study designs gives rise to a number of hypotheses for future research on how to make transparent and address this often neglected component of scientific uncertainty
 
-Although we invited more than 5 co-analysts to each of the 100 studies, due to drop-outs and peer evaluation exclusions the final number of completed analyses ranged between `r min(dplyr::count(processed, paper_id)$n)` and `r max(dplyr::count(processed, paper_id)$n)`. Table 1 shows the distribution of of the number of analyses for individual studies. 
+## Do re-analysts arrive at the same results as the original study analysts?
 
-__Table 1. The Distribution of the Number of Analyses for Studies__
+To explore the robustness of published claims, we selected a key claim from each of our 100 studies in which the authors provided evidence for a (directional) effect. We presented each empirical claim to at least five analysts along with the original data and asked them to analyse the data to examine the claim following their best judgement and report only their main result. The analysts were encouraged to analyse those studies where they saw the greatest relevance of their expertise.
 
-```{r echo=FALSE, message=FALSE}
-processed |>
-  dplyr::count(paper_id) |> 
-  dplyr::count(n, name = "N") |>
-  dplyr::rename(`Number of Completed Analyses` = n,
-                `Number of Studies` = N) |>
-  gt::gt() |>
-  gt::tab_style(
-    style = gt::cell_text(weight = "bold"),
-    locations = gt::cells_column_labels()
-  )
-```
-
-## Basic demographics of the co-analysts
-
-```{r include=FALSE}
-# Checking if analysts consistently reported their current position
-check_diff_response(processed, analyst_id, current_position_grouped)
-
-position <-
-  processed |>
-  dplyr::select(analyst_id,
-                paper_id,
-                current_position_grouped,
-                task1_timestamp) |>
-  # Keeping only the first response per analyst
-  keep_first_response(analyst_id, task1_timestamp) |>
-  count(current_position_grouped) |>
-  rename(position = current_position_grouped) |>
-  mutate(position = factor(
-    position,
-    levels = c(
-      "Professor",
-      "Associate Professor",
-      "Assistant Professor",
-      "Post-Doc Researcher",
-      "Doctoral Student",
-      "Other academic/research position"
-    )
-  ))
-```
-
-Out of all the co-analysts who submitted their work by the deadline, there were `r dplyr::filter(position, position == "Professor") |> dplyr::pull(n)` professors, `r dplyr::filter(position, position == "Associate Professor") |> dplyr::pull(n)` associate professors, `r filter(position, position == "Assistant Professor") |> dplyr::pull(n)` assistant professors, `r dplyr::filter(position, position == "Post-Doc Researcher") |> dplyr::pull(n)` post-doctoral researchers, `r dplyr::filter(position, position == "Doctoral Student") |> dplyr::pull(n)` doctoral students, `r dplyr::filter(position, position == "Other academic/research position") |> dplyr::pull(n)` from other academic/research positions. 
-
-```{r include=FALSE}
-check_diff_response(processed, analyst_id, gender)
-
-gender <-
-  processed |>
-  dplyr::select(analyst_id, paper_id, gender, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  dplyr::count(gender)
-```
-
-The gender distribution of the co-analysts is as follows: `r dplyr::filter(gender, gender == "Female") |> dplyr::pull(n)` female, `r dplyr::filter(gender, gender == "Male") |> dplyr::pull(n)` male, `r dplyr::filter(gender, gender == "Non-binary") |> dplyr::pull(n)` other, and `r dplyr::filter(gender, gender == "Prefer not to say") |> dplyr::pull(n)` didn't want to respond to this question.
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = age)
-
-age <-
-  processed |>
-  dplyr::select(analyst_id, paper_id, age, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  # Filter erroneous data
-  dplyr::filter(age != "00") |> 
-  dplyr::mutate(age = as.numeric(age))
-  
-age_group <-
-  age |> 
-  dplyr::mutate(
-    age_group = dplyr::case_when(
-      age <= 39 ~ "young",
-      age >= 40 | age <= 59 ~ "middle",
-      age >= 60 ~ "old",
-      TRUE ~ NA_character_
-    ),
-    age_group = factor(age_group, levels = c("young", "middle", "old"))
-    ) |> 
-  dplyr::count(age_group) |> 
-  tidyr::complete(age_group, fill = list(n = 0))
-```
-
-The age distribution of the co-analysts is depicted in @fig-age-plot. `r dplyr::filter(age_group, age_group == "young") |> dplyr::pull(n)` young adults (-39 years); `r dplyr::filter(age_group, age_group == "middle") |> dplyr::pull(n)` middle-aged adults (40-59 years); and no old adults (60- years).
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-age-plot
-#| fig-cap: "The figure shows the distribution of the analysts' age. When an analyst submitted more than one re-analysis with more than a year apart, we kept only their age at the time of their first submission. Moreover, one analyst is excluded because they did not disclose their age."
-age_plot <- 
-  age |>
-  ggplot2::ggplot() +
-  ggplot2::aes(x = age) +
-  ggplot2::geom_histogram(binwidth = 1) +
-  ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, 40)) +
-  ggplot2::scale_x_continuous(
-    # limits = c(20, 55),
-    # breaks = c(20, 30, 40, 50, 60),
-    # labels = c("20", "30", "40", "50", "60")
-  ) +
-  ggplot2::labs(x = "Age (years)",
-       y = "Number of co-analysts") +
-  ggplot2::theme(
-    panel.grid = ggplot2::element_blank(),
-    panel.background = ggplot2::element_blank(),
-    axis.line = ggplot2::element_line()
-  )
-
-ggplot2::ggsave(here::here("figures/demographic_age_plot.jpg"), age_plot, dpi = 300)
-
-age_plot
-```
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = education_level)
-
-education <-
-  processed |>
-  dplyr::select(analyst_id, paper_id, education_level, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  dplyr::count(education_level) |> 
-  dplyr::rename(education = education_level)
-```
-
-Regarding the highest level of education, `r dplyr::filter(education, education == "High-school diploma or equivalent") |> dplyr::pull(n)` co-analyst reported High-school diploma or equivalent, `r dplyr::filter(education, education == "Bachelor's degree or equivalent") |> dplyr::pull(n)` co-analysts had Bachelor's degree or equivalent, `r dplyr::filter(education, education == "Master's degree or equivalent") |> dplyr::pull(n)` Master's degree or equivalent, `r dplyr::filter(education, education == "Doctoral degree or equivalent") |> dplyr::pull(n)` had Doctoral degree or equivalent. In case the analysts completed more than one re-analysis and they advanced in their studies by the time of their second analysis, we kept only their first response for this comparison.
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = country_of_residence)
-
-country_data <- raster::ccodes()
-
-country <- 
-  processed |>
-  dplyr::select(analyst_id, paper_id, country_of_residence, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  dplyr::count(country_of_residence) |> 
-  dplyr::rename(region = country_of_residence) |> 
-  # Modify country names to fit the worldmap data
-  dplyr::mutate(
-    subregion = dplyr::case_when(
-      region == "Hong Kong (China)" ~ "Hong Kong",
-      TRUE ~ NA_character_
-    ),
-    region = dplyr::case_when(
-      region == "Hong Kong (China)" ~ "China",
-      region == "United States" ~ "USA",
-      region == "United Kingdom" ~ "UK",
-      TRUE ~ region
-    ),
-    continent = countrycode::countrycode(region, "country.name", "continent"),
-    iso3_code = countrycode::countrycode(region, "country.name", "iso3c")
-  ) |> 
-  dplyr::left_join(dplyr::select(country_data, ISO3, UNREGION1), by = c("iso3_code" = "ISO3"))
-
-continent <-
-  country |> 
-  dplyr::group_by(continent) |> 
-  dplyr::summarise(N = sum(n))
-
-region <-
-  country |> 
-  dplyr::group_by(UNREGION1) |> 
-  dplyr::summarise(N = sum(n))
-```
-
-The country of residence of the co-analysts is shown on the map on @fig-country-plot. Regarding the continents, `r dplyr::filter(continent, continent == "Africa") |> dplyr::pull(N)` co-analyst was from Africa, `r dplyr::filter(continent, continent == "Asia") |> dplyr::pull(N)` were from Asia, `r dplyr::filter(continent, continent == "Oceania") |> dplyr::pull(N)` from Oceania, `r dplyr::filter(continent, continent == "Europe") |> dplyr::pull(N)` from Europe, `r dplyr::filter(region, UNREGION1 == "Northern America") |> dplyr::pull(N)` from North America, `r dplyr::filter(region, UNREGION1 %in% c("Central America", "South America")) |> dplyr::summarise(sum(N)) |> dplyr::pull("sum(N)")` from South America.
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-country-plot
-#| fig-cap: "The figure shows the analysts' country of residence. When an analyst submitted more than one re-analysis and they moved between the submissions, we only kept their first response."
-
-world_map <- 
-  ggplot2::map_data("world") |> 
-  dplyr::mutate(
-    subregion = dplyr::case_when(
-      subregion == "Hong Kong" ~ subregion,
-      TRUE ~ NA_character_
-    )
-  )
-
-country_map <- dplyr::left_join(world_map, country, by = c("region", "subregion"))
-
-country_map_plot <- 
-  country_map |> 
-  ggplot2::ggplot() +
-  ggplot2::aes(x = long, y = lat, group = group, fill = n) +
-  ggplot2::geom_polygon(color = "white", linewidth = 0.2) +
-  ggplot2::scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalyst") +
-  ggplot2::theme_void() +
-  ggplot2::theme(
-    legend.title = element_text(size = 6),
-    plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")
-  )
-
-ggplot2::ggsave(here::here("figures/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
-
-country_map_plot
-```
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = primary_discipline)
-
-analyst_discipline <- 
-  processed |>
-  dplyr::select(analyst_id, paper_id, primary_discipline, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  calculate_percentage(response_var = primary_discipline) |>
-  dplyr::rename(discipline = primary_discipline) |> 
-  dplyr::arrange(dplyr::desc(dplyr::if_else(discipline == "Other", -Inf, percentage)))
-```
-
-We asked the co-analysts which discipline is the closest to their research area. The following Table 2 summarizes the distribution of their disciplinary orientation. Co-analysts from `r dplyr::slice(analyst_discipline, 1) |> dplyr::pull(discipline)` and `r dplyr::slice(analyst_discipline, 2) |> dplyr::pull(discipline)` disciplines participated in the highest ratio in this study.
-
-__Table 2. The Distribution of Co-analysts’ Disciplinary Orientation__
-
-```{r, echo=FALSE}
-# tbl-discipline
-# "Distribution of the Analysts' Primary Discipline"
-
-analyst_discipline |>
-  dplyr::select(discipline, n, percentage) |>
-  dplyr::rename(Discipline = discipline,
-                Count = n,
-                Percentage = percentage) |>
-  gt::gt() |>
-  tab_style(style = gt::cell_text(weight = "bold"),
-            locations = gt::cells_column_labels()) |>
-  gt::tab_footnote(
-    "Note: Whenever the respondents provided more than one field we only kept their first responses."
-  )
-```
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
-
-analyst_experience_years_data <-
-  processed |>
-  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  # Dropped because of faulty response
-  dplyr::filter(analyst_id != "RTX71")
-```
-
-The distribution of the years of experience with data analysis is depicted on @fig-experience-years-plot. The median time of experience with data analysis was `r median(analyst_experience_years_data$years_of_experience)` years among our co-analysts.
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-experience-years-plot
-#| fig-cap: "The figure shows the analysts' years of experience with data analysis. When an analyst submitted more than one re-analysis and a year passed between the responses we only kept their first response."
-analyst_experience_years_plot <-
-  analyst_experience_years_data |> 
-  ggplot2::ggplot() +
-  ggplot2::aes(x = years_of_experience) +
-  ggplot2::geom_histogram() +
-  ggplot2::scale_y_continuous(expand = c(0, 0)) +
-  ggplot2::labs(x = "Years of experience with data analysis",
-                y = "Number of co-analysts") +
-  ggplot2::theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
-  )
-
-ggplot2::ggsave(here::here("figures/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
-
-analyst_experience_years_plot
-```
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
-
-analysis_frequency_count <-
-  processed |> 
-  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  dplyr::count(analysis_frequency)
-```
-
-We asked our co-analysts how regularly they perform data analysis. @fig-analysis-frequency shows that the most frequent category was `r dplyr::filter(analysis_frequency_count, n == max(n)) |> dplyr::pull(analysis_frequency)`.
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-analysis-frequency
-#| fig-cap: "The figure shows how regularly the analysts perform data analysis."
-
-# For this question we report the responses by analysis and not analyst 
-analysis_frequency_plot <-
-  analysis_frequency_count |>
-  dplyr::mutate(
-    analysis_frequency = dplyr::case_when(
-      analysis_frequency == "2-3 times a week" ~ "2-3 times\na week",
-      analysis_frequency == "Once every two weeks" ~ "Once every\ntwo weeks",
-      analysis_frequency == "Less than once a month" ~ "Less than\nonce a month",
-      TRUE ~ analysis_frequency
-    ),
-    analysis_frequency = as.factor(analysis_frequency),
-    analysis_frequency = forcats::fct_relevel(
-      analysis_frequency,
-      c(
-        "Daily",
-        "2-3 times\na week",
-        "Once a week",
-        "Once every\ntwo weeks",
-        "Once a month",
-        "Less than\nonce a month"
-      )
-    )
-  ) |>
-  ggplot2::ggplot() +
-  ggplot2::aes(x = analysis_frequency, y = n) +
-  ggplot2::geom_bar(stat = "identity") +
-  ggplot2::scale_y_continuous(expand = c(0, 0)) +
-  ggplot2::labs(x = "Frequency of doing data analysis",
-                y = "Number of co-analysts") +
-  ggplot2::theme(
-    panel.background = ggplot2::element_blank(),
-    panel.grid = ggplot2::element_blank(),
-    axis.line = ggplot2::element_line(color = "black"),
-    axis.text.x = ggplot2::element_text(size = 7)
-  )
-
-ggplot2::ggsave(here::here("figures/demographic_analysis_frequency_plot.jpg"), analysis_frequency_plot, dpi = 300)
-
-analysis_frequency_plot
-```
-
-```{r include=FALSE}
-expertise_self_rating_data <-
-  processed |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |>
-  dplyr::count(expertise_self_rating)
-```
-
-We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution on @fig-self-rating-plot shows that the most prevalent answer was `r dplyr::filter(expertise_self_rating_data, n == max(n)) |> dplyr::pull(expertise_self_rating)` .
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-self-rating-plot
-#| fig-cap: "The figure shows the analysts' self-rated level of expertise in data analysis. When an analyst submitted more than one re-analysis we only kept their first response."
-
-expertise_self_rating_plot <-
-  expertise_self_rating_data |>
-  mutate(
-    expertise_self_rating = case_when(
-      expertise_self_rating == 1 ~ "1\n(Beginner)",
-      expertise_self_rating == 10 ~ "10\n(Expert)",
-      TRUE ~ as.character(expertise_self_rating)
-    ),
-    expertise_self_rating = as.factor(expertise_self_rating),
-    expertise_self_rating = fct_relevel(
-      expertise_self_rating,
-      c("1\n(Beginner)",
-        as.character(2:9),
-        "10\n(Expert)")
-    )
-  ) |>
-  ggplot() +
-  aes(x = expertise_self_rating, y = n) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Self-rated expertise of data analysis",
-       y = "Number of co-analysts") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
-  )
-
-ggsave(here::here("figures/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
-
-expertise_self_rating_plot
-```
-
-```{r include=FALSE}
-familiar_with_paper_data <-
-  calculate_percentage(processed, familiar_with_paper)
-```
-
-In `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(percentage)` % (`r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(n)` out of `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(N)`) of the cases, the co-analysts were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
-
-```{r include=FALSE}
-processed |> 
-  count(communication_check)
-```
-
-All co-analyst reported that they have not communicated about the details of their analysis with other co-analysts working with the same dataset.
-
-```{r include=FALSE}
-software_data <-
-  processed |> 
-  dplyr::reframe(
-    software = c(task1_software, task2_software),
-    software = tolower(software),
-  ) |> 
-  separate_rows(software, sep = ",\\s*") |> 
-  mutate(
-    software = case_when(
-      software == "ms excel" ~ "excel",
-      software == "r markdown" ~ "rmarkdown",
-      software == "process v4.0 by hayes for r" ~ "process v4.0",
-      software == "jamovi 1.6.23.0" ~ "jamovi",
-      software == "jamovi 2.3.9" ~ "jamovi",
-      software == "text editor to look at the stata code of the original paper" ~ "text editor",
-      software == "text editor to read the stata code in the replication materials" ~ "text editor",
-      TRUE ~ software
-    )
-  ) |> 
-  calculate_percentage(software) |> 
-  arrange(desc(n)) |> 
-  mutate(
-    software = case_when(
-      software %in% c("r", "stata", "spss", "jasp") ~ toupper(software),
-      TRUE ~ stringr::str_to_title(software)
-    )
-  )
-```
-
-We asked the co-analysts what programming language/software/tool they used in their data analysis during Task 1 and Task 2. The following figure indicates that `r slice(software_data, 1) |> pull(software)` (`r slice(software_data, 1) |> pull(percentage)`%), `r slice(software_data, 2) |> pull(software)` (`r slice(software_data, 2) |> pull(percentage)`%), and `r slice(software_data, 3) |> pull(software)` (`r slice(software_data, 3) |> pull(percentage)`%) were the most popular responses. @fig-software shows the distribution of these responses.
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-software
-#| fig-cap: "The figure shows which software the analysts used for their re-analysis tasks. In case an analyst completed multiple re-analyses or reported the use of multiple software we kept all their responses for this figure. The figure shows only software that was used by more than 1% of the analysts."
-
-software_plot <-
-  software_data |>
-  dplyr::filter(percentage > 1) |>
-  ggplot() +
-  aes(x = reorder(software, -percentage),
-      y = percentage) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(expand = c(0, 0),
-                     labels = scales::percent_format(scale = 1)) +
-  labs(y = "Percentage of co-analysts",
-       x = "Software") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
-  )
-
-ggsave(here::here("figures/demographic_software_plot.jpg"), software_plot, dpi = 300)
-
-software_plot
-```
-
-## Descriptives of the statistical analyses
-
-A difference in Task 2 compared to Task 1 was that the co-analysts received some constraints for their analysis to make their result comparable to a single result in the original study (see Methods for more details).
-
-```{r include=FALSE}
-p_value_or_bayes_data <-
-  calculate_percentage(processed, p_value_or_bayes)
-```
-
-In Task 2, when we asked the co-analysts to present one main statistical result, in `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(percentage)`% of the analyses (`r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(N)`), conclusion was based on the p-value. Bayes Factor was used in `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(percentage)`% of the cases (`r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(N)`).
-
-```{r include=FALSE}
-additional_calculations_data <-
-  calculate_percentage(processed, additional_calculations)
-```
-
-For `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(percentage)` % (`r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(N)`) of the analyses, the co-analysts reported having to make additional calculations in Task 2 compared to Task 1. In the remaining `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(N)`) of the cases, the co-analysts indicated that despite the requirements of the instructions, they could conduct the same analyses as in Task 1.
-
-```{r include=FALSE}
-direction_of_result_data <- 
-  calculate_percentage(processed, direction_of_result)
-```
-
-In Task 2, `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(percentage)`% of the results (`r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(n)` out of `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(N)`) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
-
-```{r include=FALSE}
-total_hours_data <-
-  processed |> 
-  filter(total_hours != 999)
-```
-
-The co-analysts were asked to estimate the time they spent performing Task 1 and Task 2 together. The median value of their response is `r median(total_hours_data$total_hours)` hours (@fig-total-hours).
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-total-hours
-#| fig-cap: "The figure shows the reported total hours the analyst spent on Task 1 and Task 2 together. In case an analyst completed multiple re-analyses, we kept all their responses for this figure. One response was excluded due to being an outlier (999 hours)."
-
-total_hours_plot <-
-  total_hours_data |>
-  ggplot() +
-  aes(x = total_hours) +
-  geom_histogram() +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Total hours spent on the analysis",
-       y = "Number of co-analysts") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
-  )
-
-ggsave(here::here("figures/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
-
-total_hours_plot
-```
-
-```{r include=FALSE}
+```{r number of different test family and values, include=FALSE}
 same_test_family <-
   processed |>
   dplyr::select(
@@ -679,767 +150,11 @@ proportion_unique_paper <-
   )
 ```
 
-In Task 2 `r dplyr::filter(proportion_unique_analysis, is_unique) |> pull(percentage)`% of the co-analyst used unique analytical pipelines based on the statistical test family and the value of the test statistics they arrived at. In total `r pull(proportion_unique_paper, percentage_all_unique)`% of the papers had completely unique reanalysis attempts.
+First, we explored the degree to which the reanalyses arrived to the same statistics in the reanalysis of each study. We found in `r pull(proportion_unique_paper, percentage_all_unique)` % of the studies they reported different statistics regarding statistical test families (such as t-test, F-test, χ2) and their values (after rounding them to two decimal places).
 
-## Peer evaluation
-### Peer evaluators
-#### Basic demographics of the peer evaluators 
+A challenge in any multi-analyst project is to find a common metric that allows the results of the different analyses to be compared. A practical solution is to transform the reported point estimates into a common effect size measure. Although these transformations have limitations and their calculation relies on assumptions that may not hold in all considered analysis settings25–28, for the sake of comparability we decided to compute Cohen’s d for each re-analysis, wherever it was feasible. (For an alternative approach, see Additional Results in the Supplementary information.) In our preregistration, we defined that we consider two results qualitatively the same when their effect sizes are within our tolerance region: +/- 0.05 Cohen’s d, but we provide analyses with alternative tolerance regions in the next paragraph. Our results revealed how far the new estimates were from the original ones (Fig. 2a) and how often the effect sizes of the re-analyses fell within this tolerance region (Fig. 2b).
 
-```{r include=FALSE}
-# Get peer evaluator demographic info from task1 and task2 survey results
-peer_evaluator_data <-
-  peer_eval |> 
-  distinct(evaluator_id) |> 
-  inner_join(processed, by = c("evaluator_id" = "analyst_id"))
-
-# Check if an evaluator has more than one analysis submitted
-peer_evaluator_data |> 
-  count(evaluator_id) |> 
-  arrange(desc(n))
-
-# Check if a peer evaluator has more than one evaluation submitted
-peer_eval |>
-  count(evaluator_id) |>
-  arrange(desc(n))
-```
-
-@fig-evaluator-years shows that most peer evaluators have many years of experience with conducting statistical analysis. 
-
-```{r include=FALSE}
-check_diff_response(peer_evaluator_data, evaluator_id, years_of_experience)
-```
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-evaluator-years
-#| fig-cap: "The figure shows the peer evaluators’ years of experience with data analysis. When a peer evaluator submitted more than one evaluation and a year passed between the responses, we kept only their first response."
-
-peer_analyst_experience_years_data <-
-  peer_evaluator_data |>
-  dplyr::select(evaluator_id, years_of_experience, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(evaluator_id, task1_timestamp)
-
-peer_analyst_experience_years_plot <-
-  peer_analyst_experience_years_data |>
-  ggplot() +
-  aes(x = years_of_experience) +
-  geom_histogram() +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Years of experience",
-       y = "Number of peer evaluators") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
-  )
-
-ggsave(here::here("figures/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
-
-peer_analyst_experience_years_plot
-```
-
-@fig-evaluator-analysis-frequency indicates that peer evaluators regularly perform data analysis. 
-
-```{r include=FALSE}
-check_diff_response(peer_evaluator_data, evaluator_id, analysis_frequency)
-```
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-evaluator-analysis-frequency
-#| fig-cap: "The figure shows how regularly the peer evaluators perform data analysis."
-
-peer_analysis_frequency_count <-
-  peer_evaluator_data |> 
-  dplyr::select(evaluator_id, paper_id, analysis_frequency, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = evaluator_id, time_var = task1_timestamp) |> 
-  count(analysis_frequency)
-
-# For this question we report the responses by analysis and not analyst 
-peer_analysis_frequency_plot <-
-  peer_analysis_frequency_count |>
-  mutate(
-    analysis_frequency = case_when(
-      analysis_frequency == "2-3 times a week" ~ "2-3 times\na week",
-      analysis_frequency == "Once every two weeks" ~ "Once every\ntwo weeks",
-      analysis_frequency == "Less than once a month" ~ "Less than\nonce a month",
-      TRUE ~ analysis_frequency
-    ),
-    analysis_frequency = as.factor(analysis_frequency),
-    analysis_frequency = fct_relevel(
-      analysis_frequency,
-      c(
-        "Daily",
-        "2-3 times\na week",
-        "Once a week",
-        "Once every\ntwo weeks",
-        "Once a month",
-        "Less than\nonce a month"
-      )
-    )
-  ) |>
-  ggplot() +
-  aes(x = analysis_frequency, y = n) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Frequency of doing data analysis",
-       y = "Number of peer evaluators") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    axis.text.x = element_text(size = 6)
-  )
-
-ggsave(here::here("figures/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
-
-peer_analysis_frequency_plot
-```
-
-@fig-evaluator-expertise indicates that most peer evaluators rate themselves close to expert level in data analysis. 
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-evaluator-expertise
-#| fig-cap: "The figure shows the peer evaluators’ self-rated level of expertise in data analysis. When a peer evaluator submitted more than one re-analysis, we kept only their first response."
-
-peer_expertise_self_rating_data <-
-  peer_evaluator_data |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = evaluator_id, time_var = task1_timestamp) |>
-  count(expertise_self_rating) |> 
-  complete(expertise_self_rating, fill = list(n = 0))
-
-peer_expertise_self_rating_plot <-
-  peer_expertise_self_rating_data |>
-  mutate(
-    expertise_self_rating = case_when(
-      expertise_self_rating == 1 ~ "1\n(Beginner)",
-      expertise_self_rating == 10 ~ "10\n(Expert)",
-      TRUE ~ as.character(expertise_self_rating)
-    ),
-    expertise_self_rating = factor(
-      expertise_self_rating,
-      levels = c("1\n(Beginner)",
-                 as.character(2:9),
-                 "10\n(Expert)")
-    )
-  ) |>
-  tidyr::complete(expertise_self_rating, fill = list(n = 0)) |> 
-  ggplot() +
-  aes(x = expertise_self_rating, y = n) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(expand = c(0, 0)) +
-  labs(x = "Self-reported expertise rating",
-       y = "Number of peer evaluators") +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
-  )
-
-ggsave(here::here("figures/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
-
-peer_expertise_self_rating_plot
-```
-
-### Peer evaluations
-#### Descriptives of peer evaluations 
-
-```{r include=FALSE}
-# Number of peer evaluations
-# One response was excluded in multi100_raw_processed because the evaluator did not provide the analyst_id
-nrow(peer_eval_not_reviewed)
-nrow(peer_eval)
-```
-
-In total, we received `r nrow(peer_eval_not_reviewed) + 1` peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated leaving us with a total of `r nrow(peer_eval_not_reviewed)` peer evaluation reports on `r nrow(distinct(peer_eval_not_reviewed, paper_id))` different papers. After the panel member review of the peer evaluations (see Peer Evaluation: Review and Decisions’ supplement for all decisions and reasoning behind each case), the final result of the peer evaluation was the following.  
-
-```{r include=FALSE}
-dplyr::count(peer_eval, task1_pipeline_acceptable)
-dplyr::count(peer_eval, task1_conclusion_follows_results)
-dplyr::count(peer_eval, task2_pipeline_acceptable)
-```
-
-At the end of the peer evaluation process, one analysis was deemed to contain an unacceptable analysis pipeline. Therefore, we removed this single analysis from our results. For the remaining analyses, it was determined that all Task 1 and Task 2 analysis pipelines were acceptable. Furthermore, all remaining Task 1 conclusions were considered to accurately follow on from the results, and the analysts self-categorization of the results were considered adequate.
-
-```{r include=FALSE}
-reproducibility_checks_data <-
-  peer_eval |> 
-  calculate_percentage(any_code_mismatches)
-
-reproducibility_checks_n <-
-  reproducibility_checks_data |> 
-  filter(any_code_mismatches %in% c("(3) I executed it and I found no mismatches", "(4) I executed it and I found mismatches")) |> 
-  summarise(n_reproducibility_checks = sum(n))
-```
-
-`r reproducibility_checks_n` analytical reproducibility checks were successfully conducted which identified mismatches in `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)` analyses. In all of these cases we verified that that the mismatches did not have a meaningful impact on the reported conclusion, categorization, or effect size.
-
-## Inferential robustness: The robust of the conclusions to analytical choices published in social sciences
-
-Do different analysts arrive at the same conclusions as the analysts of the original study?
-
-### Task 1 Survey results
-
-```{r include=FALSE}
-# Distinct values of task1_categorisation
-distinct(processed, task1_categorisation)
-distinct(processed, task1_categorisation_plotting)
-
-conclusions_main_data <- 
-  processed |> 
-  rename(categorisation = task1_categorisation_plotting) |> 
-  mutate(
-    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) |> 
-  calculate_conclusion(grouping_var = simplified_paper_id, categorization_var = categorisation) |>
-  mutate(
-    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(categorisation == "Same conclusion", percentage, NA), .desc = FALSE, .na_rm = TRUE)
-  )
-
-# When threshold is 100% same conclusion for robust result
-conclusions_main_robustness_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 100)
-# When threshold is 80% same conclusion for robust result
-conclusions_main_robustness_80_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 80, operator = ">")
-# When threshold is 60% same conclusion for robust result
-conclusions_main_robustness_60_data <- calculate_conclusion_robustness(data = processed, categorization_var = task1_categorisation_plotting, threshold = 60, operator = ">")
-```
-
-In Task 1, the co-analysts were asked to conduct any statistical analysis to arrive at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed studies, the conclusions of `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)`% (`r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(n)`) remained robust to independent re-analysis, so all assigned co-analysts arrived at the same conclusion as reported in the article of the original study (inferential robustness; see @fig-conclusions-main-robustness). With alternative definitions of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)`% when 80% and `r filter(conclusions_main_robustness_60_data, robust == "Inferentially robust") |> pull(percentage)`% when 60% reanalysis agreement with the original conclusion defined analytical robustness. For one study (1%), all co-analysts reported no effect or an inconclusive conclusion. 
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-conclusions-main-robustness
-#| fig-cap: "The figure shows the proportion of the inferentially robust and not robust studies."
-
-conclusion_main_robustness_plot <- plot_conclusion_robustness(conclusions_main_robustness_data, robust)
-
-ggsave(here::here("figures/conclusion_main_robustness_plot.jpg"), conclusion_main_robustness_plot, dpi = 300)
-
-conclusion_main_robustness_plot
-```
-
-@fig-conclusions-main shows the histogram display of the different and identical conclusions resulting from the re-analysis of each of the studies.
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-#| label: fig-conclusions-main
-#| fig-cap: "The figure shows the percentage of identical, inconclusive, and different conclusions for each study. Study numbers correspond to studies listed in Table S1."
-
-conclusion_main_plot <-
-  plot_percentage(
-    data = conclusions_main_data,
-    grouping_var = simplified_paper_id,
-    categorization_var = categorisation,
-    x_lab = "Study number",
-    y_lab = "Percentage of re-analyses",
-    with_sum = FALSE,
-    reverse = TRUE,
-    rev_limits = FALSE,
-    coord_flip = TRUE
-  ) +
-  theme(
-    axis.text.y = element_text(size = 8),
-    axis.text.x = element_text(size = 10),
-    axis.title.x = element_text(size = 15),
-    legend.justification = "left",
-    legend.box = "horizontal",
-    legend.position = "bottom",
-    legend.text = element_text(size = 10)
-  )
-
-# Using a hacky solution to move legend under the Y axis
-# conclusion_main_plot_wo_legend <- conclusion_main_plot + theme(legend.position = "none")
-# legend <- cowplot::get_legend(conclusion_main_plot)
-# conclusion_main_plot_w_legend <- cowplot::plot_grid(conclusion_main_plot_wo_legend, legend, nrow = 2, rel_heights = c(1, 0.05), rel_widths = c(1, 5))
-
-ggsave(here::here("figures/conclusion_main_plot.jpg"), conclusion_main_plot, width = 9, height = 11.69, dpi = 300)
-
-conclusion_main_plot
-```
-
-```{r include=FALSE}
-conclusions_analysis_data <- 
-  processed |> 
-  rename(categorisation = task1_categorisation_plotting) |> 
-  mutate(
-    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) |> 
-  count(categorisation) |> 
-  ungroup() |> 
-  mutate(
-    N = sum(n),
-    freq = n / N,
-    percentage = round(freq * 100, 2)
-  )
-```
-
-Across all the re-analyses, `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(percentage)` % (`r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(N)`) of them arrived at the same conclusion; `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(N)`) to no effects, and `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(percentage)`% (`r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(n)` out of `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(N)`) to opposite effect compared to the original conclusion.
-
-#### Inferential robustness by discipline
-
-We were interested to see whether the above results show a different pattern when inspecting them in different disciplines. @fig-discipline-robustness shows that for the fields with more than 10 studies in our collection (Economics, Political Science, and Psychology) the pattern was comparably similar. We found no outstanding differences between the discipline regarding the percentage of different and identical conclusions either (see @fig-conclusions-discipline).
-
-```{r include=FALSE}
-conclusions_discipline_data <- 
-  processed |> 
-  dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
-  dplyr::mutate(paper_discipline = str_to_title(paper_discipline)) |> 
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::mutate(
-    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) |> 
-  calculate_conclusion(grouping_var = paper_discipline, categorization_var = categorisation)
-
-conclusions_discipline_robustness_data <- 
-  processed |> 
-  dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
-  dplyr::mutate(paper_discipline = str_to_title(paper_discipline)) |> 
-  calculate_conclusion_robustness(grouping_var = paper_discipline, categorization_var = task1_categorisation_plotting)
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-discipline-robustness
-#| fig-cap: "The figure shows the inferential robustness of the studies by major disciplines (more than 10 studies in our collection)."
-
-conclusions_discipline_robustness_plot <-
-  plot_percentage(
-    data = conclusions_discipline_robustness_data,
-    categorization_var = robust,
-    grouping_var = paper_discipline,
-    with_labels = TRUE,
-    y_lab = "Percentage of studies",
-    x_lab = "Disciplines",
-    colors = c("#000004FF", "#FCFDBFFF"),
-    rev_limits = FALSE
-  ) +
-  ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
-  )
-
-ggsave(here::here("figures/conclusions_discipline_robustness_plot.jpg"), conclusions_discipline_robustness_plot, dpi = 300)
-
-conclusions_discipline_robustness_plot
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-conclusions-discipline
-#| fig-cap: "The figure shows the percentage of identical, inconclusive, and different conclusions of the studies by major disciplines. The figure displays the count of re-analyses next to each discipline name."
-
-conclusions_discipline_plot <-
-  plot_percentage(
-    data = conclusions_discipline_data,
-    grouping_var = paper_discipline,
-    categorization_var = categorisation,
-    with_labels = TRUE,
-    y_lab = "Percentage of re-analyses",
-    x_lab = "Disciplines",
-    rev_limits = FALSE
-  ) + 
-  theme(
-    plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
-    legend.text = element_text(size = 8),
-    axis.title.y = element_text(hjust = 1)
-    )
-
-ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
-
-conclusions_discipline_plot
-```
-
-#### Inferential robustness by study type (observational, experimental)
-
-Here, we were interested to see whether these results show a different pattern when separating them by study type. @fig-studytype-robustness illustrates that nearly half of the results from experimental studies remained robust upon independent re-analysis, whereas only one-third of observational studies yielded robust conclusions. Moreover, @fig-conclusions-studytype indicates that, for both study types, the majority of the re-analyses reached the same conclusions as the original study. 
-
-```{r include=FALSE}
-conclusions_studytype_data <-
-  processed |>
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::mutate(categorisation = forcats::fct_relevel(
-    categorisation,
-    c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-  )) |>
-  calculate_conclusion(grouping_var = experimental_or_observational,
-                       categorization_var = categorisation) |>
-  dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational))
-
-conclusions_studytype_robustness_data <-
-  processed |>
-  dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational)) |>
-  calculate_conclusion_robustness(grouping_var = experimental_or_observational,
-                                  categorization_var = task1_categorisation_plotting) |>
-  dplyr::ungroup()
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-studytype-robustness
-#| fig-cap: "The figure shows the inferential robustness of the studies by study type (experimental or observational). The figure displays the count of re-analyses next to each study type name."
-
-conclusions_studytype_robustness_plot <-
-  plot_percentage(
-    data = conclusions_studytype_robustness_data,
-    categorization_var = robust,
-    grouping_var = experimental_or_observational,
-    y_lab = "Percentage of studies",
-    x_lab = "Study type",
-    with_labels = TRUE,
-     colors = c("#000004FF", "#FCFDBFFF"),
-    rev_limits = FALSE
-  ) +
-  ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
-  )
-
-ggplot2::ggsave(here::here("figures/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
-
-conclusions_studytype_robustness_plot
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-conclusions-studytype
-#| fig-cap: "The figure shows percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by study type (experimental, observational)."
-
-conclusions_studytype_plot <-
-  plot_percentage(
-    data = conclusions_studytype_data,
-    grouping_var = experimental_or_observational,
-    categorization_var = categorisation,
-    x_lab = "Study type",
-    y_lab = "Percentage of re-analyses",
-    with_labels = TRUE,
-    rev_limits = FALSE
-  ) +
-  ggplot2::theme(
-    plot.margin = margin(
-      t = 20,
-      r = 10,
-      b = 10,
-      l = 10,
-      unit = "pt"
-    ),
-    legend.text = element_text(size = 8)
-  ) +
-    ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
-  )
-
-ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
-
-conclusions_studytype_plot
-```
-
-#### Inferential robustness by expertise (self-reported expertise in data analysis)
-
-Here, we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts. @fig-conclusions-expertise shows these results. 
-
-```{r include=FALSE, message=FALSE}
-conclusions_expertise_data <-
-  processed |>
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  calculate_conclusion(grouping_var = expertise_self_rating, categorization_var = categorisation) |> 
-  dplyr::mutate(
-    categorisation = forcats::fct_relevel(
-      categorisation,
-      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-    ),
-    expertise_self_rating = dplyr::case_when(
-      expertise_self_rating == 1 ~ "1\n(Beginner)",
-      expertise_self_rating == 10 ~ "10\n(Expert)",
-      TRUE ~ as.character(expertise_self_rating)
-    ),
-    expertise_self_rating = factor(
-      expertise_self_rating,
-      levels = c("1\n(Beginner)",
-                 as.character(2:9),
-                 "10\n(Expert)")
-    )
-  )
-```
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-#| label: fig-conclusions-expertise
-#| fig-cap: "The figure shows the percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by self-rated expertise (on a scale of 1 (Beginner) to 10 (Expert)). The figure does not display the bottom two categories where fewer than 3 responses were collected for each."
-
-conclusions_expertise_plot <-
-  plot_height(
-    data = conclusions_expertise_data,
-    grouping_var = expertise_self_rating,
-    categorization_var = categorisation,
-    y_lab = "Number of re-analyses",
-    x_lab = "Expertise rating",
-    with_labels = TRUE,
-    with_sum = FALSE,
-    rev_limits = FALSE
-  ) +
-  theme(legend.text = element_text(size = 8))
-
-ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, 
-       height = 6, width = 8,
-       dpi = 300)
-
-conclusions_expertise_plot
-```
-
-#### Inferential robustness by peer evaluations
-
-@fig-subset-task1-pipeline shows the inferential robustness of the studies by the acceptability of the analysis pipelines according to the peer evaluators.
-
-```{r include=FALSE}
-count(peer_eval_not_reviewed, task1_pipeline_acceptable)
-count(peer_eval_not_reviewed, task1_conclusion_follows_results)
-count(peer_eval_not_reviewed, task1_categorisation_is_accurate)
-count(peer_eval_not_reviewed, task2_pipeline_acceptable)
-```
-
-```{r include=FALSE}
-peer_eval_subset_task1_data <- 
-  peer_eval |>  
-  dplyr::filter(n_peer_evals > 1) |>  
-  dplyr::select(paper_id, analyst_id, task1_pipeline_acceptable) |>  
-  dplyr::group_by(paper_id, analyst_id) |>  
-  dplyr::summarise(
-    common_task1_acceptable = ifelse(dplyr::n_distinct(task1_pipeline_acceptable) == 1, first(task1_pipeline_acceptable), NA),
-    .groups = 'drop'
-  ) |> 
-  dplyr::filter(!is.na(common_task1_acceptable))
-
-count(peer_eval_subset_task1_data, common_task1_acceptable)
-  
-peer_eval_subset_task1_data <- 
-  peer_eval_subset_task1_data |> 
-  dplyr::filter(common_task1_acceptable != "(2) Acceptable but low quality") |> 
-  left_join(dplyr::select(processed, paper_id, analyst_id, task1_categorisation_plotting), by = c("paper_id", "analyst_id")) |> 
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::mutate(
-    common_task1_acceptable = dplyr::case_when(
-      common_task1_acceptable == "(3) Acceptable and medium quality" ~ "Acceptable and medium quality",
-      common_task1_acceptable == "(4) Acceptable and high quality" ~ "Acceptable and high quality"
-    ),
-    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
-    ) |> 
-  calculate_conclusion(grouping_var = common_task1_acceptable,
-                       categorization_var = categorisation)
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-subset-task1-pipeline
-#| fig-cap: "The figure shows the inferential robustness of the studies by the acceptability of the analysis pipelines according to the peer evaluators. For this figure we only included studies with more than one peer evaluation and where the peer evaluators agreed on their rating. The figure shows only the studies with a medium and high quality of analysis pipelines."
-
-peer_eval_subset_task1_plot <-
-  plot_percentage(
-    data = peer_eval_subset_task1_data,
-    categorization_var = categorisation,
-    grouping_var = common_task1_acceptable,
-    with_labels = TRUE,
-    y_lab = "Percentage of studies",
-    x_lab = "Peer evaluation rating of\nTask 1 analysis pipeline"
-  ) +
-  ggplot2::theme(
-    legend.text = element_text(size = 8),
-    axis.title.y = element_text(hjust = 1)
-  )
-
-ggsave(here::here("figures/peer_eval_subset_task1_plot.jpg"), peer_eval_subset_task1_plot, dpi = 300)
-
-peer_eval_subset_task1_plot
-```
-
-```{r include=FALSE}
-peer_eval |> 
-  dplyr::select(paper_id, analyst_id, evaluator_id, task1_pipeline_acceptable) |>
-  count(paper_id, analyst_id) |> 
-  arrange(n)
-
-calculate_percentage(peer_eval, task1_pipeline_acceptable) |>
-  dplyr::select(
-    `Task 1 analysis pipeline evaluation rating` = task1_pipeline_acceptable,
-    `Number of occurances` = n,
-    `Number of all responses` = N,
-    Percentage = percentage
-  ) |>
-  gt::gt() |>
-  gt::tab_style(
-    style = gt::cell_text(weight = "bold"),
-    locations = gt::cells_column_labels()
-  )
-```
-
-#### Inferential robustness by prior familiarity with the dataset
-
-Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. @fig-conclusions-familiarity shows that for these results.
-
-```{r include=FALSE}
-count(processed, familiar_with_paper)
-
-conclusions_familiarity_data <- 
-  processed |> 
-  rename(categorisation = task1_categorisation_plotting) |>
-  mutate(
-    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
-    familiar_with_paper = as.factor(familiar_with_paper)
-    ) |> 
-  calculate_conclusion(grouping_var = familiar_with_paper, categorization_var = categorisation)
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-conclusions-familiarity
-#| fig-cap: "The figure shows the percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by declared familiarity with the study."
-
-conclusions_familiarity_plot <- 
-  plot_percentage(
-    data = conclusions_familiarity_data,
-    grouping_var = familiar_with_paper,
-    categorization_var = categorisation,
-    with_labels = TRUE,
-    y_lab = "Percentage of re-analyses",
-    x_lab = "Analyst familiarity with the paper") + 
-  theme(
-    plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
-    legend.text = element_text(size = 8),
-    axis.title.y = element_text(hjust = 1)
-    )
-
-ggsave(here::here("figures/conclusions_familiarity_plot.jpg"), conclusions_familiarity_plot, dpi = 300)
-
-conclusions_familiarity_plot
-```
-
-#### Inferential robustness by the level of confidence with the suitability of the analysis
-
-```{r include=FALSE}
-conclusions_suitability_data <- 
-  processed |> 
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::mutate(
-    categorisation = forcats::fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect")),
-    confidence_in_approach = dplyr::case_when(
-      confidence_in_approach == 1 ~ "1\nNot confident at all",
-      confidence_in_approach == 5 ~ "5\nVery confident",
-      TRUE ~ as.character(confidence_in_approach)
-      ),
-    confidence_in_approach = as.factor(confidence_in_approach)
-    ) |> 
-  calculate_conclusion(grouping_var = confidence_in_approach, categorization_var = categorisation)
-```
-
-The following Table 3 shows the percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by the analyst's level of confidence with the suitability of the analysis.
-
-__Table 3. Inferential Robustness by the Level of Confidence with the Suitability of the Analysis__
-
-```{r echo=FALSE, message=FALSE}
-conclusions_suitability_data |>
-  dplyr::mutate(Count = paste(n, "/", N),
-                percentage = paste0(percentage, "%")) |>
-  dplyr::select(
-    `Confidence rating` = confidence_in_approach,
-    `Direction of the conclusion` = categorisation,
-    Count,
-    Percentage = percentage
-  ) |>
-  gt::gt() |>
-  gt::tab_style(
-    style = gt::cell_text(weight = "bold"),
-    locations = gt::cells_column_labels()
-  )
-```
-
-#### Inferential robustness by the sample size
-
-Here, in @fig-conclusions-samplesize we were interested to see whether these results show a different pattern when considering sample size. 
-
-```{r include=FALSE}
-processed |>
-  ggplot2::ggplot() +
-  # Converting to natlog because of extreme outlier
-  ggplot2::aes(x = log(reanalysis_model_sample_size)) +
-  ggplot2::geom_histogram()
-
-processed |> 
-  dplyr::count(is.na(reanalysis_model_sample_size))
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-conclusions-samplesize
-#| fig-cap: "This raincloud figure shows the distribution of the sample sizes of the re-analyses resulting in same conclusion, no effect/inconclusive, and opposite effects."
-
-conclusions_samplesize_plot <-
-  processed |>
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::select(paper_id,
-                analyst_id,
-                categorisation,
-                reanalysis_model_sample_size) |>
-  # TODO: There are missing sample size values what to do with them?
-  dplyr::filter(!is.na(reanalysis_model_sample_size)) |>
-  dplyr::mutate(
-    categorisation = forcats::fct_relevel(
-      categorisation,
-      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-    )
-  ) |> 
-  plot_rain(
-    grouping_var = categorisation,
-    response_var = reanalysis_model_sample_size,
-    trans = "log10",
-    breaks = c(10, 100, 1000, 10000, 100000),
-    x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
-    y_lab = "Sample size"
-  ) +
-  ggplot2::coord_flip() +
-  ggplot2::theme(
-    axis.title = element_text(size = 9)
-  )
-
-ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
-
-# Number of analysis where samplesize is present
-nrow(filter(processed, !is.na(reanalysis_model_sample_size)))
-# Number of analysis where df1 is present
-nrow(filter(processed, !is.na(reanalysis_degrees_of_freedom_1) | !is.na(reanalysis_degrees_of_freedom_2)))
-# dplyr::select(processed, reanalysis_model_sample_size, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2)
-
-conclusions_df_plot <-
-  processed |>
-  dplyr::rename(categorisation = task1_categorisation_plotting) |>
-  dplyr::select(paper_id,
-                analyst_id,
-                categorisation,
-                reanalysis_degrees_of_freedom_1,
-                reanalysis_degrees_of_freedom_2) |>
-  # It looks like of df2 is present than df2 belongs to the responses and df1 is for the parameters
-  dplyr::mutate(
-    reanalysis_degrees_of_freedom_1 = dplyr::case_when(
-      !is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_2,
-      is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_1
-    )
-  ) |> 
-  dplyr::select(-reanalysis_degrees_of_freedom_2) |> 
-  dplyr::filter(!is.na(reanalysis_degrees_of_freedom_1)) |>
-  dplyr::mutate(
-    categorisation = forcats::fct_relevel(
-      categorisation,
-      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
-    )
-  ) |> 
-  plot_rain(
-    grouping_var = categorisation,
-    response_var = reanalysis_degrees_of_freedom_1,
-    x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
-    y_lab = "Log10 of degrees of freedom",
-    trans = "log10",
-    breaks = c(10, 100, 1000, 10000, 100000)
-  ) +
-  ggplot2::coord_flip() +
-    ggplot2::theme(
-    axis.title = element_text(size = 9)
-  )
-
-ggplot2::ggsave(here::here("figures/conclusions_df_plot.jpg"), conclusions_df_plot, dpi = 300)
-
-conclusions_df_plot
-```
-
-#### Estimate robustness: robust of the statistical findings published in social sciences to analytical choices
-
-```{r include=FALSE}
+```{r data processing for tolerance_region_main_plot, include=FALSE}
 # Number of cases where the original effect size is missing
 missing_original_n <-
   processed |> 
@@ -1536,16 +251,8 @@ excluded_es <-
   summarise(excluded_list = glue::glue_collapse(excluded, sep = "; "))
 ```
 
-A main question of our study was whether different analysts arrive at the same effect estimates (+/- 0.05 Cohen’s d) as the analyst of the original study? @fig-effect-main shows percentages of the effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The figure displays `r nrow(dplyr::filter(reanalysis_data, !is.na(effect_size)))` re-analysis effect size estimates. For `r missing_reanalysis_n` re-analyses, the reported effect size was not convertible to Cohen’s d. The figure does not show `r dplyr::filter(reanalysis_data, effect_size > 5 | effect_size < -5) |> nrow()` re-analysed effect sizes which are higher than 5 or lower than -5 Cohen's d (`r dplyr::pull(excluded_es, excluded_list)`). For the `r missing_original_n` studies listed in the bottom of the graph, we could not determine the original effect size due to missing information.
-
-```{r echo=FALSE, warning=FALSE}
-#| label: fig-effect-main
-#| fig-cap: "The figure shows the effect size of the original result (black square) and the effect sizes of the re-analyses (green dot) for each study after conversions to Cohen’s d. Study numbers correspond to studies listed in Table S1."
-
-# Colors
-# color_vector <- setNames(c("#F8766D", "#CD9600", "#7CAE00", "#00BE67", "#00BFC4", "#00A9FF", "#C77CFF"), paste0("re-analysis_", sprintf("%02d", 1:7)))
-
-effect_main_plot <-
+```{r generating tolerance_region_main_plot, include=FALSE}
+tolerance_region_main_plot <-
   reanalysis_data |> 
   dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
   ggplot2::ggplot() +
@@ -1595,424 +302,113 @@ effect_main_plot <-
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
-ggplot2::ggsave(here::here("figures/effect_main_plot.jpg"), plot = effect_main_plot,
+ggplot2::ggsave(here::here("figures/tolerance_region_main_plot.jpg"), plot = tolerance_region_main_plot,
        width = 12, height = 13,
        dpi = 300)
-
-effect_main_plot
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-# Based on: https://github.com/CenterForOpenScience/rpp
-colors <- c("Original" = "#440154FF", "Replication" = "#FDE725FF")
-
-effec_size_corr_plot_data <-
-  reanalysis_data |>
-  dplyr::filter(!is.na(effect_size)) |>
-  dplyr::filter(effect_size <= 5 & effect_size >= -5) |>
-  dplyr::filter(original_cohens_d != -Inf)
-
-# Median
-round(median(effec_size_corr_plot_data$effect_size), 2)
-round(median(effec_size_corr_plot_data$original_cohens_d), 2)
-
-# Mean
-round(mean(effec_size_corr_plot_data$effect_size), 2)
-round(mean(effec_size_corr_plot_data$original_cohens_d), 2)
-
-# Fit the linear model
-lm_fit <- lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data)
-
-# Extract slope
-beta <- coef(lm_fit)[2]
-
-scatter <-
-  effec_size_corr_plot_data |> 
-  ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
-  geom_point(color = "Grey30",
-             shape = 21,
-             alpha = .8) +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    color = "black",
-    alpha = 0.2
-  ) +
-  annotate("text", x = 4.7, y = 4, label = bquote(italic(beta) == .(round(beta, 2))), size = 4, color = "black") +
-  geom_rug(
-    aes(color = "Original"),
-    size = 1,
-    sides = "b",
-    alpha = .6
-  ) +
-  geom_rug(
-    aes(color = "Replication"),
-    size = 1,
-    sides = "l",
-    alpha = .6
-  ) +
-  scale_color_manual(values = colors) + 
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  geom_abline(intercept = 0,
-              slope = 1,
-              color = "Grey60") +
-  scale_x_continuous(
-    limits = c(0, 5),
-    breaks = c(0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
-  ) +
-  scale_y_continuous(
-    limits = c(-5, 5),
-     breaks = c(-5, -4.5, -4, -3.5, -3, -2.5, -2, -1.5, -1, -0.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
-  ) +
-  labs(
-    x = expression("Original effect size in Cohen's " * italic("d")),
-    y = expression("Re-analysis effect size in Cohen's " * italic("d"))
-  ) +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    legend.position = "none",
-    axis.title = element_text(size = 25),
-    axis.text = element_text(size = 20)
-    )
-
-# Add reference lines for alignment checking
-# x_dense <- x_dense + geom_vline(xintercept = c(0, 2.5, 5), linetype = "dashed", color = "red")
-# y_dense <- y_dense + geom_vline(xintercept = c(-5, 0, 5), linetype = "dashed", color = "blue") + coord_flip()
-# scatter <- scatter + geom_vline(xintercept = c(0, 2.5, 5), linetype = "dashed", color = "red") +
-#                       geom_hline(yintercept = c(-5, 0, 5), linetype = "dashed", color = "blue")
-
-effec_size_corr_plot <- ggExtra::ggMarginal(scatter, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
-
-effec_size_corr_plot_data_zoomed <-
-  effec_size_corr_plot_data |> 
-  dplyr::filter(effect_size <= 1 & effect_size >= -1) |>
-  dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1)
-
-# Fit the linear model
-lm_fit_zoomed <- lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data_zoomed)
-
-# Extract slope
-beta_zoomed <- coef(lm_fit)[2]
-
-scatter_zoomed <-
-  effec_size_corr_plot_data_zoomed |> 
-  ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
-  geom_point(color = "Grey30",
-             shape = 21,
-             alpha = .8) +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    color = "black",
-    alpha = 0.2
-  ) +
-  annotate("text", x = 0.97, y = 0.8, label = bquote(italic(beta) == .(round(beta_zoomed, 2))), size = 4, color = "black") +
-  geom_rug(
-    aes(color = "Original"),
-    size = 1,
-    sides = "b",
-    alpha = .6
-  ) +
-  geom_rug(
-    aes(color = "Replication"),
-    size = 1,
-    sides = "l",
-    alpha = .6
-  ) +
-  scale_color_manual(values = colors) + 
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  geom_abline(intercept = 0,
-              slope = 1,
-              color = "Grey60") +
-  scale_x_continuous(
-    limits = c(0, 1),
-    breaks = c(0, .5, 1)
-  ) +
-  scale_y_continuous(
-    limits = c(-1, 1),
-     breaks = c(-1, -0.5, 0, .5, 1)
-  ) +
-  labs(
-    x = expression("Original effect size in Cohen's " * italic("d")),
-    y = expression("Re-analysis effect size in Cohen's " * italic("d"))
-  ) +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    legend.position = "none",
-    axis.title = element_text(size = 25),
-    axis.text = element_text(size = 20)
-    )
-
-effec_size_corr_plot_zoomed <- ggExtra::ggMarginal(scatter_zoomed, type = "density", margins = "both",  xparams = list(fill = colors["Original"], alpha = 0.5),  yparams = list(fill = colors["Replication"], alpha = 0.5))
-
-# Save plot
-ggplot2::ggsave(here::here("figures/effec_size_corr_plot.jpg"), plot = effec_size_corr_plot,
-                width = 13, height = 10,
-       dpi = 300)
-
-ggplot2::ggsave(here::here("figures/effec_size_corr_plot_zoomed.jpg"), plot = effec_size_corr_plot_zoomed,
-                width = 13, height = 10,
-       dpi = 300)
-
-effec_size_corr_plot
-
-effec_size_corr_plot_zoomed
-```
-
-```{r include=FALSE}
+```{r calculating analysis level tolerance regions, include=FALSE}
 # On the individual analysis level
 # +-0.05 threshold for tolerance region
-ind_within_tol_reg <-
+analysis_level_tolerance_region <-
   processed |>
   dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) |>
-  dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.05,
-    tolarence_region_upper = original_cohens_d + 0.05,
-    is_within_region = dplyr::case_when(
-      reanalysis_cohens_d >= tolarence_region_lower &
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Within tolerance region",
-      reanalysis_cohens_d < tolarence_region_lower |
-        reanalysis_cohens_d > tolarence_region_upper ~ "Outside of tolerance region",
-      is.na(reanalysis_cohens_d) ~ "Missing"
-    ),
-    is_within_region = factor(
-      is_within_region,
-      levels = c("Within tolerance region", "Outside of tolerance region")
-    )
-  ) |> 
-  # Exclude missing tolerance region decisions
-  dplyr::filter(!is.na(is_within_region)) |> 
+  calculate_tolerance_region(threshold = 0.05) |> 
+  # Exclude missing re-analysis effect sizes
+  dplyr::filter(is_within_region != "Missing") |>
   calculate_percentage(is_within_region)
+
+# Calculate value for abstract
+analysis_level_within_tolerance_region_5 <- dplyr::filter(analysis_level_tolerance_region, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |>  round(0)
 
 # +-0.2 threshold for tolerance region
-ind_within_tol_reg_20 <-
+analysis_level_tolerance_region_20 <-
   processed |>
   dplyr::select(paper_id, analyst_id, original_cohens_d, reanalysis_cohens_d) |>
-  dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.2,
-    tolarence_region_upper = original_cohens_d + 0.2,
-    is_within_region = dplyr::case_when(
-      reanalysis_cohens_d >= tolarence_region_lower &
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Within tolerance region",
-      reanalysis_cohens_d < tolarence_region_lower |
-        reanalysis_cohens_d > tolarence_region_upper ~ "Outside of tolerance region",
-      is.na(reanalysis_cohens_d) ~ "Missing"
-    ),
-    is_within_region = factor(
-      is_within_region,
-      levels = c("Within tolerance region", "Outside of tolerance region")
-    )
-  ) |> 
-  # Exclude missing tolerance region decisions
-  dplyr::filter(!is.na(is_within_region)) |> 
+  calculate_tolerance_region(threshold = 0.2) |> 
+  # Exclude missing re-analysis effect sizes
+  dplyr::filter(is_within_region != "Missing") |> 
   calculate_percentage(is_within_region)
 
-# On the paper level
-effect_region_all_data <- 
-  processed |> 
-  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T) |> 
-  mutate(
-    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
-  )
-
-within_tolerance_region <-
-  effect_region_all_data |> 
-  dplyr::group_by(simplified_paper_id) |> 
-  dplyr::summarise(
-    robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust")
-    ) |> 
-  dplyr::ungroup() |> 
-  dplyr::count(robust) |> 
-  dplyr::mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = round(relative_frequency * 100)
-    )
-
-effect_region_all_data_20 <- 
-  processed |> 
-  calculate_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T, weight = 0.2) |> 
-  mutate(
-    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
-  )
-
-within_tolerance_region_20 <-
-  effect_region_all_data_20 |> 
-  dplyr::group_by(simplified_paper_id) |> 
-  dplyr::summarise(
-    robust = if_else(any(is_within_region == "Within tolerance region" & relative_frequency == 1), "Inferentially robust", "Inferentially not Robust")
-    ) |> 
-  dplyr::ungroup() |> 
-  dplyr::count(robust) |> 
-  dplyr::mutate(
-    N = sum(n),
-    relative_frequency = n / N,
-    percentage = round(relative_frequency * 100)
-    )
+# Calculate value for abstract
+analysis_level_within_tolerance_region_20 <- dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage) |> round(0)
 ```
 
-We found that `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(percentage)`% (`r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(n)` out of `r dplyr::filter(within_tolerance_region, robust == "Inferentially not Robust") |> dplyr::pull(N)`) of the studies contained at least one re-analysis result where the effect size was beyond the tolerance region (+/- 0.05 Cohen's d) of the result of the original study (@fig-effect-region-all). Out of the `r dplyr::distinct(ind_within_tol_reg, N) |> dplyr::pull(N)` available reanalysis effect sizes `r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg, is_within_region == "Outside of tolerance region") |> dplyr::pull(n)`) were outside of the tolerance region. With a broader tolerance region (+/- 0.20 Cohen’s d) we found that from the available reanalysis effect sizes `r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Outside of tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(ind_within_tol_reg_20, is_within_region == "Outside of tolerance region") |> dplyr::pull(n)`) were outside of the tolerance region.
+```{r data processing for tolerance_region_all_plot, include=FALSE}
+# On the paper level
+# +-0.05 threshold for tolerance region
+# Calculate the percentage of re-analysis effect sizes within the tolerance region by study
+tolerance_region_all_data <-
+  processed |> 
+  summarize_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T, threshold = 0.05) |> 
+  mutate(
+    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
+  )
+```
 
-```{r echo=FALSE, message=FALSE}
-#| label: fig-effect-region-all
-#| fig-cap: "The figure shows percentages of the effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. Study numbers correspond to studies listed in Table S1."
-  
-# TODO: replace this function and delete it from utils
-effect_region_all_plot <- plot_tolarence_region(data = effect_region_all_data, grouping_var = simplified_paper_id, y_lab = "Study number", x_lab = "Percentage of reanalysis results") +
+```{r calculating paper level inferential robustness based on tolerance regions, include = FALSE}
+# Calculate the robustness of the re-analysis effect size on the paper level by the tolerance region
+paper_level_inferential_robustness <-
+  tolerance_region_all_data |> 
+  dplyr::group_by(simplified_paper_id) |> 
+  dplyr::summarise(
+    robust = if_else(any(is_within_region == "Within tolerance region" & freq == 1), "Inferentially robust", "Inferentially not Robust")
+    ) |>
+  dplyr::ungroup() |> 
+  calculate_percentage(robust)
+
+# +-0.2 threshold for tolerance region
+tolerance_region_all_20_data <-
+  processed |> 
+  summarize_tolerance_region(grouping_var = simplified_paper_id, drop_missing = T, threshold = 0.2) |> 
+  mutate(
+    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(is_within_region == "Within tolerance region", percentage, NA), .desc = TRUE, .na_rm = TRUE)
+  )
+
+# Calculate the robustness of the re-analysis effect size on the paper level by the tolerance region
+paper_level_inferential_robustness_20 <-
+  tolerance_region_all_20_data |> 
+  dplyr::group_by(simplified_paper_id) |> 
+  dplyr::summarise(
+    robust = if_else(any(is_within_region == "Within tolerance region" & freq == 1), "Inferentially robust", "Inferentially not Robust")
+    ) |>
+  dplyr::ungroup() |> 
+  calculate_percentage(robust)
+```
+
+```{r generating tolerance_region_all_plot, include=FALSE}
+tolerance_region_all_plot <- plot_tolarence_region(data = tolerance_region_all_data, grouping_var = simplified_paper_id, y_lab = "Study number", x_lab = "Percentage of reanalysis results") +
   ggplot2::theme(
     axis.title = ggplot2::element_text(size = 15),
     legend.text = ggplot2::element_text(size = 10),
     axis.text.x = ggplot2::element_text(size = 13)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_all_plot.jpg"), effect_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
-
-effect_region_all_plot
+ggplot2::ggsave(here::here("figures/tolerance_region_all_plot.jpg"), tolerance_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
 ```
 
-To investigate the robustness of our tolerance region threshold we calculated the proportion of reanalysis effect size estimates within the tolerance region for a range of thresholds between 0.05 and 0.1.
-
-```{r include=FALSE, message=FALSE, warning=FALSE}
-thresholds <- seq(0.01, 0.2, by = 0.001)
-
-threshold_robustness_plot_data <- map_df(thresholds, ~ calculate_tolerance_region_proportions(processed, threshold = .x, weight = NULL))
-
-threshold_robustness_plot_data <-
-  threshold_robustness_plot_data |> 
-  dplyr::mutate(
-    tolerance_region = threshold * 2
-  ) |> 
-    pivot_longer(
-    cols = c(analysis_percentage, paper_percentage),
-    names_to = "type",
-    values_to = "value",
-    names_prefix = "_percentage"
-  ) |> 
-  dplyr::mutate(
-    type =  stringr::str_replace(type, "_percentage", ""),
-    type = dplyr::case_when(
-      type == "analysis" ~ "Re-analysis effect sizes",
-      type == "paper" ~ "Studies"
-    )
-  )
-```
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-threshold_robustness_plot <-
-  threshold_robustness_plot_data |> 
-  ggplot() +
-  aes(
-    x = tolerance_region,
-    y = value,
-    linetype = type
-  ) +
-  geom_vline(xintercept = 0.1, color = "#440154FF", linetype = "dashed") +
-  geom_line() +
-  scale_x_continuous(breaks = c(0.01, seq(0.05, 0.2, by = 0.05)) * 2, expand = c(0.05, 0)) +
-  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 100, 10), limits = c(0, 100)) +
-  viridis::scale_fill_viridis(discrete = TRUE) +
-  labs(
-    x = "Width of the Cohen's d tolerance region",
-    y = "Percentage within the tolerance region",
-    linetype = "Percentage of"
-  ) +
-  ggplot2::theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    legend.position = c(0.8, 0.8)
-  )
-
-ggplot2::ggsave(here::here("figures/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
-
-threshold_robustness_plot
-```
-
-```{r include=FALSE, message=FALSE, warning=FALSE}
-weights <- seq(0.05, 0.2, by = 0.001)
-
-threshold_weighted_robustness_plot_data <- map_df(weights, ~ calculate_tolerance_region_proportions(processed, threshold = NULL, weight = .x))
-
-threshold_weighted_robustness_plot_data <-
-  threshold_weighted_robustness_plot_data |> 
-    pivot_longer(
-    cols = c(analysis_percentage, paper_percentage),
-    names_to = "type",
-    values_to = "value",
-    names_prefix = "_percentage"
-  ) |> 
-  dplyr::mutate(
-    type =  stringr::str_replace(type, "_percentage", ""),
-    type = dplyr::case_when(
-      type == "analysis" ~ "Re-analysis effect sizes",
-      type == "paper" ~ "Studies"
-    )
-  )
-```
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-threshold_weighted_robustness_plot <-
-  threshold_weighted_robustness_plot_data |> 
-  ggplot() +
-  aes(
-    x = weight,
-    y = value,
-    linetype = type
-  ) +
-  geom_line() +
-  scale_x_continuous(breaks = seq(0.05, 0.2, by = 0.05), labels = scales::percent_format(scale = 100), expand = c(0.05, 0)) +
-  scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 100, 10), limits = c(0, 100)) +
-  viridis::scale_fill_viridis(discrete = TRUE) +
-  labs(
-    x = "Percentage of original study's Cohen's d used\nto calculate tolerance region",
-    y = "Percentage within the tolerance region",
-    linetype = "Percentage of"
-  ) +
-  ggplot2::theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    legend.position = c(0.8, 0.8)
-  )
-
-ggplot2::ggsave(here::here("figures/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
-
-threshold_weighted_robustness_plot
-```
-
-##### Estimate robustness by discipline
-
-We were interested to see whether these robustness results show a different pattern when inspecting separately by the disciplines of the studies. @fig-effect-region-discipline and @fig-effect-robustness-discipline show that for the major disciplines (>=10 studies).
-
-```{r include=FALSE, warning=FALSE}
+```{r data processing for tolerance_region_discipline_plot, include=FALSE}
 processed |> 
   dplyr::distinct(paper_id, .keep_all = T) |> 
   dplyr::count(paper_discipline) |> 
   dplyr::arrange(n)
-```
 
-```{r echo=FALSE, message=FALSE}
-#| label: fig-effect-region-discipline
-#| fig-cap: "The figure shows the percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by major disciplines. The figure displays the count of re-analyses next to each discipline name."
-
-effect_region_discipline_data <- 
+tolerance_region_discipline_data <- 
   processed |> 
   dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |>
   dplyr::mutate(paper_discipline = stringr::str_to_title(paper_discipline)) |> 
   # Exclude missing values
-  calculate_tolerance_region(
+  summarize_tolerance_region(
     grouping_var = paper_discipline,
-    drop_missing = TRUE
-    # weight = 0.2
+    drop_missing = TRUE,
+    threshold = 0.05
     )
+```
 
-effect_region_discipline_plot <-
+```{r generating tolerance_region_discipline_plot, include=FALSE}
+tolerance_region_discipline_plot <-
   plot_percentage(
-    data = effect_region_discipline_data,
+    data = tolerance_region_discipline_data,
     grouping_var = paper_discipline,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
@@ -2024,23 +420,20 @@ effect_region_discipline_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_discipline_plot.jpg"), effect_region_discipline_plot, dpi = 300)
-
-effect_region_discipline_plot
+ggplot2::ggsave(here::here("figures/tolerance_region_discipline_plot.jpg"), tolerance_region_discipline_plot, dpi = 300)
 ```
 
-```{r echo=FALSE, message=FALSE}
-#| label: fig-effect-robustness-discipline
-#| fig-cap: "This raincloud figure shows for each major discipline the distributions of effect size estimate ranges (lowest to highest) calculated per study."
-
-effect_robustness_discipline_data <-
+```{r data processing for estimate_range_discipline_plot, include=FALSE}
+estimate_range_discipline_data <-
   processed |> 
   dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
   dplyr::mutate(paper_discipline = stringr::str_to_title(paper_discipline)) |> 
   calculate_estimate_range(grouping_var = paper_discipline)
+```
 
-effect_robustness_discipline_plot <-
-  plot_rain(data = effect_robustness_discipline_data,
+```{r generating estimate_range_discipline_plot, include=FALSE}
+estimate_range_discipline_plot <-
+  plot_rain(data = estimate_range_discipline_data,
             grouping_var = paper_discipline,
             response_var = estimate_range,
             x_lab = "Disciplines",
@@ -2051,34 +444,20 @@ effect_robustness_discipline_plot <-
     axis.title = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures/effect_robustness_discipline_plot.jpg"), effect_robustness_discipline_plot, dpi = 300)
-
-effect_robustness_discipline_plot 
+ggplot2::ggsave(here::here("figures/estimate_range_discipline_plot.jpg"), estimate_range_discipline_plot, dpi = 300)
 ```
 
-##### Estimate robustness by study design (observational, experimental)
-
-Here (@fig-effect-region-studytype and @fig-effect-robustness-studytype), we were interested to see whether these results show a different pattern when separating them by study type.
-
-```{r include=FALSE}
-processed |> 
-  dplyr::distinct(paper_id, .keep_all = T) |> 
-  dplyr::count(experimental_or_observational) |> 
-  dplyr::arrange(n)
-```
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-effect-region-studytype
-#| fig-cap: "The figure shows the percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by study type. The figure displays the count of re-analyses next to each discipline name."
-
-effect_region_studytype_data <- 
+```{r data processing for tolerance_region_studytype_plot, include=FALSE}
+tolerance_region_studytype_data <- 
   processed |> 
   dplyr::mutate(experimental_or_observational = stringr::str_to_title(experimental_or_observational)) |> 
-  calculate_tolerance_region(grouping_var = experimental_or_observational, drop_missing = TRUE)
+  summarize_tolerance_region(grouping_var = experimental_or_observational, drop_missing = TRUE, threshold = 0.05)
+```
 
-effect_region_studytype_plot <-
+```{r generating tolerance_region_studytype_plot, include=FALSE}
+tolerance_region_studytype_plot <-
   plot_percentage(
-    data = effect_region_studytype_data,
+    data = tolerance_region_studytype_data,
     grouping_var = experimental_or_observational,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
@@ -2090,22 +469,19 @@ effect_region_studytype_plot <-
     axis.title.y = element_text(hjust = 1)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_studytype_plot.jpg"), effect_region_studytype_plot, dpi = 300)
-
-effect_region_studytype_plot
+ggplot2::ggsave(here::here("figures/tolerance_region_studytype_plot.jpg"), tolerance_region_studytype_plot, dpi = 300)
 ```
 
-```{r echo=FALSE, message=FALSE}
-#| label: fig-effect-robustness-studytype
-#| fig-cap: "This raincloud figure shows for each study type the distribution of effect size estimate ranges (lowest to highest) calculated per study."
-
-effect_robustness_studytype_data <-
+```{r data processing for estimate_range_studytype_plot, include=FALSE}
+estimate_range_studytype_data <-
   processed |> 
   dplyr::mutate(experimental_or_observational = stringr::str_to_title(experimental_or_observational)) |> 
   calculate_estimate_range(grouping_var = experimental_or_observational)
+```
 
-effect_robustness_studytype_plot <- plot_rain(
-  data = effect_robustness_studytype_data,
+```{r generating estimate_range_studytype_plot, include=FALSE}
+estimate_range_studytype_plot <- plot_rain(
+  data = estimate_range_studytype_data,
   grouping_var = experimental_or_observational,
   response_var = estimate_range,
   x_lab = "Study type",
@@ -2119,43 +495,37 @@ effect_robustness_studytype_plot <- plot_rain(
     axis.text = element_text(size = 7)
   )
 
-ggplot2::ggsave(here::here("figures/effect_robustness_studytype_plot.jpg"), effect_robustness_studytype_plot, dpi = 300)
-
-effect_robustness_studytype_plot 
+ggplot2::ggsave(here::here("figures/estimate_range_studytype_plot.jpg"), estimate_range_studytype_plot, dpi = 300)
 ```
 
-##### Estimate robustness by expertise
-
-Here (@fig-effect-region-expertise), we were interested to see whether these results show a different pattern when inspecting them along the reported expertise of the co-analysts.
-
-```{r include=FALSE}
+```{r data processing for tolerance_region_expertise_plot, include=FALSE}
 processed |> 
   dplyr::distinct(expertise_self_rating)
-```
 
-```{r echo=FALSE, message=FALSE}
-#| label: fig-effect-region-expertise
-#| fig-cap: "The figure shows the percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by self-rated expertise (on a scale of 1 (Beginner) to 10 (Expert))."
-
-effect_region_expertise_data <- 
-  processed |> 
+tolerance_region_expertise_data <-
+  processed |>
   dplyr::mutate(
     expertise_self_rating = case_when(
       expertise_self_rating == 1 ~ "1\n(Beginner)",
       expertise_self_rating == 10 ~ "10\n(Expert)",
       TRUE ~ as.character(expertise_self_rating)
     ),
-    expertise_self_rating = factor(expertise_self_rating, levels = c(
-      "1\n(Beginner)",
-      as.character(2:9),
-      "10\n(Expert)")
+    expertise_self_rating = factor(
+      expertise_self_rating,
+      levels = c("1\n(Beginner)",
+                 as.character(2:9),
+                 "10\n(Expert)")
     )
-  ) |> 
-  calculate_tolerance_region(grouping_var = expertise_self_rating, drop_missing = TRUE)
+  ) |>
+  summarize_tolerance_region(grouping_var = expertise_self_rating,
+                             drop_missing = TRUE,
+                             threshold = 0.05)
+```
 
-effect_region_expertise_plot <-
+```{r generating tolerance_region_expertise_plot, include=FALSE}
+tolerance_region_expertise_plot <-
   plot_height(
-    data = effect_region_expertise_data,
+    data = tolerance_region_expertise_data,
     grouping_var = expertise_self_rating,
     categorization_var = is_within_region,
     y_lab = "Number of re-analyses",
@@ -2165,26 +535,25 @@ effect_region_expertise_plot <-
     with_sum = FALSE
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_expertise_plot.jpg"), effect_region_expertise_plot, dpi = 300,
+ggplot2::ggsave(here::here("figures/tolerance_region_expertise_plot.jpg"), tolerance_region_expertise_plot, dpi = 300,
                 # width = 8, height = 6
                 )
-
-effect_region_expertise_plot
 ```
 
-##### Estimate robustness by prior familiarity with the dataset
+```{r data processing for tolerance_region_familiarity_plot, include=FALSE}
+tolerance_region_familiarity_data <-
+  summarize_tolerance_region(
+    data = processed,
+    grouping_var = familiar_with_paper,
+    drop_missing = TRUE,
+    threshold = 0.05
+  )
+```
 
-Here, we were interested to see whether these results show a different pattern when inspecting them along their prior familiarity with the dataset. @fig-effect-region-familiarity shows that for these results.
-
-```{r echo=FALSE, message=FALSE, message=FALSE}
-#| label: fig-effect-region-familiarity
-#| fig-cap: "The figure shows the percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by declared familiarity with the study."
-
-effect_region_familiarity_data <- calculate_tolerance_region(data = processed, grouping_var = familiar_with_paper, drop_missing = TRUE)
-
-effect_region_familiarity_plot <-
+```{r generating tolerance_region_familiarity_plot, include=FALSE}
+tolerance_region_familiarity_plot <-
   plot_percentage(
-    data = effect_region_familiarity_data,
+    data = tolerance_region_familiarity_data,
     grouping_var = familiar_with_paper,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis\nresults",
@@ -2199,63 +568,11 @@ effect_region_familiarity_plot <-
     unit = "pt"
   ))
 
-ggplot2::ggsave(here::here("figures/effect_region_familiarity_plot.jpg"), effect_region_familiarity_plot, dpi = 300)
-
-effect_region_familiarity_plot
+ggplot2::ggsave(here::here("figures/tolerance_region_familiarity_plot.jpg"), tolerance_region_familiarity_plot, dpi = 300)
 ```
 
-##### Estimate robustness by the level of confidence with the suitability of the analysis
-
-Here (Table 4), we were interested to see whether these results show a different pattern when inspecting them along their level of confidence with the suitability of the analysis.
-
-```{r include=FALSE}
-processed |> 
-  dplyr::distinct(confidence_in_approach)
-```
-
-__Table 4. Estimate Robustness by the Level of Confidence with the Suitability of the Analysis__
-
-```{r echo=FALSE, message=FALSE}
-effect_region_suitability_data <- calculate_tolerance_region(data = processed, grouping_var = confidence_in_approach, drop_missing = TRUE) |> 
-  dplyr::mutate(
-        confidence_in_approach = dplyr::case_when(
-      confidence_in_approach == 1 ~ "1\nNot confident at all",
-      confidence_in_approach == 5 ~ "5\nVery confident",
-      TRUE ~ as.character(confidence_in_approach)
-      ),
-    confidence_in_approach = as.factor(confidence_in_approach),
-     is_within_region = dplyr::case_when(
-       is_within_region == "Within tolerance region" ~ "Yes",
-       is_within_region == "Outside of tolerance region" ~ "No",
-       TRUE ~ NA_character_
-     )
-  )
-
-effect_region_suitability_data |>
-  dplyr::mutate(Count = paste(n, "/", N),
-                percentage = paste0(round(percentage, 2), "%")) |>
-  dplyr::select(
-    `Confidence rating` = confidence_in_approach,
-    `Is the estimate within the tolerance region?` = is_within_region,
-    Count,
-    Percentage = percentage
-  ) |>
-  gt::gt() |>
-  gt::tab_style(
-    style = gt::cell_text(weight = "bold"),
-    locations = gt::cells_column_labels()
-  )
-```
-
-##### Estimate robustness by the sample size
-
-Here, we were interested to see whether these results show a different pattern when considering sample size. The following @fig-samplesize-region shows no remarkable differences between the two categories.
-
-```{r echo=FALSE, message=FALSE}
-#| label: fig-samplesize-region
-#| fig-cap: "The figure shows the distribution of sample sizes separately for re-analysis effect sizes falling within or outside of the tolerance region of the original results. In this figure, we could not include those studies where the original effect sizes were missing, and cases where the re-analysis effect size or sample size were missing."
-
-samplesize_region_data <-
+```{r data processing for tolerance_region_samplesize_plot, include=FALSE}
+tolerance_region_samplesize_data <-
   processed |>
   dplyr::select(
     paper_id,
@@ -2264,27 +581,23 @@ samplesize_region_data <-
     original_cohens_d,
     reanalysis_cohens_d
   ) |>
+  calculate_tolerance_region(threshold = 0.05) |> 
+  dplyr::filter(
+    !is.na(reanalysis_model_sample_size),
+    is_within_region != "Missing") |> 
   dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.05,
-    tolarence_region_upper = original_cohens_d + 0.05,
     is_within_region = dplyr::case_when(
-      reanalysis_cohens_d <= tolarence_region_lower |
-        reanalysis_cohens_d >= tolarence_region_upper ~ "No",
-      reanalysis_cohens_d >= tolarence_region_lower |
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Yes",
-      is.na(reanalysis_cohens_d) ~ "Missing"
+      is_within_region == "Within tolerance region" ~ "Yes",
+      is_within_region == "Outside of tolerance region" ~ "No",
     ),
     is_within_region = factor(is_within_region, levels = c("Yes", "No"))
-  ) |> 
-  dplyr::filter(
-    !is.na(original_cohens_d),
-    !is.na(reanalysis_model_sample_size),
-    is_within_region != "Missing")
+  )
+```
 
-
-samplesize_region_plot <-
+```{r generating tolerance_region_samplesize_plot, include=FALSE}
+tolerance_region_samplesize_plot <-
   plot_rain(
-    data = samplesize_region_data,
+    data = tolerance_region_samplesize_data,
     grouping_var = is_within_region,
     response_var = reanalysis_model_sample_size,
     y_lab = "Sample size",
@@ -2297,79 +610,494 @@ samplesize_region_plot <-
     axis.title.x = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_samplesize_plot.jpg"), samplesize_region_plot, dpi = 300)
-
-samplesize_region_plot
+ggplot2::ggsave(here::here("figures/tolerance_region_samplesize_plot.jpg"), tolerance_region_samplesize_plot, dpi = 300)
 ```
 
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-df_region_data <-
-  processed |>
-  dplyr::select(
-    paper_id,
-    analyst_id,
-    reanalysis_degrees_of_freedom_1,
-    reanalysis_degrees_of_freedom_2,
-    original_cohens_d,
-    reanalysis_cohens_d
-  ) |>
-  dplyr::mutate(
-    reanalysis_degrees_of_freedom_1 = dplyr::case_when(
-      !is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_2,
-      is.na(reanalysis_degrees_of_freedom_2) ~ reanalysis_degrees_of_freedom_1
-    )
-  ) |>
-  dplyr::select(-reanalysis_degrees_of_freedom_2) |>
-  dplyr::filter(
-    !is.na(original_cohens_d),!is.na(reanalysis_cohens_d),!is.na(reanalysis_degrees_of_freedom_1)
-  ) |>
-  dplyr::mutate(
-    tolarence_region_lower = original_cohens_d - 0.05,
-    tolarence_region_upper = original_cohens_d + 0.05,
-    is_within_region = dplyr::case_when(
-      reanalysis_cohens_d <= tolarence_region_lower |
-        reanalysis_cohens_d >= tolarence_region_upper ~ "No",
-      reanalysis_cohens_d >= tolarence_region_lower |
-        reanalysis_cohens_d <= tolarence_region_upper ~ "Yes"
-    ),
-    is_within_region = factor(is_within_region, levels = c("Yes", "No"))
+```{r generating estimate_panel, echo=FALSE}
+#| fig-width: 30
+#| fig-height: 14
+#| out-width: 100%
+#| fig-dpi: 300
+
+main_section <- 
+  tolerance_region_main_plot +
+  tolerance_region_all_plot +
+  plot_layout(widths = c(2, 1))
+
+# Define the remaining plots section
+small_plot_section <-
+  (
+    tolerance_region_discipline_plot |
+      estimate_range_discipline_plot 
+  ) /
+  ( tolerance_region_studytype_plot | estimate_range_studytype_plot) /
+  (tolerance_region_expertise_plot |
+     tolerance_region_familiarity_plot | tolerance_region_samplesize_plot) +
+  plot_layout(ncol = 1, nrow = 3)
+
+# Combine the main section and the remaining plots section
+estimate_panel <-
+  (main_section | small_plot_section) + plot_annotation(tag_levels = 'a')
+
+estimate_panel
+
+ggsave(here::here("figures/estimate_panel.png"), estimate_panel, width = 30, height = 14, dpi = 300)
+```
+
+__Fig. 2 \| Analytical robustness of the statistical results.__
+__a,__ Effect size of the original analysis (black square; all represented as positive values) and the effect sizes of the re-analyses (green dot) for each study after conversions to Cohen’s d. The figure displays 447 re-analysis effect size estimates. For 57 re-analyses, the reported effect size was not convertible to Cohen’s d. Furthermore, the figure does not show 5 re-analysed effect sizes outside the \[-5,5\] range. For the seven studies listed at the bottom of the figure, we could not determine the original effect size due to missing information (for details see Supplementary information). Study numbers correspond to studies listed in [https://osf.io/mkwhn](). The studies are ordered by the size of the original effect size. __b,__ Proportion of effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The studies are ordered by the displayed proportion. __c,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by major disciplines. The figure displays the count of re-analyses next to each discipline name. __d,__ Distributions of effect size estimate ranges (lowest to highest) calculated per study for each major discipline. __e,__ Proportion of re-analysis results falling within or outside of the tolerance region of the original results of the studies by study type. The figure displays the count of re-analyses next to each discipline name. __f,__ Distribution of effect size estimate ranges (lowest to highest) calculated per study for observational and experimental studies. __g,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by self-rated expertise (on a scale from 1 (Beginner) to 10 (Expert)). __h,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by declared familiarity with the study. __i,__ Distribution of sample sizes separately for re-analysis effect sizes falling within or outside of the tolerance region of the original results. In this figure, we could not include those studies where the original effect sizes were missing, and cases where the re-analysis effect size or sample size were missing (for details see Supplement).
+
+We found that only in `r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially robust") |> dplyr::pull(percentage)`% of the studies for which we could obtain the original effect size (`r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially robust") |> dplyr::pull(n)` out of `r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially not Robust") |> dplyr::pull(N)`) , were all re-analysis effect sizes inside the tolerance region (+/- 0.05 Cohen’s d) of the result of the original study (Fig. 2a). Out of the `r dplyr::distinct(analysis_level_tolerance_region, N) |> dplyr::pull(N)` available re-analysis effect sizes, `r dplyr::filter(analysis_level_tolerance_region, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)` % were inside the tolerance region. As a robustness test of our analysis, we explored the degree to which we would observe different results with different tolerance regions.
+
+We learned that even with a four times broader tolerance region (+/- 0.20 Cohen’s d), in only `r dplyr::filter(paper_level_inferential_robustness_20, robust == "Inferentially robust") |> dplyr::pull(percentage)`% of the studies were all corresponding re-analysis result inside the tolerance region. Further, out of the available `r dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(N)` reanalysis effect sizes `r dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)`% (`r dplyr::filter(analysis_level_tolerance_region_20, is_within_region == "Within tolerance region") |> dplyr::pull(n)`) were inside of this region (Fig. S11).
+
+Alternatively, we could define the tolerance region as the percentage of the given effect size. As a further robustness test, we varied the tolerance region between +/-5% and +/-20% but it barely made any difference regarding the percentage of robust studies (Fig. S12).
+
+We were interested to see whether these robustness results would show a different pattern when inspected by the disciplines of the studies, the study designs, the expertise of the analysts, their prior familiarity with the data, and the sample size in the data. Fig. 2c and Fig. 2d show the results for the major disciplines in our sample (\>=10 studies). For Fig. 2d, we created an effect size estimate range for each study as the numerical difference between the highest and lowest estimate of re-analysis effect sizes. In our reading, the listed disciplines do not yield large differences in the robustness of the results. Still, it is reasonable to think that the level of analytical robustness in different disciplines can be influenced by the type of studies that are commonly conducted there. For example, one could conjecture that empirical claims based on observational data show lower robustness of the conclusions since they likely involve more researcher degrees of freedom in terms of viable analysis paths than experimental research settings. Fig. 2e and Fig. 2f explore this question and indicate that the results of studies with observational study designs have lower analytical robustness in our sample, relative to experimental designs.
+
+Considering the extraordinary analytical variability found in the statistical results of the re-analyses, one immediate concern is that it could be an artefact of a lack of analytical expertise among some re-analysts. Therefore, we explored whether our robustness results show a different pattern when inspecting them along the self-reported statistical expertise of the re-analysts. Fig. 2g shows no support for this proposition as a higher level of expertise corresponds with no increase or decrease in the ratio of the reported results being different from the original ones. It is noteworthy that the level of self-perceived expertise was clustered in the higher end of the scale. 
+
+```{r familiarity with paper, include=FALSE}
+familiar_with_paper_data <-
+  calculate_percentage(processed, familiar_with_paper)
+```
+
+Re-analyzing published studies entails a potential risk of bias if the re-analysts' familiarity with a given study influences their choice of analysis. Re-analysts reported that they were familiar with the original study in less than `r dplyr::filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> dplyr::pull(percentage)`% of cases. Moreover, there was no more than `r dplyr::filter(tolerance_region_familiarity_data, is_within_region == "Within tolerance region") |> summarize(diff = ceiling(percentage[1] - percentage[2])) |> dplyr::pull(diff)`% difference in robustness between those who were and those who were not familiar with the original study (Fig. 2h). For both groups, more than two-thirds of the estimates fell outside our tolerance region. Finally, we were interested to see whether these robustness results would show a different pattern when considering sample size, as one could assume that studies with larger sample sizes, thus statistical degrees of freedom, could offer more robust results. Fig. 2i does not support this assumption as the density distributions of the sample sizes for results that are within and outside of the tolerance region are virtually the same. Therefore, studies with large sample sizes are not immune to analytical variability.
+
+```{r data processing for effec_size_corr_plot, include=FALSE}
+effec_size_corr_plot_data <-
+  reanalysis_data |>
+  dplyr::filter(!is.na(effect_size)) |>
+  dplyr::filter(effect_size <= 5 & effect_size >= -5) |>
+  dplyr::filter(original_cohens_d != -Inf)
+
+# Median
+round(median(effec_size_corr_plot_data$effect_size), 2)
+round(median(effec_size_corr_plot_data$original_cohens_d), 2)
+
+# Mean
+round(mean(effec_size_corr_plot_data$effect_size), 2)
+round(mean(effec_size_corr_plot_data$original_cohens_d), 2)
+```
+
+```{r generating effec_size_corr_plot, include=FALSE}
+effec_size_corr_plot <- plot_effect_size_correlation(effec_size_corr_plot_data, x_limits = c(0, 5), y_limits = c(-5, 5), annotate_positions = c(4.7, 4))
+
+# Save plot
+ggplot2::ggsave(
+  here::here("figures/effec_size_corr_plot.jpg"),
+  plot = effec_size_corr_plot,
+  width = 13,
+  height = 10,
+  dpi = 300
+)
+
+effec_size_corr_plot
+```
+
+```{r data processing for effec_size_corr_plot_zoomed, include=FALSE}
+effec_size_corr_plot_data_zoomed <-
+  effec_size_corr_plot_data |> 
+  dplyr::filter(effect_size <= 1 & effect_size >= -1) |>
+  dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1)
+```
+
+```{r generating effec_size_corr_plot_zoomed, include=FALSE}
+effec_size_corr_plot_zoomed <- plot_effect_size_correlation(effec_size_corr_plot_data_zoomed, x_limits = c(0, 1), y_limits = c(-1, 1), annotate_positions = c(0.97, 0.8))
+
+# Save plot
+ggplot2::ggsave(
+  here::here("figures/effec_size_corr_plot_zoomed.jpg"),
+  plot = effec_size_corr_plot_zoomed,
+  width = 13,
+  height = 10,
+  dpi = 300
+)
+
+effec_size_corr_plot_zoomed
+```
+
+One interesting question is whether the re-analyses show a trend or shift in effect sizes compared to the results of the original studies. If the re-analysis effect sizes randomly vary around the original effect size, we would expect that they are larger or smaller than the original ones with equal chance. Fig. 3a (data trimmed at Cohen’s d =\< 5) and 3 b (Cohen’s d =\< 1) indicate that re-analysis effect sizes show a tendency to be smaller than the original effect sizes as reflected in their best-fitting (least squares) line. The distribution of original and re-analysis effect sizes also supports this as the peak of the density distribution of the latter is markedly lower. The mean effect size of the original results is `r summarize(effec_size_corr_plot_data, mean = mean(original_cohens_d)) |> pull(mean) |> round(2)` (Median = `r summarize(effec_size_corr_plot_data, median = median(original_cohens_d)) |> pull(median) |> round(2)`), whereas for the re-analysis it is `r summarize(effec_size_corr_plot_data, mean = mean(effect_size)) |> pull(mean) |>  round(2)` (Median = `r summarize(effec_size_corr_plot_data, median = median(effect_size)) |> pull(median) |> round(2)`) Cohen’s d computed on Cohen’s ds =\< 5. This result is consistent with the possibility that original analysts proactively sought larger effects than re-analysts, that re-analysts proactively sought smaller effects than original analysts, or both.
+
+{{< pagebreak >}}
+
+```{r generating effec_size_corr_merged_plot, echo=FALSE, message=FALSE, warning=FALSE}
+#| fig-width: 22
+#| fig-height: 30
+#| out-width: 100%
+#| fig-dpi: 300
+
+label_a <- textGrob("a", x = unit(0.02, "npc"), y = unit(0.98, "npc"), 
+                    just = c("left", "top"), gp = gpar(fontsize = 26, fontface = "bold"))
+label_b <- textGrob("b", x = unit(0.02, "npc"), y = unit(0.98, "npc"), 
+                    just = c("left", "top"), gp = gpar(fontsize = 26, fontface = "bold"))
+
+# Combine labels with the plots using grobTree
+plot1 <- grobTree(effec_size_corr_plot, label_a)
+plot2 <- grobTree(effec_size_corr_plot_zoomed, label_b)
+
+# Arrange the plots with labels
+effect_size_comparison_plot <-
+  gridExtra::grid.arrange(
+  plot1,
+  plot2,
+  ncol = 1,
+  heights = c(1, 1) # Adjust relative heights if needed
+)
+
+save_grid_plot <- function(filename, plot, width, height, dpi = 300) {
+  g <- gridExtra::grid.arrange(grobs = list(plot1, plot2), ncol = 1, heights = c(1, 1))
+  ggsave(filename, plot = g, width = width, height = height, dpi = dpi, device = "jpeg")
+}
+
+# Save the plot
+save_grid_plot(here::here("figures/effect_size_comparison_plot.jpg"), effect_size_comparison_plot, width = 22, height = 30, dpi = 300)
+```
+
+_Fig. 3 \| Original study effect size versus re-analysis effect size._
+The thin diagonal line represents an ideal case when the re-analysis effect sizes are equal to original effect size, the thick line shows the best-fitting (least squares) line of the displayed dots. Density plots of original and re-analysis effect sizes are parallel to their respective axis. Figure _a_ show effect sizes Cohen’s d =\< 5, Figure _b_ show effect sizes Cohen’s d =\< 1.
+
+## Do different analysts arrive at the same conclusions as the original study analysts?
+
+```{r include=FALSE}
+# Distinct values of task1_categorisation
+distinct(processed, task1_categorisation)
+distinct(processed, task1_categorisation_plotting)
+
+conclusions_main_data <- 
+  processed |> 
+  calculate_conclusion(grouping_var = simplified_paper_id) |>
+  mutate(
+    simplified_paper_id = fct_reorder(simplified_paper_id, ifelse(categorisation == "Same conclusion", percentage, NA), .desc = FALSE, .na_rm = TRUE)
   )
 
+# When threshold is 100% same conclusion for robust result
+conclusions_main_robustness_data <- summarize_conclusion_robustness(data = processed, threshold = 100, operator = "==")
 
-df_region_plot <-
+# Calculate value for abstract
+conclusion_robust_100_percentage <- filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)
+
+# When threshold is 80% same conclusion for robust result
+conclusions_main_robustness_80_data <- summarize_conclusion_robustness(data = processed, threshold = 80, operator = ">")
+
+# Calculate value for abstract
+conclusion_robust_80_percentage <- filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)
+
+# When threshold is 60% same conclusion for robust result
+conclusions_main_robustness_60_data <- summarize_conclusion_robustness(data = processed, threshold = 60, operator = ">")
+```
+
+Another focal question of our study was whether the re-analysts arrive at the same qualitative conclusions as the original study analysts. To answer this question, we asked the re-analysts to implement any statistical re-analysis they deemed most appropriate to test the original claim using the original data, with the goal of arriving at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed claims, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)` % were robust to independent re-analysis, such that all re-analysts reported that they found evidence for the originally reported claim. With a more liberal definition of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)` % when \>80% re-analysis agreement with the original conclusion defined analytical robustness. 
+
+```{r include=FALSE}
+conclusions_analysis_data <- 
+  processed |> 
+  rename(categorisation = task1_categorisation_plotting) |> 
+  mutate(
+    categorisation = fct_relevel(categorisation, c("Same conclusion", "No effect/inconclusive", "Opposite effect"))
+    ) |> 
+  calculate_percentage(categorisation)
+```
+
+Across all individual re-analyses (n = `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(N)`), `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> pull(percentage)` % of analyses were reported to arrive at the same conclusion as in the original investigation; `r filter(conclusions_analysis_data, categorisation == "No effect/inconclusive") |> pull(percentage)`% to no effects/inconclusive result, and `r filter(conclusions_analysis_data, categorisation == "Opposite effect") |> pull(percentage)`% to the opposite effect as in the original investigation (Fig. 4a).
+
+```{r generating conclusion_main_plot, include=FALSE}
+conclusion_main_plot <-
+  plot_percentage(
+    data = conclusions_main_data,
+    grouping_var = simplified_paper_id,
+    categorization_var = categorisation,
+    x_lab = "Study number",
+    y_lab = "Percentage of re-analyses",
+    with_sum = FALSE,
+    reverse = TRUE,
+    rev_limits = FALSE,
+    coord_flip = TRUE
+  ) +
+  theme(
+    axis.text.y = element_text(size = 8),
+    axis.text.x = element_text(size = 10),
+    axis.title.x = element_text(size = 15),
+    legend.justification = "left",
+    legend.box = "horizontal",
+    legend.position = "bottom",
+    legend.text = element_text(size = 10)
+  )
+
+ggsave(here::here("figures/conclusion_main_plot.jpg"), conclusion_main_plot, width = 9, height = 11.69, dpi = 300)
+```
+
+```{r data processing for conclusions_discipline_robustness_plot, include=FALSE}
+conclusions_discipline_data <- 
+  processed |> 
+  dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
+  dplyr::mutate(paper_discipline = str_to_title(paper_discipline)) |> 
+  calculate_conclusion(grouping_var = paper_discipline)
+
+conclusions_discipline_robustness_data <- 
+  processed |> 
+  dplyr::filter(paper_discipline %in% c("psychology", "economics", "political science")) |> 
+  dplyr::mutate(paper_discipline = str_to_title(paper_discipline)) |> 
+  summarize_conclusion_robustness(grouping_var = paper_discipline, threshold = 100, operator = "==")
+```
+
+```{r generating conclusions_discipline_robustness_plot, include=FALSE}
+conclusions_discipline_robustness_plot <-
+  plot_percentage(
+    data = conclusions_discipline_robustness_data,
+    categorization_var = robust,
+    grouping_var = paper_discipline,
+    with_labels = TRUE,
+    y_lab = "Percentage of studies",
+    x_lab = "Disciplines",
+    colors = c("#000004FF", "#FCFDBFFF"),
+    rev_limits = FALSE
+  ) +
+  ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
+  )
+
+ggsave(here::here("figures/conclusions_discipline_robustness_plot.jpg"), conclusions_discipline_robustness_plot, dpi = 300)
+```
+
+```{r generating conclusions_discipline_plot, include=FALSE}
+conclusions_discipline_plot <-
+  plot_percentage(
+    data = conclusions_discipline_data,
+    grouping_var = paper_discipline,
+    categorization_var = categorisation,
+    with_labels = TRUE,
+    y_lab = "Percentage of re-analyses",
+    x_lab = "Disciplines",
+    rev_limits = FALSE
+  ) + 
+  theme(
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
+    legend.text = element_text(size = 8),
+    axis.title.y = element_text(hjust = 1)
+    )
+
+ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
+```
+
+```{r data processing for conclusions_studytype_robustness_plot, include=FALSE}
+conclusions_studytype_data <-
+  processed |>
+  calculate_conclusion(grouping_var = experimental_or_observational) |>
+  dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational))
+
+conclusions_studytype_robustness_data <-
+  processed |>
+  dplyr::mutate(experimental_or_observational = str_to_title(experimental_or_observational)) |>
+  summarize_conclusion_robustness(grouping_var = experimental_or_observational, threshold = 100, operator = "==") |>
+  dplyr::ungroup()
+```
+
+```{r generating conclusions_studytype_robustness_plot, include=FALSE}
+conclusions_studytype_robustness_plot <-
+  plot_percentage(
+    data = conclusions_studytype_robustness_data,
+    categorization_var = robust,
+    grouping_var = experimental_or_observational,
+    y_lab = "Percentage of studies",
+    x_lab = "Study type",
+    with_labels = TRUE,
+     colors = c("#000004FF", "#FCFDBFFF"),
+    rev_limits = FALSE
+  ) +
+  ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
+  )
+
+ggplot2::ggsave(here::here("figures/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
+```
+
+```{r conclusions_studytype_plot, include=FALSE}
+#| label: fig-conclusions-studytype
+#| fig-cap: "The figure shows percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by study type (experimental, observational)."
+
+conclusions_studytype_plot <-
+  plot_percentage(
+    data = conclusions_studytype_data,
+    grouping_var = experimental_or_observational,
+    categorization_var = categorisation,
+    x_lab = "Study type",
+    y_lab = "Percentage of re-analyses",
+    with_labels = TRUE,
+    rev_limits = FALSE
+  ) +
+  ggplot2::theme(
+    plot.margin = margin(
+      t = 20,
+      r = 10,
+      b = 10,
+      l = 10,
+      unit = "pt"
+    ),
+    legend.text = element_text(size = 8)
+  ) +
+    ggplot2::theme(
+    axis.title.y = element_text(hjust = 1)
+  )
+
+ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
+```
+
+```{r data processing for conclusions_expertise_plot, include=FALSE}
+conclusions_expertise_data <-
+  processed |>
+  calculate_conclusion(grouping_var = expertise_self_rating) |> 
+  dplyr::mutate(
+    expertise_self_rating = dplyr::case_when(
+      expertise_self_rating == 1 ~ "1\n(Beginner)",
+      expertise_self_rating == 10 ~ "10\n(Expert)",
+      TRUE ~ as.character(expertise_self_rating)
+    ),
+    expertise_self_rating = factor(
+      expertise_self_rating,
+      levels = c("1\n(Beginner)",
+                 as.character(2:9),
+                 "10\n(Expert)")
+    )
+  )
+```
+
+```{r generating conclusions_expertise_plot, include=FALSE}
+conclusions_expertise_plot <-
+  plot_height(
+    data = conclusions_expertise_data,
+    grouping_var = expertise_self_rating,
+    categorization_var = categorisation,
+    y_lab = "Number of re-analyses",
+    x_lab = "Expertise rating",
+    with_labels = TRUE,
+    with_sum = FALSE,
+    rev_limits = FALSE
+  ) +
+  theme(legend.text = element_text(size = 8))
+
+ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, 
+       height = 6, width = 8,
+       dpi = 300)
+```
+
+```{r data processing for peer_eval_subset_task1_plot, include=FALSE}
+peer_eval_subset_task1_data <- 
+  peer_eval |>  
+  dplyr::filter(n_peer_evals > 1) |>  
+  dplyr::select(paper_id, analyst_id, task1_pipeline_acceptable) |>  
+  dplyr::group_by(paper_id, analyst_id) |>  
+  dplyr::summarise(
+    common_task1_acceptable = ifelse(dplyr::n_distinct(task1_pipeline_acceptable) == 1, first(task1_pipeline_acceptable), NA),
+    .groups = 'drop'
+  ) |> 
+  dplyr::filter(!is.na(common_task1_acceptable))
+
+count(peer_eval_subset_task1_data, common_task1_acceptable)
+  
+peer_eval_subset_task1_data <-
+  peer_eval_subset_task1_data |>
+  dplyr::filter(common_task1_acceptable != "(2) Acceptable but low quality") |>
+  left_join(
+    dplyr::select(
+      processed,
+      paper_id,
+      analyst_id,
+      task1_categorisation_plotting
+    ),
+    by = c("paper_id", "analyst_id")
+  ) |>
+  dplyr::mutate(
+    common_task1_acceptable = dplyr::case_when(
+      common_task1_acceptable == "(3) Acceptable and medium quality" ~ "Acceptable and medium quality",
+      common_task1_acceptable == "(4) Acceptable and high quality" ~ "Acceptable and high quality"
+    )
+  ) |>
+  calculate_conclusion(grouping_var = common_task1_acceptable)
+```
+
+```{r generating peer_eval_subset_task1_plot, include=FALSE}
+peer_eval_subset_task1_plot <-
+  plot_percentage(
+    data = peer_eval_subset_task1_data,
+    categorization_var = categorisation,
+    grouping_var = common_task1_acceptable,
+    with_labels = TRUE,
+    y_lab = "Percentage of studies",
+    x_lab = "Peer evaluation rating of\nTask 1 analysis pipeline"
+  ) +
+  ggplot2::theme(
+    legend.text = element_text(size = 8),
+    axis.title.y = element_text(hjust = 1)
+  )
+
+ggsave(here::here("figures/peer_eval_subset_task1_plot.jpg"), peer_eval_subset_task1_plot, dpi = 300)
+```
+
+```{r data processing for conclusions_familiarity_plot, include=FALSE}
+conclusions_familiarity_data <- 
+  processed |> 
+  mutate(
+    familiar_with_paper = as.factor(familiar_with_paper)
+    ) |> 
+  calculate_conclusion(grouping_var = familiar_with_paper)
+```
+
+```{r generating conclusions_familiarity_plot, include=FALSE}
+conclusions_familiarity_plot <- 
+  plot_percentage(
+    data = conclusions_familiarity_data,
+    grouping_var = familiar_with_paper,
+    categorization_var = categorisation,
+    with_labels = TRUE,
+    y_lab = "Percentage of re-analyses",
+    x_lab = "Analyst familiarity with the paper") + 
+  theme(
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
+    legend.text = element_text(size = 8),
+    axis.title.y = element_text(hjust = 1)
+    )
+
+ggsave(here::here("figures/conclusions_familiarity_plot.jpg"), conclusions_familiarity_plot, dpi = 300)
+```
+
+```{r generating conclusions_samplesize_plot, include=FALSE}
+conclusions_samplesize_plot <-
+  processed |>
+  dplyr::rename(categorisation = task1_categorisation_plotting) |>
+  dplyr::select(paper_id,
+                analyst_id,
+                categorisation,
+                reanalysis_model_sample_size) |>
+  dplyr::filter(!is.na(reanalysis_model_sample_size)) |>
+  dplyr::mutate(
+    categorisation = forcats::fct_relevel(
+      categorisation,
+      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
+    )
+  ) |> 
   plot_rain(
-    data = df_region_data,
-    grouping_var = is_within_region,
-    response_var = reanalysis_degrees_of_freedom_1,
-    y_lab = "Log10 degrees of freedom",
-    x_lab = "Is the re-analysis effect size\nwithin the tolerance region?",
+    grouping_var = categorisation,
+    response_var = reanalysis_model_sample_size,
     trans = "log10",
-    breaks = c(10, 100, 1000, 10000, 100000)
+    breaks = c(10, 100, 1000, 10000, 100000),
+    x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
+    y_lab = "Sample size"
   ) +
   ggplot2::coord_flip() +
   ggplot2::theme(
     axis.title = element_text(size = 9)
   )
 
-ggplot2::ggsave(here::here("figures/effect_region_df_plot.jpg"), df_region_plot, dpi = 300)
-
-df_region_plot
+ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
 ```
 
-#### Additional analyses
+```{r generating inferential_panel, echo=FALSE, message=FALSE, warning=FALSE}
+#| fig-width: 22
+#| fig-height: 14
+#| out-width: 100%
+#| fig-dpi: 300
 
-While Cohen's d has the advantage of being easily interpretable and comparable across different analyses, it was designed to compare the means of two groups and its calculation relies on assumptions that can be compromised in more complex designs. Following the conduct of the present project, Kümpel & Hoffmann (2022) proposed a formal definition of generalized marginal effects (gMEs) which measure is comparable across different statistical models. When standardized, the value of gMEs is equal to the value of Cohen’s d where the latter effect size measure is strictly applicable. Since we had not originally planned to calculate standardized gMEs, we did not collect all required analysis outputs to compute them. As a result, we calculated gMEs only for a sub-sample of the 100 studies. See @fig-gme for the results of the gME calculation for our sub-sample of studies.
-
-```{r echo=FALSE}
-#| label: fig-gme
-#| fig-cap: "For each original and re-analysis of papers 22, 40, 63, and 75, this figure shows a forest-density plot of non-standardized gME values as defined by Kümpel & Hoffmann (2022). Specifically, the black dots give the point estimates of the average change in target expectation attributed to the regressor of interest by each analysis, while the thicker and thinner lines visualize the 0.66 and 0.95 quantiles of the corresponding densities. Study numbers correspond to studies listed in Table S1."
-
-knitr::include_graphics(here::here("generalized Marginal Effects/gMEs.png"))
-```
-
-```{r echo=FALSE, warning=FALSE, message=FALSE}
-# Panel figures for Nature
-## Inferential robustness
 inferential_panel <- (
   conclusion_main_plot +
   (
@@ -2390,34 +1118,169 @@ inferential_panel <- (
 inferential_panel
 
 ggsave(here::here("figures/inferential_panel.png"), inferential_panel, width = 22, height = 14, dpi = 300)
-
-# Estimate robustness
-# effec_size_corr_plot_gg <- ggplotify::as.ggplot(effec_size_corr_plot) +
-# ggplot2::theme(plot.margin = margin(t = 0, r = 0, b = -2, l = 0, "cm"))
-# effec_size_corr_plot_gg
-main_section <- 
-  effect_main_plot +
-  effect_region_all_plot +
-  plot_layout(widths = c(2, 1))
-
-# Define the remaining plots section
-small_plot_section <-
-  (
-    effect_region_discipline_plot |
-      effect_robustness_discipline_plot 
-  ) /
-  ( effect_region_studytype_plot | effect_robustness_studytype_plot) /
-  (effect_region_expertise_plot |
-     effect_region_familiarity_plot | samplesize_region_plot) +
-  plot_layout(ncol = 1, nrow = 3)
-
-small_plot_section
-# Combine the main section and the remaining plots section
-estimate_panel <-
-  (main_section | small_plot_section) + plot_annotation(tag_levels = 'a')
-
-estimate_panel
-
-ggsave(here::here("figures/estimate_panel.png"), estimate_panel, width = 30, height = 14, dpi = 300)
 ```
 
+__Fig. 4 \| Analytical robustness of the conclusions.__
+__a,__ Proportion of same conclusion, no effect/inconclusive results, and opposite direction conclusions for each study. Study numbers correspond to studies listed in [https://osf.io/mkwhn](). __b,__ Proportion of inferentially robust results (i.e., all re-analyses arrived at the same conclusion for the given study) by major disciplines (more than 10 studies in our collection: Economics, Political Science, and Psychology). __c,__ Proportion of same effect, no effect/inconclusive results, and conclusions in the opposite direction of the original studies by major discipline. The number of re-analyses is displayed below each discipline. __d,__ Proportion of inferentially robust results by study design (experimental vs. observational). The number of re-analyses is given below each study design. __e,__ Proportion of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by study type (experimental, observational). __f,__ Proportion of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by self-rated expertise (on a scale of 1 (Beginner) to 10 (Expert)). __g,__ Proportion of inferentially robust studies by the acceptability of the analysis pipelines according to the peer evaluators. For this figure, we included only studies with more than one peer evaluation and where the peer evaluators agreed on their rating. The figure shows only the rating options with 5 or more re-analyses in that category. _h,_ Proportion of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by declared familiarity with the study. __i,__ Distribution of the sample size of the re-analyses resulting in the same conclusion, no effect/inconclusive, and opposite effects. Sample size values were available for 345 re-analyses.
+
+We were interested to see whether these results show a different pattern when inspecting them along the earlier mentioned aspects of the analyses. Fig. 4b and Fig. 4c present the proportions of robustness of the conclusions in the listed disciplines. Just as for the case of analyses of robustness of the statistical results, the listed disciplines do not manifest large differences in robustness of the conclusions, whereas their robustness may be greatly influenced by the study designs most common in each field. Fig. 4d supports this notion as it indicates that nearly half of the conclusions from experimental studies remained robust upon independent re-analysis, whereas less than one-third of observational studies yielded robust conclusions. Moreover, Fig. 4e indicates that, although for both study designs the majority of the re-analyses reached the same conclusions as the original study, the figure was `r dplyr::filter(conclusions_studytype_data, categorisation == "Same conclusion") |> summarize(diff = ceiling(percentage[1] - percentage[2])) |> dplyr::pull(diff)`% higher for the experimental studies than for observational studies. Just as for the robustness of the results, we can ask whether the deviation from the originally reported claim in terms of conclusions is explained by re-analysts’ lack of analytical expertise. Fig. 4f shows no support for this conjecture when evaluating the pattern of results as a function of self-reported statistical expertise. The same conjecture can be assessed by considering the quality of the submitted statistical analyses that were evaluated by peer evaluators on a subset of the analyses (see Methods). Fig. 4g shows that the proportion of inferentially robust conclusions is numerically larger for analyses that were rated as medium-quality by peer evaluators than for analyses that were rated as high-quality. Whether this pattern was a result of noise, or whether more sophisticated analyses are characterized by greater heterogeneity in approaches and results should be the topic of future metascientific projects.
+
+Just as for the analyses of the robustness of the statistical results, we were interested to see whether these results show a different pattern when inspecting them as a function of analysts’ prior familiarity with the dataset. Although those familiar with the original study did report the same conclusion in a higher proportion than those who were not familiar, `r dplyr::filter(conclusions_familiarity_data, familiar_with_paper == "Yes", categorisation == "No effect/inconclusive") |> dplyr::pull(percentage)`% of their re-analyses still indicated a conclusion different from the original one (Fig. 4h).
+
+Again, we were interested to see whether these robustness results would show a different pattern when considering sample size. As presented in Fig. 4i, the density distribution corresponding to the analyses with the different conclusion types shows a comparable spread, suggesting that the conclusions of studies with smaller and larger sample sizes appear to be similarly contingent on analytical choices.
+
+For descriptive information about the re-analysts, peer evaluators, and additional robustness analyses see Supplementary information.
+
+## Limitations
+
+This study has a number of limitations. First, our collection of 100 articles represents only a small sample of all the empirical work in the social and behavioural disciplines. Despite our efforts to select a representative sample of published articles across disciplines from the investigated time-period, we could not include studies when the underlying data were not obtainable, and we excluded studies when our screening attempt to analytically reproduce the original results following the published procedures failed. We cannot exclude the possibility that these prerequisites, in addition to the self-selection of the analysts, led to sampling bias.
+
+Although we conducted more than 500 analyses, it allowed only 5 independent analyses for most datasets, therefore, we do not know to what degree they capture the full variability of analyses and results for the given question and dataset. Also, since we re-analysed already published studies, the original analysis pipeline could have anchored some of the choices of the re-analysts.
+
+We presented some exploratory analyses but there are many other factors to explore that could contribute to analytical variability (e.g., content-wise expertise). Finally, despite our best efforts to conduct quality checks on the re-analyses to ensure the soundness of the analytic strategies16, it is possible that some of the discrepancies among the original and the new results are due to weaknesses in the re-analysts approach rather than equally justifiable alternative analysis decisions. It is likewise possible that there are weaknesses in the original analysts’ approaches. It is unknown whether the quality control processes for the re-analysts resulted in better, worse, or similar overall quality of analysis decisions as compared with the quality control processes for original analysts decisions. The declared statistical expertise of the re-analysts make us believe that the observed heterogeneity in analyses and outcomes is a good representation of variation in informed analysis decision-making in social-behavioural research.
+
+## Discussion
+
+Are published results in the social and behavioural sciences robust to independent re-analyses? The present exploration shows considerable variability due to researchers’ degrees of freedom in statistical choices. Overall, when independent researchers analysed the same research question on the original data, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)`% of studies remained robust to independent re-analysis in the sense that all re-analysts arrived at the same conclusion as the original analyst or analyst team. Importantly, the difference in statistical results altered the inferential conclusions in `r filter(conclusions_analysis_data, categorisation != "Same conclusion") |> summarize(total = sum(percentage)) |>  round(0)` % of the re-analyses. Our descriptive results suggest a number of hypotheses concerning the circumstances in which we could predict greater analytical variability.
+
+## Why can there be multiple answers to the same question?
+
+Faced with the variability in the analysts’ effect size estimates and conclusions, one intuitive hypothesis is that the variation must be due to researcher characteristics, such as statistical or field-specific knowledge. Previous multi-analyst studies found little to no effect of researcher-specific characteristics, such as experience in the field or statistical expertise16,19,27. Instead, they suggest that analytic results are dependent on the particular choices that the analysts make among similarly acceptable data processing and analysis choices27. For example, when 46 independent analyst teams analysed the same speech dataset to answer the same research question, the authors concluded that “depending on the choice of how the speech signal is operationalised, researchers might find evidence for or against a theoretically relevant prediction” (p. 21)27.
+
+In line with previous findings, our results showed no strikingly different patterns across self-reported statistical expertise, and the few analysts who reported that they were familiar with the original article produced alternative results and conclusions at a comparable rate. More importantly, our peer evaluation process did not indicate that the analytical variability of the re-analyses was due to inadequate statistical practices. These results are in line with Menkveld et al.22 in which the quality assessment of the proposed analysis pipelines did not statistically explain the results.
+
+Another line of thought would suggest that the lack of robustness in the original published results reflects some conceptual vagueness of the theories or methodology29. We could not test the role of theory vagueness in a controlled manner, but it is a plausible contributor considering that social science theories often make general claims across many variables, creating theory-laden choice points regarding how constructs are operationalized, and how hypotheses are tested30. Regarding methods, we explored our results by separating them by experimental and observational study designs, and observed that the proportions of results and conclusions that were analytically robust were 15-20% higher for the experimental studies. The estimated range of effect sizes was also apparently wider for observational studies compared to experimental ones. This exploratory finding motivates a hypothesis that the increased control over the circumstances of data collection in experimental versus observational research also translates to increased control over the decision flexibility for analysts and their findings. Notably, however, there was still substantial statistical variability among findings from experimental studies. This hypothesis deserves further research.
+
+## Why do these findings matter?
+
+Where alternatively acceptable analytical paths exist, researchers can use this freedom opportunistically31,32 and bias the results towards desired findings (‘myside bias’33). The so-called credibility crisis in social and behavioural sciences stemmed mostly from the suspicion that the prevailing incentive systems for publication encouraged researchers to report and interpret empirical data to best serve non-epistemic goals such as story-telling34. Reform initiatives, such as the preregistration of research and analysis plans, aim to decrease researcher degrees of freedom to tweak the analytic method or the research question to the observed data. Would results in these fields become markedly more credible if every study was preregistered? We hypothesize that preregistration would reduce or eliminate the observed finding that original analyses observed stronger evidence for positive results than re-analyses. However, we also hypothesize that preregistration would have no impact on the observed heterogeneity across alternative analysis strategies since registering and following a single analytic path constrains the analysts only from choosing opportunistically from the alternative analytical paths but it does not give any unique statistical or epistemic status to the pre-selected analytic path26. Unexplored but alternative justifiable analyses on the same data could still lead to very different results. The present exploration is clear about the presence of this variability in approaches, results, and inferences in the social and behavioural sciences. Without exploring this variability, authors cannot guarantee consumers of their research that the reported conclusions have any privileged status over alternative conclusions.
+
+## What can we do?
+
+The outcomes of this project suggest that the empirical answers to research questions in the social and behavioural sciences depend on the analytic paths taken to pursue them. Therefore, we advocate for the broader adoption of approaches that explore, recognise, and address the uncertainty created by analytical variability.
+
+The two main types of solutions are (1) multi-analyst studies, such as our own, where multiple investigators independently follow their own approach, and (2) the multiverse9,10,35 approach where one investigator or team performs numerous analyses across the set of reasonable pipelines. Project leaders aiming to conduct multi-analyst studies can consult various tutorial papers and guidelines. Aczel et al.36 provide an expert consensus guideline on the entire life-cycle of multi-analyst projects from recruiting suitable analysts, through conducting the project to the reporting of the outcomes. Kümpel & Hoffmann37 offer a framework for synthesising objective outcome metrics. The Subjective Evidence Evaluation Survey38 is a tool for systematically exploring and quantifying subjective measures of evidence in multi-analyst studies allowing analysis teams to subjectively reflect on various aspects of evidence, such as coherence, robustness, and relevance but also on the quality of the research design and data.
+
+Multiverse analysis is also useful, especially when the dataset cannot be shared with other research groups due to confidentiality reasons or when there are insufficient human resources to recruit several independent analysts. Several guideline papers help researchers conduct and interpret such analyses10,35,39–41.
+
+Recently, many scholars have called for a stronger focus on replication in science42. Similar to preregistration, however, replications are unlikely to help address the robustness of results to multiple justifiable analysis strategies as they intentionally repeat the same (or at least a very similar) analysis path. In this sense, replications can help detect bodies of work in which authors may have leveraged their researcher degrees of freedom to generate results that are in line with their own or the journal’s expectations. All other things being equal, a severely p-hacked literature should contain fewer replicable findings. However, replicability does not eliminate analytical variability itself. Nevertheless, having multiple studies, creates an opportunity to observe if analytical variability is, itself, replicable. For example, imagine that Study A provides evidence for a claim with Analysis 1 but not for Analysis 2. If several replications also find evidence for the claim with Analysis 1 but not for Analysis 2, then the analytic choices are directly implicated in how evidence for the phenomenon is observed. However, if it is random across replications whether Analysis 1 or Analysis 2 provides evidence for the claim, then the implications of the analytic variability are very different. The combination of replications and robustness investigations will facilitate advancement of stronger theoretical underpinnings of the topics of study, and could reduce analytical variability in the long run by creating a more direct mapping between theory and measurement29,43,9.
+
+All in all, we argue that the scholarly communication system could foster more engagement with robustness testing. Research findings of particular scientific or societal importance could be accompanied by robustness reports44 that summarise the results of alternative theory-motivated analytic choices by independent analysts. Such a submission format could provide a platform for analysts to scrutinise the fragility of the findings before they have a major impact on scholarship and policy.
+
+## What did we learn about the robustness of research?
+
+Our results support the view that the results in social and behavioural science studies are contingent on the analyst’s choices and if an analyst reports a single result from a single analytical path, they have not exhausted the possible answers that the dataset can provide. This finding align with the conclusions drawn by Wagenmakers, Sarafoglou, and Aczel7, that the belief that "for any dataset, there exists a single, uniquely appropriate analysis procedure" and "multiple plausible analyses would reliably yield similar conclusions"(p. 424) are no more than statistical myths. Without multi-analyst and multiverse approaches, the fragility of empirical findings remains concealed.
+
+Objectivity is a fundamental ideal of science, implying that claims about the world should not be contingent on the predispositions of the claimant. What our results reveal is not that we must distrust or reject the results of the past. Instead, they suggest that we should adopt greater caution about the evidence that single analytical paths can offer to support social and behavioural science claims. We believe that the limitations of "single-shot" analyses are a science-wide issue. Methodological innovations such as multi-lab collaborations, multi-analyst, or multiverse approaches could increase the robustness of social and behavioural sciences and perhaps, more broadly, in other empirical fields.
+
+# Methods
+## Preregistration
+
+The methods, materials, analysis plan, peer evaluation, and data management strategy of the project were preregistered on the OSF. All deviations from the registered plan are reported and explained in the ‘Deviations from preregistration’ supplementary document.
+
+## Ethical considerations
+
+The datasets resulting from this project are not considered human subject research and are covered under an umbrella ethics protocol that is managed by the Center for Open Science (COS) (LINK). The institutional ethical board of the Faculty of Education and Psychology of Eotvos Lorand University Budapest, Hungary judged that the re-analysts are not considered to be research participants and the project raises no ethical concerns.
+
+## Materials
+## Selection of studies
+
+Studies were provided by the SCORE project. The studies originated from a stratified random sample of \~600 articles, from a stratified random sample of \~3,000 papers, from a stratified random sample of \~30,000 papers, from a pool of \~60 journals, published between 2009 and 2019 (Fig. S14). The journals covered the main branches of social and behavioural sciences (economics, political science, psychology, sociology, management, education, marketing/organisational behaviour, health-related, criminology, public administration). The list of journals is available here.
+
+To obtain the original studies, the following steps were taken: First, the paper was reviewed: If data and/or code were available, they were downloaded and saved into a project on OSF. If data and/or code were not available, SCORE attempted to contact the corresponding author to request they share the data and code used for the original publication.
+
+The majority of the studies were tested by the SCORE team for analytic reproducibility. Analytic reproducibility was tested in cases when both original data and code were available (n = 63), or when the original data were available but the original code had to be adapted by the SCORE team in order to successfully reproduce the result (n = 7). If data were available but the original code was not, SCORE sourced a collaborating lab to generate new analytic code for the reproduction (n = 10). If data and code were not available, the collaborating lab used the secondary source data which were shared upon request (acquired by SCORE), alongside newly generated analytical code for the reproduction (n = 11). Some reproductions were never attempted (n = 9). If the analytic reproduction failed, the paper was removed from the pool (REF, SCORE methods papers).
+
+Studies were excluded from the sample if they did not contain at least one inferential test using non-simulated, human data, where human data are defined at any level of human organisation (e.g., the individual person, family, political entity, firm, economic unit). In addition, the study was required to contain a single inferential statistical test result that corresponded to the claim with our instructions. Thus, we ensured that given the claim and the instructions, no other statistical result could correspond to the claim in the original article. If all potential claims from the study were too ambiguous, and, therefore, could not be linked with a single inferential test statistic with the specification instructions, the study was excluded.
+
+The selected studies and all available corresponding data and materials were made available to re-analysts so that they could fully understand the selected claim and approach. There are trade-offs for how much information to give to the re-analysts to conduct re-analyses. Complete blinding of the original analysis strategy would ensure an entirely independent decision-making process about how to analyse the data. However, in much scientific writing, there is insufficient clarity in the description of the theoretical background, rationale and specification of the conceptual model to be tested. In some papers, there is a clean break between these and clear hypotheses to test. In other papers, the narrative intermixes theoretical statements and analysis decisions and may not even clearly state hypotheses or how they correspond with observed results. As a consequence, attempts to blind papers inevitably lead to variation in what is blinded across papers and many subjective decisions about what should be blinded (because it provides information about analysis strategy) and what can remain unblinded (because it provides information about theory and rationale). A major risk of those blinding decisions is that important information could be removed which would weaken the re-analysts’ ability to conduct a fair re-analysis of the original claim. As such, we opted for complete transparency of the original article so that no potentially important information is missing for the re-analysts, and we instructed re-analysts that they should create an analysis plan based on their own decisions for how best to assess the study’s claim. On balance, this increases the risk of dependent decision-making but reduces the risk of misspecification of the hypothesis and rationale of the original research. In this context, we judged the latter to be a more important precondition for conducting an informative study.
+
+## Claim selection
+
+Claim selection was built on Phase 1 of the SCORE project effort. The claims identified for Phase 1 of SCORE were executed according to a ‘single trace’ approach where only a single claim trace was extracted from the article which corresponded to one statistically significant inferential test result. Within the the current project, first, the lead team ensured that the extractions (i) are understandable, (ii) contain only one claim, (iii) indicate the direction of the effect, (iv) there is a statistical hypothesis test-based result provided in the article that corresponds to the claim; and (v) the claim was phrased on a conceptual and not statistical level. If not, then they extract the part of the claim that is relevant, or if this could not be achieved, they selected another more suitable sentence from the abstract, or if this could not be achieved, they searched for another suitable sentence from other parts of the article that could satisfy all of our criteria. When none of these steps presented a claim that satisfied the expectations then the given article was not used in our study (for their list and explanation of dropping see our data table). Where an expression of a claim has been judged by the lead team as ambiguous or rhetorical, they substituted the expression with an ellipsis mark (e.g.,: “dramatically increased” to “ … increased”) while preserving the original wording and the meaning of the claim. Only in cases where due to the selection the wording of the claim became complicated, ungrammatical, or contained a vague definition or an unexplained abbreviation, did the core team make necessary (and marked) adjustments in the grammar or wording of the claim while preserving the original meaning of the extraction. For example, the following selection “Three factors increase the salience of the proliferation threat: (1) prior violent militarized conflict…” would have been changed to “\[prior violent militarized conflict\] increase\[s\] the salience of the proliferation threat …”. The list of claims can be found at [https://osf.io/mkwhn]().
+
+## Analysis instructions
+
+For the re-analysts’ second task, instructions were needed in cases where the original paper contained more than one statistical analysis corresponding to the high-level claim, in order to be able to compare the new result to the one in the original paper. For this, the lead team prepared certain instructions (e.g., data selection, exclusions) that single out only one statistical result in the original paper. The instructions always remained circumstantial (e.g., data selection, exclusions, choice of measurement) and never gave direct instructions to the choice of statistical approach or full specification of the model.
+
+## Procedures
+## Re-analyst recruitment
+
+Our preregistered aim was to have at least five independent re-analyses carried out for each of the 100 selected studies (Fig. 5). Our choice of 5 analyses per study was led by practical considerations as we judged that recruiting 500 analysts for a project is the limit of our capacity.
+
+Participation in the project was advertised on social media, at conferences, in mailing lists (e.g., SCORE collaborator list), via personal networks, and in research newsletters. As a response to our recruitment call, 1141 researchers signed up to participate in our study. Out of these volunteers, 459 signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline. From all the eligible volunteers, we selected re-analysts and peer evaluators on a first-come first-served basis.
+
+The expectation of participation in the study was experience with conducting statistical analyses and this was communicated with the volunteers from the start of the recruitment. Re-analysts were informed that they would qualify as re-authors on the publication of this study if (1) they completed their analyses and submitted all required materials and the post-analysis survey on time; (2) their analyses pass the peer evaluation, and (3) they review and approve the manuscript in time.
+
+Re-analysts received a flat fee of 100 USD payment for each of their completed re-analyses (including both Task 1 and Task 2) if they submitted their work before March 2023, the deadline of the grant budget, unless they were from an embargoed country in which case we were unable to transfer them any payment. Peer evaluators received a flat fee of 10 USD payment per peer evaluation. Any further volunteers were informed that this payment does not apply to them.
+
+Upon joining the project, the volunteers for re-analysis were required to accept the project requirements. They were informed about (a) their tasks and responsibilities; (b) the project confidentiality agreements; (c) the plans for publishing the research report and presenting the data, analyses, and conclusion; (d) the conditions for an analysis to be included or excluded from the study; (e) that their names will be publicly linked to the analyses; (f) the re-analysts’ rights to update or revise their analyses; (g) the project time schedule; and (h) the nature and criteria of compensation. Re-analysts were informed that whereas they could consult other researchers during their analyses, they could not work in teams in this project. Before discussing the details of the analyses with others, the re-analysts were asked to ascertain that the person was not another re-analyst on that dataset. All communication materials of this study are openly available on the public repository of the project at [https://osf.io/nvy8a]().
+
+## Assignment of analyses and tasks to re-analysts
+
+The following procedure was first piloted with two analysts to learn about the practical challenges and time demands of the following tasks. As the results of those analyses were not of central interest, we kept no records of them.
+
+First, each re-analyst was asked to assign themselves to one study, but at later rounds of recruitment, we allowed re-analysts to complete analysis on another paper, other than the one they completed earlier. They were asked to choose those studies where they saw the greatest relevance of their expertise. Authors of the original study could not be re-analysts of that study.
+
+For several practical reasons, the re-analyses were not started at the same time for each study and each analyst. Firstly, it took us several rounds of recruitment to gather the target number of analyses for each study mainly due to drop-outs, delays, unplanned personal difficulties, and shortage of staff. Secondly, our analysts found it difficult to retrieve, open or interpret some of the datasets. In some cases, we had to reach out to the original authors, causing further delays in the project.
+
+The task of the re-analysts was to reflect on the corresponding claim (see claim selection) by re-analyzing the corresponding data. The re-analysts were provided with access to the datasets, extracted claims, the original articles, and all the corresponding materials. They were informed that their analyses should be conducted preferably with scripts that could reproduce all their results (including data preprocessing, extraction of test statistics and p-values/Bayes Factors, computing effect size measures, etc.), but they could use the statistical software of their choice to produce an analysis script. Re-analysts were asked to write and structure their code such that others could understand their analysis scripts (e.g., by annotating the different analysis steps), and they were also informed that the analysis scripts from all analysts would be made publicly available with their names linked to the analyses.
+
+Re-analysts received two main tasks for each study, where Task 2 was given after the completion of Task 1. Once Task 1 was submitted, the analysts could not change the submission of Task 1 unless they were asked by the lead team to provide some missing information from their analysis.
+
+_Task 1_ The re-analysts were asked to reflect on the selected claim by re-analyzing the corresponding data. They could conduct and report as many analyses as they wished, but they had to draw a single conclusion from their analysis. They were asked to report their analyses and indicate whether their results provided evidence for the relationship/effect as claimed by the original study.
+
+_Task 2_ For this task, the re-analysts had to produce only one statistical result corresponding to the claim they studied in Task 1, which would be compared to a statistical result in the original paper. The lead team provided certain instructions (e.g., data selection, exclusions) for this analysis to be able to compare the new result to one result in the original paper (see Analysis instructions section). Re-analysts were asked to report their results in terms of statistical families of r, z-, t-, F-, or χ² tests (or their non-parametric versions). In addition, they were asked to report sample sizes (e.g., per group) and the corresponding degrees of freedom. By this means, most results could be translated into standardized coefficients by the coordinators.
+
+The reason to require two analyses from the re-analysts was that they served two different aims. The results of Task 1 aimed to answer our first preregistered project question: “Do different analysts arrive at the same conclusions as the analyst of the original study?”, whereas the results of Task 2 aimed to answer our second registered project question: “Do different analysts arrive at the same effect estimates as the analyst of the original study?” We found that asking only one of the tasks would have not been sufficient to fully address both questions. In Task 1, researchers were not constrained to one analysis, so they could have produced more than one statistical result in order to draw a conclusion from the dataset. Therefore, in Task 1, it was not guaranteed that we would be able to select a single effect size from each analyst in order to answer our second project question. Another challenge to find an answer to our second question was that in some of the original articles, one claim could have had more than one corresponding statistical result listed. In these cases we prepared instructions for Task 2 in order to single out only one statistical result in the original paper. For example, if the original study contained two corresponding regression models, one with some exclusions and one with no exclusions, then we chose one of them (e.g., the latter), and instructed the re-analysts not to apply any exclusions on the analysed data. In all other regards, re-analysts were free to conduct their calculations according to their best judgment.
+
+After completing the analysis and writing up the methods, results, and conclusion, re-analysts were expected to upload their analysis code (if available) to the corresponding OSF folder. Their reported methods, results, and conclusion were collected via an online form (see [https://osf.io/fjnhz/]()). When uploading the materials, they were also asked to fill out a post-analysis survey. All communication materials of this study are openly available on the public repository of the project.
+
+## Peer evaluations
+
+The goal of peer evaluation in this project was to assess whether the applied analytical choices are acceptable and the reported conclusion follows from the statistical results. By acceptable, we mean that peer evaluators agree that the analysis pipeline is within the variations that could be considered appropriate by the scientific community in addressing the given analytical task.
+
+The peer evaluation phase did not address potential errors in translating the description of the analytic methodology into analysis scripts. To mitigate potential gross errors in the analysis, peer evaluators were provided with a thorough and standardised description of the results and conclusions obtained using the described analysis, including sample sizes, the effect size, the test statistic, and degrees of freedom, etc. From the description of the dataset, the description of the analysis, and the reported results and conclusions, peer evaluators were able to identify potential flaws in the implementation of the analysis that could stem from errors and/or mismatches.
+
+## Assignment of analyses to peer evaluators
+# HERE  but seven cases (i.e., 98.6% of peer evaluations were carried out on a dataset that was different to the dataset they analysed themselves)
+When assigning the volunteering peer evaluators to analyses, the initial rule was that they should not evaluate any re-analyses conducted on datasets they have re-analysed as a re-analyst. In practice, for logistical reasons, this rule was applied in all but seven cases (i.e., 98.6% of peer evaluations were carried out on a dataset that was different to the dataset they analysed themselves). They were asked to choose to evaluate those analyses where they see the greatest relevance of their expertise. If after choosing a study to evaluate, a peer evaluator did not feel sufficiently skilled/experienced to judge whether the proposed analysis is acceptable, he/she was told not to fill out our template and should return the re-analysis to the pool and choose a new one.
+
+## Peer Evaluation Procedure
+
+For details, see the corresponding section in the Supplementary Information.
+
+## Analysis methods
+
+This exploratory study contains no inferential statistics. Besides the frequency- and proportion-based summary statistics, we calculated only the effect sizes of the results from the original articles and the reanalyses.
+
+## Cohen’s d effect sizes
+
+Following our preregistration, we converted all results into Cohen’s ds wherever it was possible. For a number of cases, we could not achieve this due to missing information in the original studies or reported statistics that cannot be converted into Cohen’s d (e.g., logistic regression). All the conversions are listed in the R scripts and the data documentation. All the original effect sizes are listed as positive values and the re-analysis effect sizes are negative only when they showed an opposite effect compared to the original study.
+
+For further information on methods see Supplementary information.
+
+## Reporting summary
+
+Further information on research design is available in the Nature Portfolio Reporting Summary linked to this article.
+
+## Data availability
+
+Study data, and materials are available on the project OSF ([https://osf.io/q5h2c/]()) and GitHub repositories ([https://github.com/marton-balazs-kovacs/multi100/]()). Archived data include the original datasets or a description how to gain access to them. Our shared materials include all the survey questions, and the general communication texts and instructions that we sent to the re-analysts and peer-evaluators. We excluded from our datafiles the email addresses of the re-analysts, as well as the records of those analysts who did not comply with the instructions and did not submit all the required analyses by the deadline. For further details about our exclusion criteria and procedure, see our Supplementary information document.
+
+## Code availability
+
+All analysis codes serving this project are available at [https://github.com/marton-balazs-kovacs/multi100]().
+
+# References
+
+# Abstract
+The same dataset can be analysed in different justifiable ways to answer the same research question, potentially challenging the robustness of empirical science. In this crowd initiative, we investigated the degree to which research findings in the social and behavioural sciences are contingent on analysts’ choices. To explore this question, we took a sample of 100 studies published between 2009 and 2018 in criminology, demography, economics and finance, management, marketing and organisational behaviour, political science, psychology, and sociology. For one claim of each study, at least five re-analysts were invited to independently re-analyze the original data.
+
+The statistical appropriateness of the re-analyses was assessed in peer evaluations and the robustness indicators were inspected along a range of research characteristics and study designs. Only `r analysis_level_within_tolerance_region_5` % of the independent re-analyses yielded the same result (within a tolerance region of +/- 0.05 Cohen’s d) as the original report. Even with a four times broader tolerance region, this indicator did not go above `r analysis_level_within_tolerance_region_20` %. 
+
+Regarding the conclusions drawn, only `r conclusion_robust_100_percentage` % of the studies remained analytically robust, meaning that all re-analysts reported evidence for the originally reported claim. Using a more liberal definition of robustness produced comparable result (`r conclusion_robust_80_percentage`% when \>80% re-analysis agreement with the original conclusion defined analytical robustness).
+
+This explorative study suggests that the common single-path analyses in social and behavioural research cannot be assumed to be robust to alternative — similarly justifiable — analyses. Therefore, we recommend the development and use of practices to explore and communicate this neglected source of uncertainty.
+
+__Keywords__ research credibility, data analysis, scientific transparency, crowdsourcing science, robustness, analytical variability

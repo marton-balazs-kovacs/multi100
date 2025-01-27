@@ -1,0 +1,206 @@
+---
+title: "Multi100: Descriptive raw to processed"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+## Setup
+### Loading packages
+
+```{r}
+library(tidyverse)
+library(here)
+```
+
+### Load custom functions
+
+```{r}
+source(here::here("R/recode_colnames.R"))
+source(here::here("R/save_codebook.R"))
+source(here::here("R/utils.R"))
+```
+
+### Read data
+
+```{r}
+# demographic_information_raw data is not shared
+demographic_information_raw <- readr::read_csv(here::here("data/raw/multi100_demographic-information_raw_data.csv"))
+# 'all_people' data (to be used for checking that ID's match)
+all_people <- readr::read_csv(here::here("data/raw/multi100_all-people_raw_data.csv"))
+```
+
+## Cleaning demographic information raw dataset
+
+Recoding free-text responses to gender in the demographic information.
+
+```{r}
+demographic_information_raw <-
+  demographic_information_raw |> 
+  mutate(
+    gender = case_when(
+      gender == "Nonbinary" ~ "Non-binary",
+      TRUE ~ gender
+    )
+  )
+```
+
+### Introducing reference variable
+
+```{r}
+demographic_information_raw <- 
+  demographic_information_raw |> 
+  mutate(
+    # add 'task1_submission_number' as a reference variable
+    task1_submission_number = 1:nrow(demographic_information_raw),
+    # remove leading and trailing spaces from Analyst_ID and Paper_ID variables
+    analyst_id = trimws(analyst_id, "both")
+    )
+```
+
+We are excluding the pilot responses. Analysts with analyst_id "8nJioy5V5B" and "z2u1wLLVu1" are test runs (pilot data).
+
+```{r}
+demographic_information_raw <-
+  demographic_information_raw |> 
+  filter(analyst_id %ni% c("8nJioy5V5B", "z2u1wLLVu1"))
+```
+
+Check how many analyses were submitted with '_2' ID's. Some analyst submitted multiple analyses. We assigned '_2' to the analyst_ids of these analyst for the second and possibly third analyses.
+
+```{r}
+demographic_information_multiple_analyses <- 
+  demographic_information_raw |> 
+  filter(str_detect(analyst_id, "_")) |> 
+  dplyr::select(analyst_id, paper_id) |> 
+  arrange(analyst_id) |> 
+  group_by(analyst_id) |> 
+  mutate(n = n())
+```
+
+There are no analysts who did more than 2 analysis.
+
+We are removing '_2' from the end of analyst_id's in both Task 1 and Task 2. They are not needed for further analysis because paper_id and analyst_id together can identify an analysis perfectly.
+
+```{r}
+demographic_information_raw <-
+  demographic_information_raw |> 
+  mutate(analyst_id = str_replace(analyst_id, "_2$", ""))
+```
+
+Check whether each analyst_id matches with the ID they were assigned in the signup form ('all_people').
+Check if all analyst_id in task1 are present in all_people, if 'FALSE' then all ID's match.
+
+```{r}
+any(!(demographic_information_raw$analyst_id %in% all_people$analyst_id)) 
+```
+
+Check for duplicate responses.
+
+```{r}
+demographic_information_duplicates <-
+  demographic_information_raw |> 
+  group_by(paper_id, analyst_id) |> 
+  mutate(n = n()) |> 
+  filter(n > 1) |> 
+  dplyr::select(-age, -gender, -country_of_residence) |>
+  arrange(desc(n))
+
+demographic_information_duplicates |> 
+  distinct(paper_id, analyst_id, n)
+```
+
+Attend to each of these cases manually. We will only keep the correct responses for further analysis.
+
+```{r}
+demographic_information_raw <-
+  demographic_information_raw |> 
+  filter(
+    # SN. 23 to be removed... responses largely identical, but the comments of the analyst indicate that SN. 24 is their preferred version
+    task1_submission_number != 23,
+    # SN. 25 to be removed... analyst forgot to include something in original
+    task1_submission_number != 25,
+    # SN. 64 to be removed... submission is identical apart from conclusion... consider duplicate response a replacement of the original
+    task1_submission_number != 64,
+    # SN. 110 to be removed... submission is identical apart from 'years of experience'... 
+    # SN. 110 states that the analyst is 30 years old and has 30 years of experience. SN. 108 reports 6 years of experience...
+    # consider SN. 110 an error
+    task1_submission_number != 110,
+    # SN. 193 to be removed... original submission states the claim cannot be tested, but the duplicate SN. 235 corrects this
+    task1_submission_number != 193,
+    # SN. 91 to be removed... SN. 237 is stated as an updated entry
+    task1_submission_number != 91,
+    # SN. 52 to be removed... SN. 250 is an updated entry
+    task1_submission_number != 52,
+    # SN. 49 to be removed... SN. 282 is an updated entry
+    task1_submission_number != 49,
+    # SN. 146 to be removed... SN. 283 is an updated entry
+    task1_submission_number != 146,
+    # SN. 216 to be removed... SN. 284 is an updated entry
+    task1_submission_number != 216,
+    # SN. 316 to be removed... SN. 324 is stated as an updated entry
+    task1_submission_number != 316,
+    # SN. 337 to be removed... SN. 345 is an updated entry
+    task1_submission_number != 337,
+    # SN. 378 + 379 to be removed... three identical submissions
+    task1_submission_number != 378,
+    task1_submission_number != 379,
+    # SN. 386 + 387 to be removed... SN. 388 states that this is their third and final submission with minor changes made from the previous
+    task1_submission_number != 386,
+    task1_submission_number != 387,
+    # SN. 498 to be removed... SN. 497 is stated as an updated entry
+    task1_submission_number != 498,
+    # SN. 415 to be removed... SN. 536 is an updated entry
+    task1_submission_number != 415 
+  )
+```
+
+Verify that there are no longer any duplicates.
+
+```{r}
+demographic_information_raw |> 
+  count(paper_id, analyst_id) |> 
+  filter(n > 1)
+```
+
+## Create a processed dataset and randomize the order
+
+```{r}
+demographic_information <-
+  demographic_information_raw |>
+  dplyr::mutate(task1_timestamp = as_date(task1_timestamp)) |> 
+  # Create a group identifier based on analyst_id
+  group_by(analyst_id) |> 
+  arrange(task1_timestamp) |> 
+  mutate(task1_timestamp = row_number()) |> 
+  ungroup() |> 
+  dplyr::select(
+    analyst_id,
+    age,
+    gender,
+    country_of_residence,
+    task1_timestamp
+  )
+```
+
+## Create list of values for each analyst
+
+```{r}
+demographic_information <- demographic_information |>
+  group_by(analyst_id) |>
+  summarize(
+    age = list(unique(age)),
+    gender = list(unique(gender)),
+    country_of_residence = list(unique(country_of_residence))
+  ) |> 
+  ungroup() |> 
+  select(-analyst_id) |> 
+  # Shuffle the rows order
+  dplyr::slice_sample(n = nrow(demographic_information_raw)) |> 
+  mutate(anon_id = row_number())
+```
+
+## Save processed dataset
+
+```{r}
+saveRDS(demographic_information, "data/processed/multi100_demographic-information_data.rds")
+```
