@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-data/
 data/raw/multi100_analyst-payments_raw_data.csv
 data/processed/multi100_analyst-payments_processed_data.csv
 data/raw/multi100_demographic-information_raw_data.csv

@@ -1,0 +1,7 @@
+description,variable_name
+Időbélyeg,task1_timestamp
+1.1. Please provide your analyst ID.,analyst_id
+1.2. Please provide the ID of your paper.,paper_id
+1.4. What is your gender identity?,gender
+1.5. What is your age? (in years),age
+1.7 Country of residence,country_of_residence

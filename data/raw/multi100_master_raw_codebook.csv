@@ -1,0 +1,15 @@
+description,variable_name
+paper_id,paper_id
+reproduction_type (OSF),reproduction_type_osf
+reproduction result (OSF),reproduction_result_osf
+"categorization of the claims
+
+(1) same = same claim (does not mean they are literally the same, is possible that paticulars (e.g., numbers) are deleted from the claim);
+(2) similar = a closely related claim
+(3) part = new claim is part of the original claim
+(4) no = not the same claim",categorisation_of_claim
+original statistical result,in_text_original_statistical_result
+"Related_statistical_result
+
+M-S columns",related_original_statistical_result
+Location_of_result_in_paper,original_result_page_number

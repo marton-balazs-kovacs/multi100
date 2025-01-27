@@ -1,0 +1,15 @@
+description,variable_name
+Időbélyeg,signup_timestamp
+E-mail-cím,signup_email
+First name,first_name
+Surname,last_name
+Title,title
+"To prevent our messages going to spam, please send a short email confirming your interest in the project to multi100@cos.io (using the email address you previously entered). If you do not see a reply in a few days, check your “junk mail” folder or “spam” folder and add multi100@cos.io to your White List or Safe Sender List. If you still do not receive an email, then write to multi100@cos.io explaining the problem. We will make every effort to ensure that emails are delivered.",email_to_cos_sent
+University/Research Institute.,university_research_institute
+"I have experience conducting statistical analyses, reporting results, and documenting my work in code.",experience_conducting_analyses
+Analysts in this project should not disclose any information to any other researcher until all analysts have submitted their analyses. This means analysts are not allowed to share or discuss the methodology and results of their analyses with other re-analysts of the given dataset. Researchers and peer evaluators agree to refrain from posting anything about the project via social media or in the public domain until the project is completed.,disclosure_agreement
+"After submitting your analysis, your name will be linked to the submitted analysis and you will remain responsible for its content. Your email address will be used exclusively to communicate during the project. By filling out this form, you agree to the use of your email address to communicate during the project.",name_attached_to_analysis
+"In addition to co-analysts, we are looking for researchers to serve as evaluators of the submitted analyses. An evaluator’s job is to check the plausibility and sensibility of an analysis based on the summary of the analysis submitted by the analyst. Our expectation is that evaluators complete evaluations of 20 different analyses, and evaluators are eligible for a payment if they complete their task in time. Are you interested in serving as an evaluator for this project?",willing_to_peer_eval
+analyst_id,analyst_id
+comment about email,signup_comment
+removed,removed

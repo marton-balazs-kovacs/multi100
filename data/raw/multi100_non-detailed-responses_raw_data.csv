@@ -1,0 +1,523 @@
+analyst_id,paper_id,variable_identified_in,original_response,change_to,source_of_information
+FO7L6,Barreca_JournPoliEco_2016_J999,task1_analysis_report,"""Main conclusion to test was that that “the mortality impact of days with mean temperature exceeding 80°F declined by 75 percent” and that “almost the entire decline occurred after 1960”. To do so, I split my analysis in two parts: (i) Comparison before/after 1960 and (ii) Comparison between decades for the 1960-2004 period. 
+As some variables were not available in the original dataset, I chose a different approach than the one implemented in the paper. The majority of the analysis was conducted to perform the most obvious data cleaning and preparation to test the conclusion of the paper.
+A linear model was used in addition to several graphical representations of the data ""","Before starting this review, let’s mention an important point: all the data required are not available to
+reproduce the main equation 1 of the paper (p123). In particular, the mean temperature is not included in
+the dataset. Moreover, many control variables that seem to be essential to test the hypothesis (including
+age stratification of the population) are only available after 1960. I therefore chose a different approach to
+test the hypothesis.
+Since I could not reproduce equation 1, I chose a different approach to test the mentioned hypothesis and I
+tried to see if the visualization of the data corroborated the conclusions of the article. 
+ I performed some data cleaning according to the following rules:
+• Add a time period variable (before and after 1960) to test the main finding of the abstract;
+• Keep only the hottest months (as mortality is usually higher in the winter) to be sure to study hot day–
+related fatalities only;
+• Compare the nine main climatic regions.
+Comparison before/after 1960
+We observe globally a higher mortality for the period before 1960 but the decline in the temperaturemortality relationship across time periods is not clear with this plot (ie the trend curves does not tend to
+diverge with the increase in the number of days with extreme temperatures).
+Moreover, the relationship between an increase in the number of days above 80°F and an increase in
+mortality is not systematically verified, especially for the oldest period (before 1960).
+But for this comparison we can only view the mortality of the total population (no age stratification before
+1960). However, it is likely that there is an aging of the population, and thus an increase in the population
+most sensitive to extreme heat days after 1960.
+To test the effect of extreme temperatures for a given population category, only data after 1960 should be
+kept.
+Comparison between decades for the
+1960-2004 period
+We may now try to assess the hypothesis including the control variables. But we have to restrict our time
+period as most control variables are only available from 1960 to 2004, as illustrated in the plot below for the
+example of the evolution of the fraction of households with air conditioning:
+As mentioned by the authors of the article, there is indeed an increase in the number of homes with air
+conditioning.
+Let’s now look at the evolution of the oldest fraction of the population (>65 years):
+The general trend does indeed show an increase in the fraction of the population above 65 years.
+For the rest of the analysis, we will focus on this fraction of the population, which must be the most sensitive
+to extreme temperatures.
+This requires some additional data cleaning:
+Even when focusing on the most sensitive fraction of the population, we reach the same conclusion as
+before (part II.): we observe globally a decline of the mortality for the most recent decades but the decline in
+the temperature-mortality relationship across time periods is not clear with this plot (ie the trend curves does
+not tend to diverge with the increase in the number of days with extreme temperatures).
+Let’s take another look with a barplot version.
+Again, the decline of the mortality for the most recent decades is clear but it seems to be stable for all
+temperatures.
+Now, in order to have a more direct answer to our hypothesis, we will compare the mortality between 1960s
+and 1990s-2000s by region and by temperature class.
+To do so, we will subtract the average effect of the 1960s mortality from the data for the most recent years
+(1990 and 2000 decades) by climate region and by temperature class.
+For the conclusion of the article to be verified, the gap between 1960s and 1990s-2000s should increase
+with time. But the simple statistical test performed here shows the opposite effect (decrease of the gap with
+the increase of the number of days at 80 degrees).
+Conclusion
+The data processing carried out in the article under review involves many assumptions about the control
+factors. Due to missing data in the dataset provided with the article, a different approach has been adopted
+here. I tried to see if the great tendency highlighted in the article could be found by limiting the data
+processing to the steps that seem the most essential, such as comparison between regions and population
+ages.
+The results obtained with this approach do not validate the conclusion of the article: no trend toward
+a decline in the temperature-mortality relationship across decades was found in this review.
+Some of the missing data (such as average temperature per month) could be used to refine the comparison
+by using the same equation as the authors. But it also seems to me that, as the authors mention in the
+article, some data are not available (especially data before 1960, such as population stratification by age).
+This limits in any case the conclusions that can be drawn before this date.",Analysts report on the OSF
+FO7L6,Barreca_JournPoliEco_2016_J999,task2_analysis_report,1. Prepare data to fit the instructions 2. Quick look at the data 3. Perform statistical test (here ANOVA),"For task 2, the instructions were:
+• use 90 °F as a threshold for temperature extremes
+• compute the decline between the 1931–59 and 1960–2004 periods
+• conduct the analysis without geographical, or precipitation frequency specification
+• use a 2 months temperature exposure window
+• disregard socio-economic factors and technological and public health advancements over time
+• do not specify the causes of death.
+1. Data preparation
+We may now load the data:
+Then, I perform some data cleaning to follow the instructions:
+Just missing one instruction : “use a 2 months temperature exposure window”. Therefore, I calculate a new
+“days_above_90_roll” variable to take into account this exposure window:
+2. Statistic test
+Before performing any statistic test, let’s take a quick look at the result:
+On the basis of this graph, it seems that we reach the opposite conclusion of the original article. That is to
+say that the mortality in the past is globally higher than the mortality today, but that the most important
+differences are especially for the coldest months. While this difference tends to decrease, even to disappear
+for the coldest months.
+Let’s perform an ANOVA to check this. To do so, we will sort the temperature variable into three classes:
+It seems that there is a significant effect of both factors and interaction. Let’s plot the results:
+To conclude:
+• There is a significant difference of mortality between the two periods (present and past);
+• But, contrary to the conclusion of the original article, this difference is not higher in high-temperature
+conditions.
+To go further, it seems to me that the difference of mortality between past and present may indeed higher in
+extreme temperature conditions. Yet, this difference is higher for “cold” events than for “hot” events. So I can
+not confirm the conclusion of the original article.",Analysts report on the OSF
+A3X6D,Balcells_JournConflictRes_2014_0P4r,task1_analysis_report,I used the orginal data provided and conducted a survival analysis using multiple specifications. The results show rather clearly that irregular conflicts last longer than all other types of conflicts.,"I used the orginal data provided and conducted a survival analysis using multiple specifications. The results show rather clearly that irregular conflicts last longer than all other types of conflicts.
+###############################
+# In summary: using the code from the website and the stata code I cannot run the regressions as variables as missing or the data is missing
+# using the data from the journal and after some adjustments we get similar results
+# however, I cannot replicate the exact mean, nor the exact the regression or the exact graph
+# however, all the results prevail using my approach
+# using the data from the website (TRduration) yields also similar results (but again not identical)
+# it is also unclear how the others have 1206 observations
+# I was not able to run the regressions with PRIO100 with the data and info I obtained. To do so we would need to exclude all conflicts with less than 100 deaths a year
+# and this data is not provided.
+# Overall I don't know how the authors get to their data and their analysis. But using their data we obtain the same insight!
+################################
+#setting the location
+#reading the data
+#difference in months
+#the duration in months
+#simple recoding
+#getting the mean of the duration of conflicts
+#########
+#Running a simple survival analysis on the duration and whether the conflict ended or not.
+#using weibul, and gaussian distributions as well as cox regressions.
+#using weibul distribution
+#using the gausian distribution
+#using a cox regression
+
+#using the data from the author yields similar results but it loses significance for models 3 and 4!!",Analysts R code
+KQXUE,Teney_EurSocioRev_2016_qXX2,task1_analysis_report,Please see the document writeup.pdf that I uploaded,"Introduction
+My task within the ‘Multi100’ project is to independently re-analyze Teney’s
+(2016) finding that ‘poor economic performances . . . decrease positive dimensions of EU framing.’
+I have received two Stata do-files ‘eb all.do’ and ‘eb ml ESR.do’ as well as
+an author note reading ‘The required data to replicate my analyses can be
+downloaded on the Gesis repository website. I am not allowed to forward the
+Eurobarometer data. Enclosed you’ll find the code to combine the different
+Eurobarometer data waves and the code for the analysis of the ESR piece.’
+This is a tough one based on the materials at hand for several reasons.
+ It is not clear what data is being used. Teney (2016, p. 620) reports that
+the ‘analysis is based on the pooled data of 16 [Eurobarometer] waves that
+took place at least once a year between March 2004 and May 2013 (EB
+61.0, 62.0, 63.4, 64.2, 65.2, 67.2, 69.2, 10.1, 72.4, 73.4, 74.2, 75.3, 76.3,
+77.3, 78.1, 79.3).’ Note that ‘10.1’ stands in the middle of the otherwise
+ordered list. This is probably a mistake, Eurobarometer 10.1 must have
+been collected in the 1970’s. I thus do not attempt to include Eurobarometer 10.1 to the data.
+Adding the problem, the Stata do-file ‘eb all.do’ that (partially) documents the data preparation suggests that the analyses also draw on additional Eurobarometer waves not mentioned in the article.
+Importantly, the two treatment variables indicating ‘poor economic performances’ are not included in the Eurobarometer data. The only information on those variables reported in Teney (2016) is: ‘The gravity of the
+economic crisis for the population is measured with an indicator of change
+in the economic performance and an indicator of (absolute) involvement in
+the economic process, namely the annual gross domestic product (GDP)
+growth and unemployment rates (Eurostat, 2014).’ Eurostat (2014) is
+a generic reference to the Eurostat database which does not specify the
+treatment variables any further, and also the temporal dimension—how
+1
+the Eurostat data was merged to the (somewhat unevenly timed) Eurobarometer data—is left unexplained in the article and is also not shown
+in the Stata do-files. This makes it difficult to replicate the Teney (2016)
+findings.
+ The modeling strategy of Teney (2016) is not crystal clear. While the hypothesis ‘poor economic performances . . . decrease positive dimensions of
+EU framing’ seems reasonably straightforward (e.g. ρx,y < 0), the model
+used by Teney (2016) to test the hypothesis is not.
+Teney (2016, Table 3) uses a random-effects model (variance components
+for survey waves and country–survey waves) which includes a range of
+variables next to the treatment: Sex, age, education, a set of dummy variables indicating occupational group and labor market status, and degree of
+urbanization. I am not sure why these variables are necessary to identify
+an effect of the treatment variables. It seems unlikely to me that population composition would meaningfully confound the relationship between
+economic performance and perceptions of the European Union.
+On top of these variables, the two treatment variables unemployment rate
+and GDP growth are included simultaneously, which I find a questionable
+choice. Why would GDP growth net of unemployment, or unemployment
+net of GDP growth be a good measure of economic performance?
+Further, quadratic terms of the two treatment variables are included in
+the equation.
+Finally, the two treatment variables are each interacted with two dummy
+variables indicating respondent’s education.
+It is not exactly clear to me how to interpret the coefficients pertaining to
+the treatment variables, particularly when the hypothesis only specifies a
+direct linear effect.
+ The analysis in Teney (2016) leaves a lot of researcher degrees of freedom.
+The four outcome variables are based on complex data analyses of many
+measurements detailed in a different article (Teney et al., 2014), thus I do
+not question whether the variables are valid and reliable measures of the
+intended construct.
+What I do note however is that it seems to me that several arbitrary
+decisions are being made in the construction of the outcomes, and neither
+Teney (2016) nor I take the time to assess the robustness of the findings
+to these decisions.
+Data
+Eurobarometer
+For my analyses, I make use of the Eurobarometer surveys listed in Table 1.
+Note that I exclude the 10.1 Eurobarometer.
+Table 2 shows that my attempt at reproducing the outcome variables is
+not bad. Despite one data set (‘10.1’) excluded, are relatively close to the
+ones reported in Teney (2016, Table 1), which reports .534, .105, .208, .153,
+respectively.
+The number of cases reported in Table 2 is also relatively close to Teney’s
+(2016) N = 390,373. My data set should be smaller than Teney’s (2016) as one
+data set is missing, yet I assume that Teney (2016) uses listwise deletion and
+loses cases with missing values on the covariates (sex, age, education, occupational group and labor market status, and degree of urbanization) which I do
+not take into account.
+Figure 1 reproduces Teney’s (2016) Figure 1, and again I would say that my
+reconstruction of the data set is reasonably close.
+Eurostat data
+I obtain annual gross domestic product and unemployment data from Eurostat.
+Specifically, I am using
+ Gross domestic product at market prices expressed in million Euro based
+on chain-linked volumes (2005), (‘nama 10 gdp,’ ‘CLV05 MEUR,’ ‘B1GQ’),
+shown in Figure 2. I then calculate the annual growth, shown in Figure 3.
+ Annual unemployment rate as a percentage of the total population aged
+20–64 years (‘une rt a h,’ ‘Y20-64,’ ‘PC POP’), shown in Figure 4.
+Analytical strategy
+While the complicated model which Teney (2016) uses probably makes sense to
+test her full battery of hypotheses, my aim is to only test the claim that “poor
+economic performances . . . decrease positive dimensions of EU framing.”
+This can easily be done by aggregating the Eurobarometer data to the country level (i.e. using the data shown in Figure 1) and using a fixed-effects panel
+regression setup.
+Thus I am estimating the equation
+yit = xitβ + αi + uit for t = 2004, . . . , 2013 and i = 1, . . . , N,
+where yit is in turn cosmopolitan and utilitarian framing and xit is GDP
+growth and unemployment. αi
+is the unobserved time-invariant individual effect, e.g. historical and institutional factors, and uit is the error term.
+In addition, I am estimating models where I add both treatments simultaneously.
+The virtue of the fixed effects estimator is that it removes all time-constant
+confounding from the equation, irrespective of whether it has been observed or
+is unobserved. Important country differences such as cultural differences are
+thus accounted for. This approach is arguably more rigorous than the random
+effects model used by Teney (2016).
+The data used for the models is described in Table 3. For fixed-effects models
+particularly the within-variance is important, and as Table 3 demonstrates, the
+within-variance is non-negligible for all variables.
+Results
+Results are shown in Figure 5. Panel A1 shows the association between changes
+in cosmopolitan meaning and changes in GDP growth, with and without accounting for unemployment rate. The association is small and not different
+from zero at conventional levels of statistical precision. This finding is not in
+line with our guiding hypothesis that weak economic performance is associated
+with lower support for positive dimensions of EU framing.
+Panel A2 illustrates the association between changes in cosmopolitan meaning and changes in unemployment rate, with and without accounting for GDP
+growth. A higher unemployment rate is associated with weaker support for a
+cosmopolitan EU framing, as was predicted by our guiding hypothesis.
+Panel B1 shows the association between changes in utilitarian meaning and
+changes in GDP growth, with and without accounting for unemployment rate.
+Higher GDP growth is associated with stronger support for a utilitarian EU
+framing, as was predicted by our guiding hypothesis.
+Panel B2 shows the association between changes in utilitarian meaning and
+changes in unemployment rate, with and without accounting for GDP growth.
+A higher unemployment rate is associated with weaker support for a utilitarian
+EU framing, as was predicted by our guiding hypothesis.
+In sum, we have conducted four tests of our guiding hypothesis and three
+came out in the expected direction. I would suggest that this can be interpreted
+as support for the guiding hypothesis.
+Could this be due to a multiple comparison problem? Rather than conducting a formal false discovery rate analysis, Table 4 shows the p-values that go
+with the coefficients shown in Figure 5, and it becomes clear that even with a
+very conservative correction method my substantive results would be unaffected.
+Conclusion
+Drawing on Eurobarometer and Eurostat data from 2004 to 2013, I was able
+to corroborate Teney’s (2016) finding that ‘poor economic performances . . .
+decrease positive dimensions of EU framing.’
+This overlap in findings is remarkable as I substantially deviate from Teney’s
+(2016) modeling approach, removing complex interactions and control variables
+which did not make much sense to me when testing the guiding hypothesis, while
+at the same time using a more rigorous fixed-effects approach that controls for
+both observed and unobserved time-constant confounders. Further, my data
+partially deviated from Teney (2016).
+Further reflecting on this exercise, I note that I was able to do almost all
+of the data preparation based on the description in the article alone; only for
+summing up and dividing the outcome variables the Stata do-files provided by
+the author were really necessary.
+Is Eurobarometer 10.1 in fact Eurobarometer 70.1? Kind of late to realize
+that now.",Analysts report on the OSF
+KQXUE,Teney_EurSocioRev_2016_qXX2,task2_analysis_report,It was quite a lot as the paper wasn't particularly clear about the data it used and I needed to check a few things. Please see task2.pdf for a complete write-up.,"Introduction
+My  first  task  within  the  `Multi100'  project  was  to  independently  re-analyzeTeney's (2016) nding that `poor economic performances:::decrease positivedimensions of EU framing.'My  second  task  in  the  `Multi100'  project  is  to  re-analyze  Teney's  (2016)nding  that  `poor  economic  performances:::decrease  positive  dimensions  ofEU framing' with the following guidance:`Your analysis should produce a single, main result in terms of statisticalfamilies  ofz,t,F,  or2tests  (or  their  alternative  or  non-parametricversions).`You should disregard contextual variables related to the EU policies andparty EU salience and party EU positions indexes in your analysis.`You should use the positive non-materialist form of EU framing in youranalysis.`You should use the unemployment rate as the measure for poor economicperformance in your analysis.'In fact I had already done that in the previous task:  Figure 5 (Panel A2)and Table 4 reported the association between the unemployment rate and the`Cosmopolitan'  outcome  (the  `positive  non-materialist  form  of  EU  framing').For  this  regression  coecient  I  reported  standard  errors  (in  Figure  5)  and  ap-value (in Table 4), but hey, here I will do this again, this time also reportinga test statistic.In addition, I will use an additional data set that Teney (2016) probably alsoused.  Teney (2016) reports twice to be using one data set referred to as Euro-barometer 10.1.  This is obviously wrong as there is no Eurobarometer 10.1 andEurobarometer 10 was collected in the 1970's rather than during the observationwindow stated in Teney (2016).1
+Just before submitting Task 1 it occurred to me that Eurobarometer 10.1 isprobably just a typo for Eurobarometer 70.1.  Here I'll incorporate Eurobarom-eter 70.1 in the analyses.MaterialsI have received two Stata do-les `eball.do' and `ebmlESR.do' aswell as an author note reading `The required data to replicate my analyses canbe downloaded on the Gesis repository website.  I am not allowed to forwardthe Eurobarometer data.  Enclosed you'll nd the code to combine the dierentEurobarometer data waves and the code for the analysis of theESRpiece.'Potential reasons for deviationsThis is a tough one based on the materialsat hand for several reasons.It is not clear what data is being used.  Teney (2016, p.  620) reports thatthe `analysis is based on the pooled data of 16 [Eurobarometer] waves thattook place at least once a year between March 2004 and May 2013 (EB61.0,  62.0,  63.4,  64.2,  65.2,  67.2,  69.2,  10.1,  72.4,  73.4,  74.2,  75.3,  76.3,77.3, 78.1, 79.3).'  Note that `10.1' stands in the middle of the otherwiseordered list.  This is probably a mistake, Eurobarometer 10.1 must havebeen collected in the 1970's.  I assume that Eurobarometer 10.1 is a typoand should refer to Eurobarometer 70.1.Adding  the  problem,  the  Stata  do-le  `eball.do'  that  (partially)  docu-ments the data preparation suggests that the analyses also draw on addi-tional Eurobarometer waves not mentioned in the article.Importantly, the two treatment variables indicating `poor economic per-formances' are not included in the Eurobarometer data.  The only infor-mation on those variables reported in Teney (2016) is:  `The gravity of theeconomic crisis for the population is measured with an indicator of changein the economic performance and an indicator of (absolute) involvement inthe economic process, namely the annual gross domestic product (GDP)growth  and  unemployment  rates  (Eurostat,  2014).'   Eurostat  (2014)  isa generic reference to the Eurostat database which does not specify thetreatment variables any further,  and also the temporal dimension|howthe Eurostat data was merged to the (somewhat unevenly timed) Euro-barometer data|is left unexplained in the article and is also not shownin the Stata do-les.  This makes it dicult to replicate the Teney (2016)ndings.The modeling strategy of Teney (2016) is not crystal clear.  While the hy-pothesis `poor economic performances:::decrease positive dimensions ofEU framing' seems reasonably straightforward (e.g.x;y<0), the modelused by Teney (2016) to test the hypothesis is not.Teney (2016, Table 3) uses a random-eects model (variance componentsfor  survey  waves  and  country{survey  waves)  which  includes  a  range  ofvariables next to the treatment:  Sex, age, education, a set of dummy vari-ables indicating occupational group and labor market status, and degree of2
+urbanization.  I am not sure why these variables are necessary to identifyan eect of the treatment variables.  It seems unlikely to me that popula-tion composition would meaningfully confound the relationship betweeneconomic performance and perceptions of the European Union.On top of these variables, the two treatment variables unemployment rateand GDP growth are included simultaneously, which I nd a questionablechoice.  Why would GDP growth net of unemployment, or unemploymentnet of GDP growth be a good measure of economic performance?Further,  quadratic terms of the two treatment variables are included inthe equation.Finally, the two treatment variables are each interacted with two dummyvariables indicating respondent's education.It is not exactly clear to me how to interpret the coecients pertaining tothe treatment variables, particularly when the hypothesis only species adirect linear eect.The analysis in Teney (2016) leaves a lot of researcher degrees of freedom.The four outcome variables are based on complex data analyses of manymeasurements detailed in a dierent article (Teneyet al., 2014), thus I donot question whether the variables are valid and reliable measures of theintended construct.What  I  do  note  however  is  that  it  seems  to  me  that  several  arbitrarydecisions are being made in the construction of the outcomes, and neitherTeney (2016) nor I take the time to assess the robustness of the ndingsto these decisions.DataEurobarometerFor  my  analyses,  I  make  use  of  the  Eurobarometer  surveys  listed  in  Table  1.Note that I include the 70.1 Eurobarometer instead of the 10.1 Eurobarometer.Outcome variablesI tried following the variable construction described inTeney (2016) and in `ebmlESR.do' as closely as possible.Table??shows  that  my  attempt  at  reproducing  the  outcome  variables  isnot  bad.   Despite  one  data  set  (`10.1')  excluded,  are  relatively  close  to  theones  reported  in  Teney  (2016,  Table  1),  which  reports  .534,  .105,  .208,  .153,respectively.The number of cases reported in Table 2 is larger than the one of Teney's(2016)N= 390;373.  I assume that Teney (2016) uses listwise deletion and losescases with missing values on the covariates (sex, age, education, occupationalgroup and labor market status, and degree of urbanization) which I do not takeinto account.Figure 1 reproduces Teney's (2016) Figure 1, and again I would say that myreconstruction of the data set is reasonably close.
+Eurostat dataI obtain unemployment data from Eurostat.  Specically, I am using the annualunemployment  rate  as  a  percentage  of  the  total  population  aged  20{64  years(`unertah,' `Y20-64,' `PCPOP'), shown in Figure 2.Analytical strategyWhile the complicated model which Teney (2016) uses probably makes sense totest her full battery of hypotheses, my aim is to only test the claim that \pooreconomic performances:::decrease positive dimensions of EU framing.""This can easily be done by aggregating the Eurobarometer data to the coun-try level (i.e. using the data shown in Figure 1) and using a xed-eects panelregression setup.Thus I am estimating a model with the equationyit=xit+i+uitfort= 2004;:::;2013 andi= 1;:::;N,whereyitis cosmopolitan framing andxitis unemployment.iis the unob-served time-invariant individual eect, e.g. historical and institutional factors,anduitis the error term.The virtue of the xed eects estimator is that it removes all time-constantconfounding from the equation, irrespective of whether it has been observed oris  unobserved.   Important  country  dierences  such  as  cultural  dierences  arethus accounted for.  This approach is arguably more rigorous than the randomeects model used by Teney (2016).
+The data used for the models is described in Table 3. For xed-eects modelsparticularly the within-variance is important, and as Table 3 demonstrates, thewithin-variance is non-negligible for all variables.ResultTable 4 shows the association between changes in cosmopolitan meaning andchanges in unemployment rate.  A higher unemployment rate is associated withweaker support for a cosmopolitan EU framing, as was predicted by our guidinghypothesis.
+ConclusionDrawing on Eurobarometer and Eurostat data from 2004 to 2013,  I was ableto  corroborate  Teney's  (2016)  nding  that  `poor  economic  performances:::decrease positive dimensions of EU framing.'This overlap in ndings is remarkable as I substantially deviate from Teney's(2016) modeling approach, removing complex interactions and control variableswhich did not make much sense to me when testing the guiding hypothesis, whileat the same time using a more rigorous xed-eects approach that controls forboth  observed  and  unobserved  time-constant  confounders.   Further,  my  datapartially deviated from Teney (2016).Further reflecting on this exercise,  I note that I was able to do almost allof the data preparation based on the description in the article alone; only forsumming up and dividing the outcome variables the Stata do-les provided bythe author were really necessary.",Analysts report on the OSF
+0ZI5H,Wilde_AmSocioRev_2010_4XLv,task1_analysis_report,"Construct variables (personal opinion based on theory), Logistic regression (a binomial DV), Ordered Regression (an ordinal DV), details see .rmd file","Construct variables (personal opinion based on theory), Logistic regression (a binomial DV), Ordered Regression (an ordinal DV), details see .rmd file
+## Data pre-processing
+Considering my area of expertise is not sociology, the encoding of variables could be disputed by peers. However, I agreed with：  
+
+a) some calculation of the following variable from original paper:  
+**NPCCHANG** (**Field Stability**, Change in percent Catholic);  
+**NSTRUCTU** (**Structuration**)  
+
+b) the encoding of the following variable:  
+**IREVELA0** (**Vote on revelation** - progressive/conservative);  
+**IFRSTBV0** (**Vote on first BVM** - progressive/conservative);   
+
+I did not agree with the following variable and then tried to recode or explain them:  
+
+c) **NRELREG1** (I would consider it represent **'Monopolization'**; true value in NRELREG2 or NRELREG4 are representing false value of this variable)  
+d) **NINCUMBE** (it represent Field Stability in the original paper, but I consider it as another perspective of **'Monopolization'**)  
+
+I would also construct a variable:
+
+e) **NORGGRO1** (**organizational growth/efficacy situation**) by simply transforming change in percent Catholic into a binary variable (0: negative growth, 1: positive growth)  
+
+Due to the lack of relevant information, the pattern of missing data is assumed to be **MCAR**. Considering the sample size of this dataset is enough large to ensure the power and there is no a priori assumptions about the distribution of IVs, I would use *listwise deletion* instead of any imputation or pairwise deletion.
+## RCT: more competition/willingness to grow, more reform
+### Logistic Regression of Sources of Revelation
+The above result shows objective binary growth, market share and one of my assumed monopoly variable 'Incumbency' are not significant in predicting bishops' revelation vote (potential reform or progressive behaviour in revelation issue) probability. However, the interaction gives/imply us the following information:  
+
+a) incumbency may be useful as a Z variable between IREVELA0 (bishops' revelation vote probability) and NRELREG1 (national religion);  
+
+b) market share may be only significant in predicting bishops' revelation vote probability when a country's religion is monopolized. The estimate might imply that less market share would significantly increase the bishops` revelation vote probability (reform tendency of bishops) when monopoly exists.  
+
+### Logistic Regression of Blessed Virgin Mary
+The above result gave some interesting evidence that:  
+
+c) market share, monopoly and organizational growth situation both significant in the simple model now;  
+
+d) when the interaction is entered, the simple effects changed slightly (but are still significant at the 0.1 level). If we consider such a simple effect is still noticeable, then the ""monopoly X market share"" and the ""monopoly inside mechanism"" are still useful in this model, as previous mention.  
+
+BIC shows model with interaction are better than the no-interaction.
+
+### Phased summary 1:  
+We proved that monopoly (""national religion"" mainly, ""incumbency"" may as Z variable) and the interaction between market share and monopoly are a notable approach to progressive voting behaviour. Both RCT interaction models support that less market share would significantly increase the bishops` progressive vote probability when monopoly exists. This conclusion only partially proved RCT's basic causal mechanism, namely simply considering more competition/willingness to grow (less market share) would lead to more reform (voting behaviour). At least, national religion is an important variable that could not be ignored.
+
+According to the paper's literature review, protestants concern the Mary issue more than the Revelation issue. This prior assumption gave us information that they (bishops) would be more sensitive on progress to the Mary issues. Therefore, for the same bishop with same progressive trait, the positive vote possibility of the ""Mary issue"" would be higher than the ""Revelation issue"". This conclusion implies that there is a rank in the voting behaviour since ""conservative/progressive"" is a latent trait. And we would make a bold assumption that variable **IDV4CAT** (Voting pattern on first BVM and revelation - four category) is an ordinal manifest variable measuring the ""conservative/progressive"" trait.
+
+## NIT: more complicated  
+### Logistic Regression of Blessed Virgin Mary, NIT version
+### Logistic Regression of Sources of Revelation, NIT version
+### Phased summary 2:
+
+There are some interesting findings:  
+
+- The coefficient of market share is now significant.
+- The Field Stability shows a decreasing estimate from BVM to REV of the NIT predicting model. I consider field stability may not be so important in the individual decision progress although its coefficient sometimes significant at a p<0.05 level. 
+- In contrast, Field Structuration shows a stable significant estimate in predicting individual's voting behaviour.
+- Considering the interactions between market share and structuration/monopoly are notable, it is worth doubting that instead of the national religion, market share would be better as a Z variable.  
+
+I would not report any regression coefficient direction change because it is not uncommon and it is meaningless to me. According to above summary, I would remove field stability and only put market share, national religion and structuration as predicting variable in the ordinal regression model.  
+There are still some limitations like I did not figure out the interaction issue (NA) between structuration and monopoly (national religion) due to my lack of experience, which I think it is not important (There is no multicollinearity, all variables are binary and theoretically non-overlapping).  
+## Ordered Regression of BVM and revelation
+We considered **IDV4CAT** is an ordinal manifest variable measuring the ""conservative/progressive"" trait. However, we need to reorder its encoding:
+Then we created a simple (without interaction) ordinal regression model based on above assumption:
+## Conclusion
+
+We established several logistic regression models to explore whether RCT or NIT model is better. The result shows:
+
+- The hypothesis of RCT is too simple to explain the individual's voting behaviour;  
+- The variable from NIT enriches the interpretability of the model, although we only consider structuration is more important;  
+- Market share, as a classic variable from RCT, act more like a Z variable through both RCT and NIT approach;  
+- According to the result of ordered regression, bishops who live in a higher structuration country would significantly have a higher possibility (odd ratio: 2.5209) to progressive vote while their RCT variables significantly but less affect (national religion: 0.2039, market share: 0.9975). However, although we could claim that **PART OF** NIT characteristics prioritize bishops' *institutions' legitimacy* concerns over *efficiency* concern, the real relationship is more complicated than this simple claim, especially in interaction and variables' causal mechanisms. Moreover, structuration, market share and religion monopoly are far from enough as the manifest variables to confirm RCT and NIT.
+
+### Claim: Partly Proved.",Analysts R code
+0ZI5H,Wilde_AmSocioRev_2010_4XLv,task2_analysis_report,Please check the *.rmd and the output .html file.,"Please check the *.rmd and the output .html file.
+## Data pre-processing
+
+According to the task description, different from what I did in task 1, I need to consider concerns about institutions’ legitimacy as ecumenical concerns (embedded in a field structurated by Protestants), namely the structuration (NSTRUCTU). Therefore, the structuration should be considered the only NIT variable. Field stability (NPCCHANG) should be an interactive variable with country religion variable (Religious freedom, NRELREG2; state religion is not RCC, NRELREG4). In other words, their purpose in this analysis would be to participate in group-wise regression to discuss the situation of stability among different countries in groups. The market share would be the only RCT variable. On this basis, the country religion is actually a grouping moderator in the analysis. In addition, according to some results of analysis 1, some original variables will be included.  
+
+For the reason above, different from task1, the variable list should be as close as the original paper but with some small changes:  
+
+DV:  
+**IREVELA0** (**Vote on revelation** - progressive/conservative);  
+**IFRSTBV0** (**Vote on first BVM** - progressive/conservative);  
+**IDV4CAT** (**Progressive** - ordinal manifest variable of C/P trait);  
+
+NIT variables:  
+**NSTRUCTU** (**Structuration**, the core of NIT);  
+**NPCCHANG** (**Field Stability**, Change in percent Catholic);  
+**NINCUMBE** (**Incumbency**);  
+
+RCT variables:  
+**NPERCATH** (**Market Share**, Percent Catholic - 1965, the core of RCT);  
+**NRELREG2** (**Country attribute** - dummy: Religious freedom, *RCC is state religion* as baseline);  
+**NRELREG4** (**Country attribute** - dummy: State religion is not RCC);  
+
+However, I see **Country attribute** as the between-group moderator. That is, the dummy variables are not longer as the variables for RCT variables but for the construction of moderator. Its result would be the same as the group-wise regression with transformed **Religious regulation (three categories) - 1955**.  
+
+Normal interaction:  
+**NRELREG4 * NSTRUCTU**, **NRELREG2 * NSTRUCTU**, **NRELREG4 * NPERCATH**, **NRELREG2 * NPERCATH** (if we need group discussion);  
+**XINCUMST** (Interaction between incumbency and stability);  
+**XSTRUCST** (Interaction between structuration and stability);  
+**XINCUMS0** (Interaction between incumbency and structuration);  
+
+Moreover, we would have special interaction according to the analysis description that:  
+**NRELREG4 * NPCCHANG** (how stability interacts with religious freedom);  
+**NRELREG2 * NPCCHANG** (how stability interacts with another established religion);  
+
+Considering that our purpose is to compare coefficient values, only the coefficients of **NSTRUCTU** and **NPERCATH** will be compared in the same regression equation. National religion will be used as moderator later for group-wise regression; field stability will be used as the normal NIT variable. According to different DVs, we will first build some regression equations containing all variables to prove/reject our claim.
+
+In addition, same as the first round analysis:  
+According to the paper's literature review, protestants concern the Mary issue more than the Revelation issue. This prior assumption gave us information that they (bishops) would be more sensitive on progress to the Mary issues. Therefore, for the same bishop with same progressive trait, the positive vote possibility of the ""Mary issue"" would be higher than the ""Revelation issue"". This conclusion implies that there is a rank in the voting behaviour since ""conservative/progressive"" is a latent trait. And we would make a bold assumption that variable **IDV4CAT** (Voting pattern on first BVM and revelation - four category) is an ordinal manifest variable measuring the ""conservative/progressive"" trait.
+
+Due to the lack of relevant information, the pattern of missing data is assumed to be **MCAR**. Considering the sample size of this dataset is enough large to ensure the power and there is no a priori assumptions about the distribution of IVs, I would use *listwise deletion* instead of any imputation or pairwise deletion. 
+## Prioritize concerns about their institutions’ legitimacy over the concerns about efficiency  
+### Sources of Revelation/Overall:
+We could see in this Revelation model, the SE-adjusted coefficient showed bishops who live in a higher market share country would significantly have a higher possibility to progressive vote on revelation issue (odd ratio: approximately 100%) while possibly living in a higher structuration country only contribute 9.79%. We did a t-test to compare these two coefficients manually and the result positively support that a low possibility to accept H0 ""these two coefficient are the same"" in the NHST framework (t = 3.81, p = 0.000144 << 0.005). Considering the odds ratios, I would reject the original claim in Revelation Model*""These characteristics [other crucial characteristics of the social environment within which leaders operate], which we derive from Neo-Institutional Theory (NIT) ... lead them [leaders] to prioritize concerns about their institutions’ legitimacy over the concerns about efficiency ... (p. 586.).""*.  
+
+### Blessed Virgin Mary(BVM)/Overall: 
+The BVM Model also suggests the same result (t = 2.90, p = 0.00381 < 0.05). 
+
+### How about overall?
+The overall ordinal model also supports this result (t = 4.12, p = 0.0000403 << 0.05).
+
+## Group-wise analysis
+
+I consider the overall model have already prove the claim. However, the analysis description asked me to notice how stability interact with group variable. So, based on two logistic model, we would conduct some group-wise analysis.
+
+### Sources of Revelation & Blessed Virgin Mary(BVM)/Group-wise:
+*Same as the first round, NRELREG2:NSTRUCTU is missing. I would ignore it and admit that is because of my lack of ability.*  
+The analysis result suggests in the Rev. issue, the intercept of voting behavior possibility of bishops who live in a competitive or hostile religion environment is significant to the baseline group (national religion is RCC). (please forgive me for using such a direct inference) In other words, living in a competitive or hostile religion environment would make bishops would have a lower willingness to vote (-12.706252%, -12.444885%). However, their increasing/decreasing trends/slopes are not significant (z = -0.720 ~ 0.423, p = 0.471 ~ 0.966) in both model. So, we could not consider country religion as a general moderator in this analysis but only in the Rev. issue.
+
+## Conclusion
+
+### Claim: Not Proved.",Analysts R code
+DAA9C,McDevitt_JournPoliEco_2014_yQeR,task1_analysis_report,"The paper describes where ""the primary data"" came from, but did not make that raw data available. I converted the provided Stata (.dta) formats to .csv with Pandas in order to be able to read them. I found a file called ""final_data"" that seemed to contain the cleaned data, which matched a Table in the Appendix for number of records. The assigned claim only necessitated keeping two columns, so the analysis was relatively straightforward.","The paper describes where ""the primary data"" came from, but did not make that raw data available. I converted the provided Stata (.dta) formats to .csv with Pandas in order to be able to read them. I found a file called ""final_data"" that seemed to contain the cleaned data, which matched a Table in the Appendix for number of records. The assigned claim only necessitated keeping two columns, so the analysis was relatively straightforward.
+-----------
+Find data
+Paper claims 'the primary data for all plumbing firms...come(s) from a June 2008 download of the Web-based version of ReferenceUSA'. This data was not provided in the .zip file for download (p. 913, Section II. Data Description)
+
+Additionally, 'the primary measure of firm quality...is the number of compliants filed against the firm with the Better Business Bureau...(which) comes from a June 2008 download of the BBB's website.' This data was also not provided in a raw form in the files available for download.
+
+File called 'final_data' appears to contain cleaned and summarized data
+Number of records (2,293) in this file matches that in Table 2 in Online Appendex: 'Summary Statistics for Illinois Plumbing Firms'
+Keep only the two columns I need",Analysts code
+648X2,Wilfahrt_WorldPolitics_2018_k7wj,task1_analysis_report,This is fully reported in my uploaded R Notebook. I am happy to provide more detail if necessary.,"I have been tasked with using the replication data in Martha Wilfahrt's 2018 *World Politics* paper ""Precolonial Legacies and Institutional Congruence in Public Goods Delivery: Evidence from Decentralized West Africa"" to test the claim that ""areas that were once home to precolonial states distribute goods more broadly across space.""
+
+What I want to do to test this claim is to see if the IV measuring congruence with precolonial states (Congruence_20km_CRavg_T1/T2) correlates significantly and meaningfully with the DVs that measure the extent to which public goods are distributed broadly (the paper does this with a variable that looks at the difference between actual targeting and target that ""maximizes the percentage of the local government's population living within three to five kilometers of a school or clinic, and taking into account existing facilities"", p. 259). I look at this descriptively (without adjusting for possible confounders) and causally (given the **strong** assumption that adjusting for confounders I'm left with something resembling random assignment of pre-colonial congruence).
+
+My overall conclusion is that *""The results do not show evidence for or against the relationship/effect as described in the claim provided in your task.""* This is hinges on two issues. While trying to understand the data and analysis and how those relate to main paper and supplementary information, I also uncovered errors in the reporting of the results, which I will flag at the end of this note.",Analysts R code
+648X2,Wilfahrt_WorldPolitics_2018_k7wj,task2_analysis_report,This is covered in the uploaded R Notebook.,"In task 2, I was told to focus on the same core research question but ""You should focus on primary schools instead of health facilities in your analysis. You should control for local need and geographic suitability in your analysis.""
+
+The instructions specify controls: need and geographic suitability. Note that I am given no guidance on the time period, nor how to handle missing data. The Multi100 instructions force one to present a single result and the instructions seems to preclude some kind of pooling with a time fixed effect, so I'll just pick time period 1. Choosing only time period 1 and ignoring missing data may be problematic (see comments and analysis in Task 1 above).
+
+The requested setup of the model is the same as what I did for part of task 1. I do not feel that I have a better sense of the underlying causal model than the author of the paper, so my controls for need and suitability follow her choices.^[The only control variable that gave me pause was percent Mouride, which could be considered a measure of demand instead of need, but removing it barely alters the main results.]
+
+As above I'll use lm_robust to get easy clustering of SEs on regions. The results are quite similar if I do not cluster the standard errors (it's worth checking this as there are only 11 regions/clusters).",Analysts R code
+08UM9,Wilfahrt_WorldPolitics_2018_k7wj,task1_analysis_report,Detailed analysis protocol is available in the Rmd file uploaded on osf.,"### Ploting the relationship between Congruency and New Public Goods without Controls
+In the following plots, we illustrate the evolution of four measures of public good distribution as a function of six precolonial congruence measures. In general, different precolonial congruence measures exhibited similar patterns across different measures of public good distribution. Meanwhile, access to neither new clinic nor schools measured at T1 and T2 were positively correlated with precolonial congruence.
+
+Table. 1 confirmed the observation above that pre-colonial congruence is not significantly correlated with any new public goods using linear regression models. We only took congruence within 20 km at corresponding time period as the measure of pre-colonial congruence given the observation above that different measures exhibited highly homogeneous pattern. Specifically, GLM refers to generalized linear models and LM refers to linear models.
+
+Even though we found no significant correlation between new public good access and precolonial congruence, this null result might be  confounded by other irrelevant variables, such as village population, density, demand for public goods, regional wealth etc. We aim to rerun the models above while adding these confounding variables in the regression. Added controlled variables include: 
+
+1. population in 2011  (LnPop2011); 
+
+2. population density within 3km (Pop_Dens_3km); 
+
+3. distance to school at corresponding time period (D_School_02_sqrt/D_School_09_sqrt); 
+
+4. percentage of villages with schools at corresponding time period (PercVillages_Schools_CR02/PercVillages_Schools_CR09);
+
+5. regional wealth (Regional_Wealth);
+
+6. percentage of primary school students attending schools at corresponding time period (Student_Attendance_02_CR/Student_Attendance_09_CR); 
+
+7. percentage of villages that take common markers of Mouride at corresponding time period (Perc_CR_Mouride_T1/Perc_CR_Mouride_T2); 
+
+8. distance to waterway (LnD_waterway);
+
+9. elevation (Village_Elevation);
+
+10. latitude (Latitude);
+
+11. longitude (Longitude); 
+
+12. percentage of villages listed in French cencensus at corresponding time period (Perc_CR_1900_T1/Perc_CR_1900_T2);
+
+13. whether the village was listed in French colonial censuses (Village_1958).
+
+14. percentage of villages with clinics in 2009 (PercVillages_Schools_CR09);
+
+15. whether a village falls within Lowland Rainforest/Grassland (LL_Rainforest_grassland);
+
+16. whether a village falls within Ferlo zone (Ferlo_Zone);
+
+17. whether a village falls within Sahel Grassland (Sahel_Grassland_Bush);
+
+18. whether a village falls within Sudanian woodland (Sudanian_Woodland).
+
+As shown in Table. 2, access to new schools in 2002 and 2009 become highly significantly associated with pre-conlonial congruence, which strongly contradicts the results shown in Table. 1, in which no control variables were added to the regression formular. There are two possibilities: 1) this effect could simply be explained by some random effect, for example this effect does not exist within neighboring villages but it might be only exist across larger scale of geographical regions. The vast irrelevant differences between larger geographical regions drives the effect. This issue could be resolved by applying generalized linear mixed models (GLMM), which could take larger scale of geographical markers as random effects. 2) pre-colonial congruence is correlated with some of the control variables. Strong correlation across variables might vastly bias the results of each single variables. This issue could be resolved by testing model multicolinearity, ploting correlation between variables, and droping strongly inter-correlated control variables from the model.
+
+### Solution 1: constructing GLMM model
+As shown in Table 3, these effects are very robust in mixed models. Access to new clinics at T2 also exhibited significant effect in addition to the effects observed in access to new schools and social services. 
+
+### Solution 2: Testing model multicollinearity
+Figure. 4-7 revealed that Perc_CR_1900_T2, Longitude, Sahel_Grassland_Bush, LL_Rainforest_grassland, and Sudanian_Woodland are subject to increase multicollinearity in the linear models estimated above, due to moderate or high correlation with other variables (VIF larger than 5 is considered moderate or high multicollinearity). 
+
+### Solution 3: Digging the potential intercorrelation between independent variables
+As shown in the heatmaps above, pre-colonial congruences are positively correlated with longitude and Perc_CR_1900_T1 or Perc_CR_1900_T2 (Congruence T1 and longitude: r = `r C2T1_LONG$estimate`, p = `r C2T1_LONG$p.value`; Congruence T2 and longitude: r = `r C2T2_LONG$estimate`, p = `r C2T2_LONG$p.value`; Congruence T1 and Perc_CR_1900_T1: r = `r C2T1_PC1T$estimate`, p = `r C2T1_PC1T$p.value`; Congruence T2 and Perc_CR_1900_T1: r = `r C2T2_PC1T$estimate`, p = `r C2T2_PC1T$p.value`). 
+
+To sum, both multicollinearity test and correlation analysis suggest the exclusion of Longitude, Perc_CR_1900_T1, Perc_CR_1900_T2, Sahel_Grassland_Bush, LL_Rainforest_grassland, and Sudanian_Woodland. New GLMMs are constructed without these variables.
+
+### Conclusion
+As shown in Table 8, all four measures public goods are significantly associated with pre-colonial convergence (ps < 0.05). To conclude, areas that were once home to precolonial states indeed distribute goods more broadly across space.",Analysts R code
+08UM9,Wilfahrt_WorldPolitics_2018_k7wj,task2_analysis_report,This information has been provided in the html file uploaded on osf page.,"In accordance with the email for Task 2, there are two instructions outlined:
+
+1. You should focus on primary schools instead of health facilities in your analysis;
+
+2. You should control for local need and geographic suitability in your analysis;
+
+As the analysis reported in Table 3 meets both standards apart from the fact that results of health facilities and social services are also included. Thus, in Table 5 below, we report two GLMM models with only primary school access as dependent variable and all controlling variables including *Longitude*, *Perc_CR_1900_T1*, *Perc_CR_1900_T2*, *Sahel_Grassland_Bush*, *LL_Rainforest_grassland*, and *Sudanian_Woodland* which are controls for local need and geographic suitability.
+
+### Conclusion
+As shown in Table 5, precolonial congruence has significant positive effect on access to new primary schools at both T1 (t = `r m.T1_20.T2[1,4]`, p = `r m.T1_20.T2[1,5]`) and T2 (t = `r m.T1_20.T2[2,4]`, p = `r m.T1_20.T2[2,5]`). Thus, we come to the conclusion that areas that were once home to precolonial states indeed distribute goods more broadly across space.",Analysts R code
+1XA8N,PIETRYKA_AmPoliSciRev_2017_yjkQ,task1_analysis_report,"""o        Standardization of IVs
+o        Logistic regression with:
+a)        Socioeconomic IVs, only
+b)        Socioeconomic IVs + social proximity to elites
+c)        Socioeconomic IVs + network centrality
+d)        Socioeconomic IVs + network centrality + social proximity to elites
+o        Chi-square 1 DOF: a) vs b), c) vs d)
+
+This is reported also in an uploaded file """"report.docx""""""","Dataset info:
+Independent Variables (IVs): socioeconomic parameters, network centrality, social proximity to élites - quantitative and binary variables.
+Dependent Variable (DV): turnout to vote – binary variable
+Given the binary dependent variable and the multiple quantitative and categorical independent variables, I used logistic regression, with steps detailed below.
+
+Methods:
+-        Used software: MATLAB R2022a with Statistics and Machine Learning Toolbox
+-        Steps of the analysis:
+o        Standardization of IVs
+o        Logistic regression with:
+a)        Socioeconomic IVs, only
+b)        Socioeconomic IVs + social proximity to elites
+c)        Socioeconomic IVs + network centrality
+d)        Socioeconomic IVs + network centrality + social proximity to elites
+o        Chi-square 1 DOF: a) vs b), c) vs d)
+
+In both available datasets, the analysis proves the claim: social proximity to elites is significantly contributing to turnout to vote, with respect to both socioeconomic variables and socioeconomic variables + network centrality. This is confirmed also when considering both datasets together.",Analysts report on the OSF
+GRUWQ,Gartzke_JournConflictRes_2009_rym8,task1_analysis_report,"The data was stored in Stata dat format and it required specific preprocessing (estimation of splines). After preprocessing the data with stata, I verified its integrity with Matlab and limited the columns needed to run the same model as in Table 2 of the paper. Then the final analysis was done in R.","The data was stored in Stata dat format and it required specific preprocessing (estimation of splines). After preprocessing the data with stata, I verified its integrity with Matlab and limited the columns needed to run the same model as in Table 2 of the paper. Then the final analysis was done in R.
+Steps for the analysis
+Step1, preprocessing with STATA version 17.0 on Linux Ubuntu 20.0
+load the data in dta format
+install the extension btscs.ado obtained from:
+Run commands stored in step1_stata_preprocessing.do to obtain data for the model
+Output stored in intermediate file: dataSplined.csv
+Step2, quality control with Matlab version R2021a for Linux CentOS7
+interactive quality control and plots with Matlab version (not included in the repository)
+Run script step2_matlab_prepro.m to keep only the columns for the final model
+Output stored in intermediate file: data_cleaned_from_stata.csv
+Step 3, running the probit regression model in R version 4.1.1 on Linux CentOS7
+Run command step3_R_modelfitting.r
+Output stored in file: R_output.txt",Analysts report on the OSF

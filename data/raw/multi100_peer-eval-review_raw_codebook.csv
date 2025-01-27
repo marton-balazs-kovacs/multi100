@@ -1,0 +1,10 @@
+description,variable_name
+Evaluator_ID,evaluator_id
+Analyst_ID,analyst_id
+Paper_ID,paper_id
+Issue_Identified_In,variable_name
+Evaluator_Categorisation,evaluator_categorization
+Issues_Raised,evaluator_categorization_explanation
+Decision,expert_panel_decision
+Expert_Panel_Reasoning,expert_panel_reasoning
+Change_To,change_to
