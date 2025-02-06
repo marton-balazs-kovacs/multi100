@@ -1,10 +1,5 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # multi100
-
-<!-- badges: start -->
-<!-- badges: end -->
 
 The goal of multi100 is to store the data preprocessing and analysis
 codes for the Multi 100 study.
@@ -33,3 +28,76 @@ documents. Within this folder you can find the following files:
 
 The `figures/` folder contains all the figures that are created in the
 `multi100_analysis.Rmd` file.
+
+## Reproducibility and Software Environment
+
+This project uses the {renv} package to manage R package dependencies,
+ensuring a reproducible environment. Below are the details regarding
+software dependencies, tested versions, and system requirements.
+
+### 1. Software Dependencies and Operating System
+
+All R package dependencies, including version numbers, are captured in
+the `renv.lock` file. This file allows you to recreate the exact
+software environment used for the analyses.
+
+- Operating System Tested On:
+  - **Primary OS:** Windows 11 64bit, Linux Mint 20.3 64bit
+  - **R Version:** 4.3.0, 4.4.2
+  - **Package Versions:** As specified in `renv.lock`.
+
+### 2. Required Hardware For Smooth Operation
+
+- **Standard Hardware:** The analysis can be run on standard desktop or
+  laptop computers with at least:
+- **RAM:** Minimum 4GB
+- **Processor:** modern multi-core CPU
+- **Non-Standard Hardware:** None required.
+
+## How to Reproduce the Analysis Using `{renv}`
+
+1.  Install R and RStudio (optional):
+
+- [Download R](https://cran.r-project.org/bin/windows/base/)
+- [Download RStudio](https://posit.co/download/rstudio-desktop/) (if
+  preferred)
+
+2.  Install {renv} (if not already installed):
+
+``` r
+install.packages("renv")
+```
+
+3.  Clone or Download This Project:
+
+- Clone via Git:
+
+<!-- -->
+
+    git clone https://github.com/marton-balazs-kovacs/multi100.git
+
+- Or download the ZIP file and extract it.
+
+4.  Restore the Project Environment: Open the project in R (or RStudio)
+    and run:
+
+``` r
+renv::restore()
+```
+
+This command will:
+
+- Install the exact versions of all packages listed in `renv.lock`.
+- Ensure compatibility with the tested environment.
+- Installing the `renv` environment takes about 10 minutes on an average
+  computer with Windows 11 64bit.
+
+5.  Run the Analysis: Execute the main analysis script:
+
+``` r
+rmarkdown::render("analysis/multi100_results.qmd")
+```
+
+This command will generate the main manuscript and save each figure
+separately. Generating the main manuscript takes about 7 minutes on an
+average computer.
