@@ -54,25 +54,25 @@ All R package dependencies, including version numbers, are captured in
 the `renv.lock` file. This file allows you to recreate the exact
 software environment used for the analyses.
 
-- Operating System Tested On:
-  - __Primary OS:__ Windows 11 64bit, Linux Mint 20.3 64bit
-  - __R Version:__ 4.3.0, 4.4.2
-  - __Package Versions:__ As specified in `renv.lock`.
+-   Operating System Tested On:
+    -   **Primary OS:** Windows 11 64bit, Linux Mint 20.3 64bit
+    -   **R Version:** 4.3.0, 4.4.2
+    -   **Package Versions:** As specified in `renv.lock`.
 
 ### 2. Required Hardware For Smooth Operation
 
-  - __Standard Hardware:__ The analysis can be run on standard desktop or
-    laptop computers with at least:
-  - __RAM:__ Minimum 4GB
-  - __Processor:__ modern multi-core CPU 
-  - __Non-Standard Hardware:__ None required.
+-   **Standard Hardware:** The analysis can be run on standard desktop
+    or laptop computers with at least:
+-   **RAM:** Minimum 4GB
+-   **Processor:** modern multi-core CPU
+-   **Non-Standard Hardware:** None required.
 
 ## How to Reproduce the Analysis Using `{renv}`
 
 1.  Install R and RStudio (optional):
 
-  - [Download R](https://cran.r-project.org/bin/windows/base/)
-  - [Download RStudio](https://posit.co/download/rstudio-desktop/) (if
+-   [Download R](https://cran.r-project.org/bin/windows/base/)
+-   [Download RStudio](https://posit.co/download/rstudio-desktop/) (if
     preferred)
 
 2.  Install {renv} (if not already installed):
@@ -83,13 +83,13 @@ install.packages("renv")
 
 3.  Clone or Download This Project:
 
-  - Clone via Git:
+-   Clone via Git:
 
 ```         
 git clone https://github.com/marton-balazs-kovacs/multi100.git
 ```
 
-  - Or download the ZIP file and extract it.
+-   Or download the ZIP file and extract it.
 
 4.  Restore the Project Environment: Open the project in R (or RStudio)
     and run:
@@ -100,10 +100,19 @@ renv::restore()
 
 This command will:
 
-  - Install the exact versions of all packages listed
-in `renv.lock`.
-  - Ensure compatibility with the tested environment.
-  - Installing the `renv` environment takes about 10 minutes on an average computer with Windows 11 64bit.
+-   Install the exact versions of all packages listed in `renv.lock`.
+-   Ensure compatibility with the tested environment.
+-   Installing the `renv` environment takes about 10 minutes on an
+    average computer with Windows 11 64bit.
+
+(If you are using Windows, `renv::restore()` will not work without
+RTools. You need RTools to compile some packages. You can install it by
+running: )
+
+```{r, eval=FALSE}
+install.packages("installr")
+installr::install.Rtools()
+```
 
 5.  Run the Analysis: Execute the main analysis script:
 
@@ -111,4 +120,6 @@ in `renv.lock`.
 rmarkdown::render("analysis/multi100_results.qmd")
 ```
 
-This command will generate the main manuscript and save each figure separately. Generating the main manuscript takes about 7 minutes on an average computer.
+This command will generate the main manuscript and save each figure
+separately. Generating the main manuscript takes about 7 minutes on an
+average computer.

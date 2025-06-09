@@ -92,6 +92,15 @@ This command will:
 - Installing the `renv` environment takes about 10 minutes on an average
   computer with Windows 11 64bit.
 
+(If you are using Windows, `renv::restore()` will not work without
+RTools. You need RTools to compile some packages. You can install it by
+running: )
+
+```{r, eval=FALSE}
+install.packages("installr")
+installr::install.Rtools()
+```
+
 5.  Run the Analysis: Execute the main analysis script:
 
 ``` r
