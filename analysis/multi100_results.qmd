@@ -111,7 +111,7 @@ same_test_family <-
     reanalysis_statistic_report
   ) |>
   dplyr::filter(!is.na(reanalysis_statistic_report) &
-                  !is.na(reanalysis_type_of_statistic)) |>
+                  !is.na(reanalysis_type_of_statistic)) |> 
   dplyr::mutate(
     reanalysis_statistic_report = round(reanalysis_statistic_report, 2),
     reanalysis_statistic = interaction(reanalysis_type_of_statistic, reanalysis_statistic_report)
@@ -718,8 +718,6 @@ effec_size_corr_plot_zoomed
 ```
 
 One interesting question is whether the re-analyses show a trend or shift in effect sizes compared to the results of the original studies. If the re-analysis effect sizes randomly vary around the original effect size, we would expect that they are larger or smaller than the original ones with equal chance. Fig. 3a (data trimmed at Cohen’s d =\< 5) and 3 b (Cohen’s d =\< 1) indicate that re-analysis effect sizes show a tendency to be smaller than the original effect sizes as reflected in their best-fitting (least squares) line. The distribution of original and re-analysis effect sizes also supports this as the peak of the density distribution of the latter is markedly lower. The mean effect size of the original results is `r summarize(effec_size_corr_plot_data, mean = mean(original_cohens_d)) |> pull(mean) |> round(2)` (Median = `r summarize(effec_size_corr_plot_data, median = median(original_cohens_d)) |> pull(median) |> round(2)`), whereas for the re-analysis it is `r summarize(effec_size_corr_plot_data, mean = mean(effect_size)) |> pull(mean) |>  round(2)` (Median = `r summarize(effec_size_corr_plot_data, median = median(effect_size)) |> pull(median) |> round(2)`) Cohen’s d computed on Cohen’s ds =\< 5. This result is consistent with the possibility that original analysts proactively sought larger effects than re-analysts, that re-analysts proactively sought smaller effects than original analysts, or both.
-
-{{< pagebreak >}}
 
 ```{r generating effec_size_corr_merged_plot, echo=FALSE, message=FALSE, warning=FALSE}
 #| fig-width: 22

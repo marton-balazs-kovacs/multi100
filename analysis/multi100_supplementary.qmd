@@ -1154,3 +1154,513 @@ The main milestones of the project were
 * Start of re-analyst recruitment Jan 21, 2022
 * Start of re-analyses Nov 19, 2022
 * Completion of the project Oct 22, 2024
+
+---
+
+## Additional analysis for revision
+
+### Checking whether match between test statistic type between re-analysis and original studies influences the results by study type
+
+We have to exclude re-analysis tests for which we could not convert the test statistic to Cohen's d.
+
+```{r}
+# Number of papers for which the original type of statistic is missing
+processed |> 
+  dplyr::select(
+    simplified_paper_id,
+    original_type_of_statistic,
+  ) |>
+  filter(is.na(original_type_of_statistic)) |> 
+  distinct(simplified_paper_id) |> 
+  count()
+
+# Number of analysis for which the re-analysis type of statistic is missing
+processed |> 
+  dplyr::select(
+    analyst_id,
+    reanalysis_type_of_statistic,
+  ) |>
+  filter(is.na(reanalysis_type_of_statistic)) |> 
+  distinct(analyst_id) |> 
+  count()
+
+same_test_family <-
+  processed |>
+  dplyr::select(
+    simplified_paper_id,
+    analyst_id,
+    reanalysis_type_of_statistic,
+    reanalysis_cohens_d,
+    original_type_of_statistic,
+    original_cohens_d,
+    experimental_or_observational
+  ) |>
+  dplyr::filter(!is.na(reanalysis_type_of_statistic) &
+                  !is.na(original_type_of_statistic)) |>
+  dplyr::mutate(
+    original_type_of_statistic = stringr::str_replace_all(original_type_of_statistic, "²", "2"), 
+    original_type_of_statistic = tolower(original_type_of_statistic),
+    reanalysis_type_of_statistic = tolower(reanalysis_type_of_statistic),
+    match = dplyr::if_else(
+      reanalysis_type_of_statistic == original_type_of_statistic, 
+      "Match", 
+      "No match"
+    ))
+
+nrow(same_test_family)
+
+same_test_family |> 
+  count(match) |> 
+  add_percentage(n)
+
+# Number and percentage of cases where the original and re-analysis test statistics match by study type
+same_test_family |> 
+  group_by(experimental_or_observational) |> 
+  count(match) |> 
+  add_percentage(n)
+
+# Original and re-analysis test statistics match by study type and tolerance region
+same_test_family |>
+  calculate_tolerance_region(threshold = 0.05) |>
+  count(experimental_or_observational, match, is_within_region) |>
+  group_by(experimental_or_observational, match) |> 
+  add_percentage(n)
+```
+
+### Results by analyst academic field and original paper field match
+
+```{r}
+# Missing paper discipline values
+processed |> 
+  dplyr::select(paper_discipline, primary_discipline) |> 
+  dplyr::filter(is.na(paper_discipline)) |> 
+  count()
+
+# Missing analyst field values
+processed |> 
+  dplyr::select(paper_discipline, primary_discipline) |> 
+  dplyr::filter(is.na(primary_discipline)) |> 
+  count()
+
+# Distinct paper disciplines and analyst disciplines
+processed |> 
+  distinct(simplified_paper_id, .keep_all = T) |> 
+  count(paper_discipline)
+
+count(processed, primary_discipline)
+
+# We only keep cases where we can match the paper's discipline and the analysts background unambiguously
+# Creating a variable that records whether the analyist's academic field matches the study discipline
+academic_field_match_data <-
+  processed |>
+  filter(
+    paper_discipline %in% c("economics", "political science", "psychology", "sociology"),
+    primary_discipline %in% c("Economics", "Political Science", "Psychology", "Sociology")
+  ) |> 
+  dplyr::mutate(
+    paper_discipline = tolower(paper_discipline),
+    primary_discipline = tolower(primary_discipline)
+  ) |>
+  dplyr::mutate(field_match = dplyr::if_else(paper_discipline == primary_discipline,
+                                       "Match",
+                                       "No match"))
+
+academic_field_match_data |> 
+  nrow()
+  
+# Number and percentage of cases where the field of the analyst matches the field of the study
+academic_field_match_data |> 
+  count(field_match) |> 
+  add_percentage(n)
+```
+
+```{r}
+# academic_field_match_data |> 
+#   dplyr::filter(field_match == "Match") |> 
+#   calculate_abstract_res()
+```
+
+```{r}
+# Calculating the frequency of results within tolerance region on the analysis level for matching and non-matching cases with 5% threshold
+analysis_level_tolerance_region <-
+  academic_field_match_data |>
+  dplyr::select(paper_id,
+                analyst_id,
+                original_cohens_d,
+                reanalysis_cohens_d,
+                field_match) |>
+  calculate_tolerance_region(threshold = 0.05) |>
+  # Exclude missing re-analysis effect sizes
+  dplyr::filter(is_within_region != "Missing") |>
+  dplyr::count(field_match, is_within_region) |> 
+  dplyr::group_by(field_match) |> 
+  add_percentage(n)
+
+analysis_level_tolerance_region
+```
+
+```{r}
+conclusions_discipline_match_data <-
+  academic_field_match_data |>
+  calculate_conclusion(grouping_var = field_match)
+
+conclusions_discipline_match_data
+```
+
+```{r}
+conclusions_discipline_match_plot <-
+  plot_percentage(
+    data = conclusions_discipline_match_data,
+    grouping_var = field_match,
+    categorization_var = categorisation,
+    with_labels = TRUE,
+    y_lab = "Percentage of re-analyses",
+    x_lab = "Disciplines",
+    rev_limits = FALSE
+  ) + 
+  theme(
+    plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
+    legend.text = element_text(size = 8),
+    axis.title.y = element_text(hjust = 1)
+    )
+
+conclusions_discipline_match_plot
+```
+
+### Analysing the subset of original papers where the COS team did a reproducibility check
+
+```{r}
+processed |> distinct(simplified_paper_id, .keep_all = T) |> count(reproduction_result_osf)
+```
+
+```{r}
+reproducibility_data <-
+  processed |>
+  dplyr::mutate(
+    reproducibility = dplyr::case_when(
+      reproduction_result_osf %in% c(
+        "never attempted",
+        "not evaluated -- analysis code not provided",
+        "not evaluated -- code did not run",
+        "not reproduced",
+        "not evaluated -- dataset could not be opened",
+        "not evaluated -- not all variables are publicly available",
+        "not evaluated -- number of observations doesn't match paper and variables in code don't match dataset"
+      ) ~ "not reproduced",
+      TRUE ~ "reproduced"
+    )
+  )
+
+# reproducibility_data |> 
+#   dplyr::select(reproducibility, reproduction_result_osf)
+```
+
+```{r}
+# Number of analysis for reproduced and not papers
+reproducibility_data |> 
+  dplyr::count(reproducibility)
+
+# Number of papers that are reproduced and not reproduced
+reproducibility_data |>
+  dplyr::distinct(simplified_paper_id, .keep_all = T) |> 
+  dplyr::count(reproducibility)
+```
+
+```{r}
+# Calculate the main results from the abstract for reproduced and not reproduced papers
+reproducibility_data |> 
+  dplyr::filter(reproducibility == "reproduced") |> 
+  calculate_abstract_res()
+
+reproducibility_data |> 
+  dplyr::filter(reproducibility == "not reproduced") |> 
+  calculate_abstract_res()
+```
+
+### Main analysis for results without extreme outliers
+
+```{r}
+# processed |> 
+#   dplyr::select(reanalysis_cohens_d)
+
+# Excluding extreme outliers larger than 3 or smaller than -3 Cohen's d from the re-analysis effect sizes
+outlier_data <- 
+  processed |> 
+  dplyr::filter(
+    !is.na(reanalysis_cohens_d),
+    reanalysis_cohens_d <= 3,
+    reanalysis_cohens_d >= -3
+  )
+
+# Number of reanalysis remaining
+nrow(outlier_data)
+processed |> dplyr::filter(!is.na(reanalysis_cohens_d)) |> nrow()
+
+# Calculate the main results from the abstract
+## No conclusion result
+calculate_abstract_res(outlier_data)
+```
+
+### Fig3b modifications
+
+Fig 3b could have the re-analysis effect size dots in different form or colour when the conclusion was the same as the original.
+
+```{r}
+reanalysis_data <-
+  processed |>
+  dplyr::select(simplified_paper_id,
+                analyst_id,
+                reanalysis_cohens_d,
+                original_cohens_d,
+                direction_of_result) |>
+  dplyr::group_by(simplified_paper_id) |>
+  dplyr::rename(effect_size = reanalysis_cohens_d) |>
+  dplyr::mutate(effect_size_type = paste0("re-analysis_0", row_number()),) |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    simplified_paper_id = as.factor(simplified_paper_id),
+    # Put missing values at the end
+    original_cohens_d = dplyr::if_else(is.na(original_cohens_d), -Inf, original_cohens_d),
+    simplified_paper_id = forcats::fct_reorder(.f = simplified_paper_id,
+                                               .x = original_cohens_d,
+                                               .fun = function(x) median(x),
+                                               .na_rm = FALSE)
+  )
+
+effec_size_corr_plot_data <-
+  reanalysis_data |>
+  dplyr::filter(!is.na(effect_size)) |>
+  dplyr::filter(effect_size <= 5 & effect_size >= -5) |>
+  dplyr::filter(original_cohens_d != -Inf)
+
+effec_size_corr_plot_data_zoomed <-
+  effec_size_corr_plot_data |> 
+  dplyr::filter(effect_size <= 1 & effect_size >= -1) |>
+  dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1)
+```
+
+```{r}
+# Based on: https://github.com/CenterForOpenScience/rpp
+colors <- c("Original" = "#440154FF",
+            "Replication" = "#FDE725FF")
+
+# Fit the linear model
+lm_fit <-
+  lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data_zoomed)
+
+# Extract slope
+beta <- coef(lm_fit)[2]
+
+# Calculate the breaks based on the supplied limits
+x_breaks <- seq(from = 0, to = 1, by = 0.5)
+
+y_breaks <- seq(from = -1, to = 1, by = 0.5)
+
+# Create the scatter plot
+scatter <-
+  effec_size_corr_plot_data_zoomed |>
+  ggplot(aes(
+    x = original_cohens_d,
+    y = effect_size,
+    color = as.factor(colors)
+  )) +
+  geom_point(
+    # TODO:  Is this the only place where I have to use direction_of_result and not task1_categorisation
+    aes(fill = direction_of_result),
+    shape = 21,
+    color = "Grey30",
+    alpha = 0.8
+  ) +
+  scale_fill_viridis_d(option = "D") +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "black",
+    alpha = 0.2
+  ) +
+  annotate(
+    "text",
+    x = 0.97,
+    y =  0.8,
+    label = bquote(italic(beta) == .(round(beta, 2))),
+    size = 4,
+    color = "black"
+  ) +
+  geom_rug(
+    aes(color = "Original"),
+    size = 1,
+    sides = "b",
+    alpha = .6,
+    show.legend = FALSE
+  ) +
+  geom_rug(
+    aes(color = "Replication"),
+    size = 1,
+    sides = "l",
+    alpha = .6,
+    show.legend = FALSE
+  ) +
+  scale_color_manual(values = colors) +
+  geom_hline(aes(yintercept = 0), linetype = 2) +
+  geom_abline(intercept = 0,
+              slope = 1,
+              color = "Grey60") +
+  scale_x_continuous(limits = c(0, 1),
+                     breaks = x_breaks) +
+  scale_y_continuous(limits = c(-1, 1),
+                     breaks = y_breaks) +
+  labs(
+    x = expression("Original effect size in Cohen's " * italic("d")),
+    y = expression("Re-analysis effect size in Cohen's " * italic("d")),
+    fill = "Conclusion"
+  ) +
+  theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.box = "horizontal",
+    legend.title = element_blank(),
+    axis.title = element_text(size = 22),
+    axis.text = element_text(size = 20)
+  )
+
+# Add density plots on the axes
+ggExtra::ggMarginal(
+  scatter,
+  type = "density",
+  margins = "both",
+  xparams = list(fill = colors["Original"], alpha = 0.5),
+  yparams = list(fill = colors["Replication"], alpha = 0.5)
+)
+```
+
+### Checking the main abstract results regarding the inference for  >=50% threshold
+
+```{r}
+summarize_conclusion_robustness(data = processed, threshold = 50, operator = ">")
+```
+
+### Calculating heterogeneity ratio
+
+```{r}
+processed |>
+  dplyr::filter(
+    !is.na(reanalysis_correlation_coef),!is.na(reanalysis_model_sample_size),!is.na(reanalysis_cohens_d)
+  ) |>
+  nrow()
+```
+
+```{r}
+heterogeneity_data <-
+  processed |>
+  dplyr::select(
+    simplified_paper_id,
+    analyst_id,
+    reanalysis_correlation_coef,
+    reanalysis_model_sample_size,
+    reanalysis_cohens_d,
+    reanalysis_type_of_statistic,
+    reanalysis_statistic_report,
+    reanalysis_degrees_of_freedom_1,
+    reanalysis_degrees_of_freedom_2
+  ) |>
+  # TODO: Might need to revise filters
+  dplyr::filter(
+    !is.na(reanalysis_correlation_coef),!is.na(reanalysis_model_sample_size),!is.na(reanalysis_cohens_d)
+  ) |>
+  heterogeneity_ratio(simplified_paper_id)
+
+nrow(heterogeneity_data)
+
+median(heterogeneity_data$heterogeneity_ratio)
+
+quantile(heterogeneity_data$heterogeneity_ratio, probs = c(0.25, 0.75))
+
+min(heterogeneity_data$heterogeneity_ratio)
+
+max(heterogeneity_data$heterogeneity_ratio)
+
+IQR(heterogeneity_data$heterogeneity_ratio)
+
+hist(heterogeneity_data$heterogeneity_ratio)
+```
+
+### Open data availability
+
+```{r}
+open_data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1GwDGeNqloliZqkaNMbgWGnzAHwWWDoXO-Egc0s9tR60/edit?usp=sharing", col_types = "c") |> 
+  dplyr::mutate(available_data = as.logical(available_data))
+```
+
+```{r}
+count(open_data, available_data)
+```
+
+```{r}
+open_data_cleaned <- 
+  open_data |> 
+  dplyr::select(-original_materials) |> 
+  dplyr::right_join(processed, by = "paper_id")
+  # dplyr::filter(!is.na(available_data))
+
+# Results in the abstract where the data are available
+open_data_cleaned |> 
+  dplyr::filter(available_data == TRUE) |> 
+  calculate_abstract_res()
+
+# Results in the abstract where the data are NOT available
+open_data_cleaned |> 
+  dplyr::filter(available_data == FALSE) |> 
+  calculate_abstract_res()
+```
+
+### Estimate inferential robustness with alternative accordance thresholds
+
+We learned that even with a 4 times broader tolerance region  (+/- 0.5 Cohen’s d), we would find that around 80% of the studies still show results outside of this region and around half of the individual reanalysis effect sizes are outside of this region (Fig. S11).
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+thresholds <- seq(10, 100, by = 1)
+
+inferential_threshold_robustness_plot_data <-
+  tibble(
+    threshold = thresholds,
+    robustness = purrr::map_dbl(
+      threshold,
+      ~ summarize_conclusion_robustness(
+        processed,
+        threshold = .x,
+        operator = dplyr::if_else(.x == 100, "==", ">")
+      ) |> 
+        dplyr::filter(robust == "Inferentially robust") |> 
+        dplyr::pull(percentage)
+    )
+  )
+```
+
+```{r}
+inferential_threshold_robustness_plot_data |>
+  ggplot() +
+  aes(x = threshold,
+      y = robustness) +
+  geom_line() +
+  scale_x_continuous(
+    breaks = seq(10, 100, 10), 
+    labels = scales::percent_format(scale = 1),
+    limits = c(0, 100)) +
+  scale_y_continuous(
+    labels = scales::percent_format(scale = 1),
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100)
+  ) +
+  labs(x = "Threshold of proportion of re-analyses arriving at the same conclusion as the original study",
+       y = "Percentage of studies") +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = c(0.8, 0.8)
+  )
+```
+
