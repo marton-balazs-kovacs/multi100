@@ -1,8 +1,8 @@
 paper_id,original_materials,original_type_of_statistic,original_statistic_report,original_degrees_of_freedom_1,original_degrees_of_freedom_2,original_model_sample_size,original_correlation_coef,original_cohens_d,original_effect_size_available,original_reproduction_outcome
-Bigoni_Econometrica_2015_VBx1,https://osf.io/x8mhf/?view_only=b1f6a50dd15d4a819745b35bf069dee7,t,-6.0973,7,NA,4416,-0.9174,-4.6091,Yes,(1) successful reproduction - values correspond with original paper
+Bigoni_Econometrica_2015_VBx1,https://osf.io/x8mhf/?view_only=b1f6a50dd15d4a819745b35bf069dee7,F,82.3082,1,7,192,0.9600,6.8581,Yes,(1) successful reproduction - values correspond with original paper
 Fehr_AmEcoRev_2011_gdlO,https://osf.io/jgvm8/?view_only=fc62ff463b964e538090634560624854,z,-2.0226,NA,NA,5,-0.8917,-3.9402,Yes,(1) successful reproduction - values correspond with original paper
-Wilfahrt_WorldPolitics_2018_k7wj,https://osf.io/ngwcx/?view_only=954489db875946dd894ab08ff5ebeb7e,t,-5.6105,10,NA,283,-0.8712,-3.5484,Yes,(1) successful reproduction - values correspond with original paper
-Christensen_EurJournPersonality_2018_8R9d,https://osf.io/6zh34/?view_only=3e5bfed2e1f041dbbb4376e9c0c5f70b,t,-65.6900,1998,NA,516,-0.8268,-2.9392,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
+Wilfahrt_WorldPolitics_2018_k7wj,https://osf.io/ngwcx/?view_only=954489db875946dd894ab08ff5ebeb7e,z,6.4308,NA,NA,14168,0.0540,0.1081,Yes,(1) successful reproduction - values correspond with original paper
+Christensen_EurJournPersonality_2018_8R9d,https://osf.io/6zh34/?view_only=3e5bfed2e1f041dbbb4376e9c0c5f70b,t,-65.6900,1998,NA,2000,-0.8268,-2.9392,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
 Wlezien_CompPolitStu_2017_ByBk,https://osf.io/frjxy/?view_only=efd3b9ff818a46948ed766f21e151798,t,-3.9833,13,NA,16,-0.7414,-2.2095,Yes,(1) successful reproduction - values correspond with original paper
 Petersen_Cognition_2017_yJwG,https://osf.io/dhqt3/?view_only=ac9bb6624be940c4988a3ecbc77ea2d8,t,-4.7079,27,NA,28,-0.6714,-1.8121,Yes,(1) successful reproduction - values correspond with original paper
 LINDQVIST_AmPoliSciRev_2010_OeGv,https://osf.io/cah3f/?view_only=8b958c4f12184a3c83de406ec26e8a05,t,-3.5133,30,NA,33,-0.5399,-1.2829,Yes,(1) successful reproduction - values correspond with original paper
@@ -27,12 +27,12 @@ McDevitt_JournPoliEco_2014_yQeR,https://osf.io/z7mfu/?view_only=277b7d18bb24436e
 Dumas_AcaManageJourn_2018_5KrD,https://osf.io/rqukb/?view_only=95410e175e3c4583adcf5a14cf10b67b,t,-2.3614,348,NA,353,-0.1256,-0.2532,Yes,(1) successful reproduction - values correspond with original paper
 Cleave_ExpEco_2013_Njqj,https://osf.io/br2aq/?view_only=865a8e84907849e688e63ca34fe91f26,z,-2.7295,NA,NA,658,-0.1062,-0.2137,Yes,(1) successful reproduction - values correspond with original paper
 ANN_SLOCUM_Criminology_2010_JxXe,https://osf.io/8udve/?view_only=4136086868d64e6ea191dd172c45bcf2,z,-2.1392,NA,NA,1354,-0.0581,-0.1165,Yes,(1) successful reproduction - values correspond with original paper
-Raley_JournMarFam_2012_D2LY,https://osf.io/c8u5q/?view_only=855e0adec1db4515ab44f1e993be6228,t,-3.5202,10071,NA,4105,-0.0351,-0.0702,No,(3) reproduction unsuccessful due to a lack of data and/or code
+Raley_JournMarFam_2012_D2LY,https://osf.io/c8u5q/?view_only=855e0adec1db4515ab44f1e993be6228,NA,NA,NA,NA,NA,NA,NA,No,(3) reproduction unsuccessful due to a lack of data and/or code
 Kuo_Demography_2016_JWzJ,https://osf.io/u8x9s/?view_only=df61ea3e019f4d42957e0e0e4f8281f1,z,-4.8786,NA,NA,54291,-0.0209,-0.0419,Yes,(2) reproduction unsuccesful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
 Wang_AmEcoJourn_2013_7d4J,https://osf.io/ezuas/?view_only=39b38f8f5eb4435d9d525d63caf5432d,t,-2.0248,10214,NA,13292,-0.0200,-0.0401,Yes,(1) successful reproduction - values correspond with original paper
 Teney_EurSocioRev_2016_qXX2,"https://osf.io/whp4b/?view_only=9ff92fcdae304245b673258f23c24688
-Accessible Data Link: https://osf.io/7p3mj/",z,-4.0300,NA,NA,335566,-0.0070,-0.0139,No,(3) reproduction unsuccessful due to a lack of data and/or code
-Baccara_AmEcoJourn_2014_RqVE,https://osf.io/vsxwz/?view_only=7aa6fa69c01b47fdb4b52a46bb4bb31b,t,4.2303,NA,NA,871215,1.0000,#DIV/0!,No,(1) successful reproduction - values correspond with original paper
+Accessible Data Link: https://osf.io/7p3mj/",NA,NA,NA,NA,NA,NA,NA,No,(3) reproduction unsuccessful due to a lack of data and/or code
+Baccara_AmEcoJourn_2014_RqVE,https://osf.io/vsxwz/?view_only=7aa6fa69c01b47fdb4b52a46bb4bb31b,z,4.2303,NA,NA,871215,0.0045,0.0091,Yes,(1) successful reproduction - values correspond with original paper
 Gartzke_JournConflictRes_2009_rym8,https://osf.io/5xdq3/?view_only=acceb336a2fa4eb3909e8b5e6122b5e3,z,5.0400,NA,NA,213454,0.0109,0.0218,Yes,(1) successful reproduction - values correspond with original paper
 Chen_Demography_2018_yAPR,"https://osf.io/sfmce/?view_only=ddeea3414abc4f3ea43bb8978bd44d3c
 Accessible Data Link: https://osf.io/9jsv3/",F,8.1373,1,11188,14824,0.0270,0.0539,Yes,(1) successful reproduction - values correspond with original paper
@@ -60,14 +60,14 @@ Gerber_BritJournPoliSci_2018_3WmY,https://osf.io/xqrgv/?view_only=7dbe13975ec544
 Thames_CompPolitStu_2010_l22v,https://osf.io/jau7k/?view_only=574522a43ee242faafa6c9f542028e9a,z,2.3607,NA,NA,232,0.1547,0.3133,Yes,(1) successful reproduction - values correspond with original paper
 Antràs_Econometrica_2013_a2Yx,https://osf.io/8g6rt/?view_only=6e871f7c26314c96925060b69080be3d,t,2.5399,252,NA,2783,0.1580,0.3200,Yes,(1) successful reproduction - values correspond with original paper
 Einstein_AmJourPoliSci_2017_mxyQ,https://osf.io/nrt4s/?view_only=3bcd18975d9f477fabe7504629bbea27,z,3.7273,NA,NA,549,0.1582,0.3204,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
-McLaren_WorldPolitics_2012_wRvv,https://osf.io/7hb5w/?view_only=c08c9c7ba1824ca1aa1ce874c75074ca,t,50.1100,90156.3464,NA,68113,0.1646,0.3338,No,(3) reproduction unsuccessful due to a lack of data and/or code
+McLaren_WorldPolitics_2012_wRvv,https://osf.io/7hb5w/?view_only=c08c9c7ba1824ca1aa1ce874c75074ca,NA,NA,NA,NA,NA,NA,NA,No,(3) reproduction unsuccessful due to a lack of data and/or code
 Jiang_AmJourPoliSci_2018_Rjp9,https://osf.io/eafs2/?view_only=accf9c2a6e9c473aa75ff51b96d2f19d,t,3.0291,325,NA,3693,0.1657,0.3360,Yes,(1) successful reproduction - values correspond with original paper
 Luttrell_JournExpSocPsych_2016_rjb,https://osf.io/q67m9/?view_only=e29b4bddc8bf4052b3725ad2d23fdaad,t,2.2823,169,NA,174,0.1729,0.3511,Yes,(1) successful reproduction - values correspond with original paper
 Goerg_JournLabEco_2010_WLpV,https://osf.io/tbr2x/?view_only=517aa8eb980540b8871d166e7849fe4a,t,2.8970,268,NA,270,0.1743,0.3539,Yes,(1) successful reproduction - values correspond with original paper
 Cohen_AmEcoRev_2015_2lb5,https://osf.io/nw5ve/?view_only=da75830db2534048b96504eca4444f11,t,4.8822,574,NA,631,0.1997,0.4076,Yes,(1) successful reproduction - values correspond with original paper
 Baillon_Econometrica_2018_QYNq,https://osf.io/grcbn/?view_only=4aee0ec403734de9bd226194a0f190ae,t,2.1225,98,NA,198,0.2096,0.4288,Yes,(1) successful reproduction - values correspond with original paper
 Beaman_JournLabEco_2018_7ybJ,https://osf.io/2qngf/?view_only=6cbc2b00b8c54b25b7c32d6c1ff50eac,F,10.285,1,218,220,0.2123,0.4344,Yes,(1) successful reproduction - values correspond with original paper
-Ihme_JournExpPoliSci_2018_xYbO,https://osf.io/53zr4/?view_only=23266f8b78cb47a98c8bc724fa0e4e7b,t,2.5985,141,NA,143,0.2138,0.4377,No,(4) successful reproduction but values differ from the original paper
+Ihme_JournExpPoliSci_2018_xYbO,https://osf.io/53zr4/?view_only=23266f8b78cb47a98c8bc724fa0e4e7b,t,2.4600,141,NA,143,0.2029,0.4143,Yes,(4) successful reproduction but values differ from the original paper
 Fitzgerald_SocialForces_2018_4q0L,https://osf.io/m4yse/?view_only=6b9bc5ac897b46cfb47ea96b0b8431f0,t,3.7318,286,NA,350,0.2155,0.4413,Yes,(1) successful reproduction - values correspond with original paper
 Adida_CompPolitStu_2016_G0Kb,"https://osf.io/avj8y/?view_only=978a4c4cd219427c9f529a1128478dc7
 Accessible Data Link: https://osf.io/d24he/",t,2.7500,155,NA,158,0.2157,0.4418,Yes,(2) reproduction unsuccessful but the test statistic information provided in the paper is sufficiently detailed - no reproduction needed
@@ -88,7 +88,7 @@ Liu_JournMarket_2015_9DZl,https://osf.io/5r4yp/?view_only=621d437b4a2a4e288e27e0
 Huijts_EurSocioRev_2013_OY3B,https://osf.io/qnvt2/?view_only=977afd85d7a1403c8808a96da1fbbc1c,t,2.4350,31.7562,NA,10477,0.3967,0.8642,Yes,(1) successful reproduction - values correspond with original paper
 Mironova_JournExpPoliSci_2014_59Rq,https://osf.io/67xkz/?view_only=9ce5aa6e16bb4c75839b88401642e8b6,t,4.0314,75.8936,NA,118,0.4200,0.9255,Yes,(1) successful reproduction - values correspond with original paper
 Brough_JournConsRes_2016_9ey,https://osf.io/dj9y5/?view_only=0e5a1b26c8974ebb866f83af3dc7e10d,F,43.9976,1,190,194,0.4336,0.9624,Yes,(1) successful reproduction - values correspond with original paper
-Savani_PsychologSci_2010_88xa,https://osf.io/5svmz/?view_only=fbc36a2c4a7b4f5caa43f54ac3874914,t,4.1503,65,NA,67,0.4577,1.0296,No,(4) successful reproduction but values differ from the original paper
+Savani_PsychologSci_2010_88xa,https://osf.io/5svmz/?view_only=fbc36a2c4a7b4f5caa43f54ac3874914,t,4.1503,65,NA,67,0.4577,1.0296,Yes,(4) successful reproduction but values differ from the original paper
 Behrman_JournPoliEco_2015_G55r,https://osf.io/njw6q/?view_only=7d16467bba004af1ac7022aa802c18d2,t,5.4286,86,NA,11314,0.5052,1.1708,Yes,(1) successful reproduction - values correspond with original paper
 Kleven_AmEcoRev_2013_Jg9v,https://osf.io/hjvm2/?view_only=887d789f05a141cf8a6a30f4dc8125f6,z,3.8695,NA,NA,48,0.5204,1.2187,Yes,(1) successful reproduction - values correspond with original paper
 Shahar_JournConflictRes_2018_J0Yv,https://osf.io/qrtpy/?view_only=be11c20118104b5a84585c59bb27f54d,t,10.0086,207,NA,284,0.5711,1.3913,Yes,(1) successful reproduction - values correspond with original paper
@@ -98,9 +98,9 @@ Ohtsubo_EvoHumanBehavior_2014_zlm2,https://osf.io/ek3tm/?view_only=68d4ca0832524
 Bursztyn_JournPoliEco_2012_jaK4,https://osf.io/mdh4x/?view_only=80fa4a04145e4d0c84a63ac6ee80ca61,t,6.3676,10,NA,156,0.8956,4.0272,Yes,(1) successful reproduction - values correspond with original paper
 Usmani_AmJournSocio_2018_GJe4,"https://osf.io/gv4mc/?view_only=fe2066d5a3ac4036bae682b721b4f026
 Accessible Data Link: https://osf.io/7zh2p/",NA,NA,NA,NA,NA,NA,NA,No,(3) reproduction unsuccessful due to a lack of data and/or code
-Hurst_EvoHumanBehavior_2017_yypJ,https://osf.io/vhmgc/?view_only=5c6bedb36b2549a88ac137d6c746bcb8,NA,6.9511,135,NA,138,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
-Anderson_AmEcoJourn_2011_bLe8,https://osf.io/k7xzy/?view_only=c1f2b9aaf05d486c942783efd8ec57ec,t,2.7103,89,NA,1295,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
-Benjamin_AmEcoRev_2010_WaYe,https://osf.io/8xzur/?view_only=cd34533283e24371aa11d08b35addc14,t,3.4261,69,NA,71,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
-Wright_JournConflictRes_2016_W0GN,https://osf.io/b69xv/?view_only=8471d18b7ba244449cc2bad7ab4980a7,z,3.4885,NA,NA,2788,NA,NA,Yes,(1) successful reproduction - values correspond with original paper
+Hurst_EvoHumanBehavior_2017_yypJ,https://osf.io/vhmgc/?view_only=5c6bedb36b2549a88ac137d6c746bcb8,t,-6.9511,135,NA,138,-0.5134,-1.1965,Yes,(1) successful reproduction - values correspond with original paper
+Anderson_AmEcoJourn_2011_bLe8,https://osf.io/k7xzy/?view_only=c1f2b9aaf05d486c942783efd8ec57ec,t,2.7103,89,NA,1295,0.2761,0.5746,Yes,(1) successful reproduction - values correspond with original paper
+Benjamin_AmEcoRev_2010_WaYe,https://osf.io/8xzur/?view_only=cd34533283e24371aa11d08b35addc14,t,3.4261,69,NA,71,0.3813,0.8249,Yes,(1) successful reproduction - values correspond with original paper
+Wright_JournConflictRes_2016_W0GN,https://osf.io/b69xv/?view_only=8471d18b7ba244449cc2bad7ab4980a7,z,3.4885,NA,NA,2788,0.0660,0.1323,Yes,(1) successful reproduction - values correspond with original paper
 Li_JournExpPoliSci_2017_G4mp,"https://osf.io/jspz3/?view_only=6d6f88c3b32f497eaaca030f8fc594b4
 Accessible Data Link: https://osf.io/5h2bf/",NA,NA,NA,NA,NA,NA,NA,No,(3) reproduction unsuccessful due to a lack of data and/or code

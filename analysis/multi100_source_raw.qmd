@@ -18,7 +18,7 @@ library(here)
 
 ```{r}
 # Uncomment this line if you would like to run the code and you need to connect R to your Drive
-#gs4_auth()
+# gs4_auth()
 ```
 
 ### Load custom functions
@@ -524,23 +524,12 @@ original_effect_sizes <-
    original_degrees_of_freedom_1 = gsub(",", ".", original_degrees_of_freedom_1),
    original_degrees_of_freedom_2 = gsub(",", ".", original_degrees_of_freedom_2),
   )
-
-reanalyzed_effect_sizes <-
-  reanalyzed_effect_sizes |>
-  mutate(
-    reanalysis_statistic_report = gsub(",", ".", reanalysis_statistic_report),
-    reanalysis_degrees_of_freedom_1 = gsub(",", ".", reanalysis_degrees_of_freedom_1),
-    reanalysis_degrees_of_freedom_2 = gsub(",", ".", reanalysis_degrees_of_freedom_2),
-  )
 ```
 
 ## Save raw dataset
 
 ```{r}
 readr::write_csv(task1, here("data/raw/multi100_task1_raw_data.csv"))
-
-# We are not sharing this information openly
-readr::write_csv(demographic_information_raw, here("data/raw/multi100_demographic-information_raw_data.csv"))
 
 readr::write_csv(task2, here("data/raw/multi100_task2_raw_data.csv"))
 
@@ -558,10 +547,12 @@ readr::write_csv(peer_eval, here("data/raw/multi100_peer-eval_raw_data.csv"))
 
 readr::write_csv(peer_eval_review, here("data/raw/multi100_peer-eval-review_raw_data.csv"))
 
-# We are not sharing this information openly
-# readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
-
 readr::write_csv(claim_direction_review, here("data/raw/multi100_claim-direction-review_raw_data.csv"))
 
 readr::write_csv(non_detailed_responses, here("data/raw/multi100_non-detailed-responses_raw_data.csv"))
+
+# We are not sharing this information openly
+# readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
+
+readr::write_csv(demographic_information_raw, here("data/raw/multi100_demographic-information_raw_data.csv"))
 ```
