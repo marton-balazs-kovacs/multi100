@@ -481,7 +481,7 @@ save_codebook(non_detailed_responses_codebook, here::here("data/raw", "multi100_
 
 ## Dropping variables that contain personal information
 
-Some variables contain personal information that we cannot share openly. We will drop these variables here for the further analysis. We also drop `task1_comments` and `task2_comments` that include free-text comments to the organizers by the analysts.
+Some variables contain personal information that we cannot share openly. We will drop these variables here for the further analysis. We also drop `task1_comments` and `task2_comments` that include free-text comments to the organizers by the analysts. Finally, we will remove variables with internal comments as well made by the lead team during manual data preprocessing.
 
 ```{r}
 task1 <- 
@@ -496,17 +496,35 @@ all_people <-
   all_people |> 
   dplyr::select(
     -signup_email,
-    -signup_comment
+    -signup_comment,
+    -email_to_cos_sent,
+    -removed
     )
 
 peer_eval <- 
   peer_eval |>  
-  dplyr::select(-evaluator_email)
+  dplyr::select(
+    -evaluator_email,
+    -evaluator_comments
+    )
 
 analyst_payments <-
   analyst_payments |> 
   dplyr::select(
     -signup_email
+  )
+
+claim_direction_review <-
+  claim_direction_review |> 
+  dplyr::select(
+    -coded_by,
+    -notes
+  )
+
+reanalyzed_effect_sizes <-
+  reanalyzed_effect_sizes |> 
+  dplyr::select(
+    -reanalysis_es_missing_reason
   )
 ```
 
@@ -552,6 +570,7 @@ readr::write_csv(claim_direction_review, here("data/raw/multi100_claim-direction
 readr::write_csv(non_detailed_responses, here("data/raw/multi100_non-detailed-responses_raw_data.csv"))
 
 # We are not sharing this information openly
+# We will upload these files in a private OSF component for archiving.
 # readr::write_csv(analyst_payments, here("data/raw/multi100_analyst-payments_raw_data.csv"))
 
 readr::write_csv(demographic_information_raw, here("data/raw/multi100_demographic-information_raw_data.csv"))

@@ -8,13 +8,13 @@ editor_options:
 ## Setup
 ### Loading packages
 
-```{r}
+```{r setup, message=FALSE, warning=FALSE}
 library(tidyverse)
 ```
 
 ### Load custom functions
 
-```{r}
+```{r customFunctions}
 source(here::here("R/utils.R"))
 source(here::here("R/standard_correlation_coefficient.R"))
 source(here::here("R/cohens_d.R"))
@@ -22,7 +22,7 @@ source(here::here("R/cohens_d.R"))
 
 ## Read data
 
-```{r}
+```{r readData, message=FALSE}
 # Task1 form responses
 task1 <- readr::read_csv(here::here("data/raw/multi100_task1_raw_data.csv"))
 
@@ -82,6 +82,8 @@ all_paper |>
   nrow()
 ```
 
+All papers have their corresponding reference.
+
 Number of papers in all_paper based on paper_id, it should be a 100.
 
 ```{r}
@@ -90,27 +92,46 @@ all_paper |>
   nrow()
 ```
 
+The number of original papers is indeed 100.
+
 ## all_people
 
 Check if analysts have only one analyst_id.
 
 ```{r}
-all_people |> 
-  distinct(first_name, last_name, analyst_id) |>  
-  group_by(first_name, last_name) |> 
-  mutate(n_analyst_id = n()) |> 
-  arrange(desc(n_analyst_id), last_name)
+all_people |>
+  mutate(across(c(first_name, last_name, analyst_id), tolower)) |>
+  distinct(first_name, last_name, analyst_id) |>
+  group_by(first_name, last_name) |>
+  mutate(n_analyst_id = n()) |>
+  arrange(desc(n_analyst_id), last_name) |>
+  dplyr::filter(n_analyst_id > 1)
 ```
+
+There are analysts who have multiple ids. This can lead to faulty results. We will handle these cases later in the script.
 
 Check if analyst_id is unique to the person.
 
 ```{r}
-all_people |> 
-  distinct(first_name, last_name, analyst_id) |> 
-  group_by(analyst_id) |> 
-  mutate(n_analyst_id = n()) |> 
-  arrange(desc(analyst_id))
+all_people |>
+  mutate(across(c(first_name, last_name, analyst_id), tolower)) |>
+  distinct(analyst_id, first_name, last_name) |>
+  group_by(analyst_id) |>
+  summarise(n_names = n_distinct(paste(first_name, last_name)), .groups = "drop") |>
+  arrange(desc(n_names))
 ```
+
+All `analyst_id`s are unique.
+
+Making sure that we did not repurpose any analyst id.
+
+```{r}
+all_people |> 
+  count(analyst_id) |> 
+  arrange(desc(n))
+```
+
+Indeed, we did not.
 
 Check who agreed to have their name attached to the analysis.
 
@@ -118,6 +139,8 @@ Check who agreed to have their name attached to the analysis.
 all_people |> 
   count(name_attached_to_analysis)
 ```
+
+Everyone agreed to have there names attached to the analysis.
 
 ## original_effect_sizes
 
@@ -129,9 +152,9 @@ original_effect_sizes <-
   dplyr::select(-original_materials)
 ```
 
-Effect sizes were calculated in excel for this table. The decimal place is denoted with a comma instead of a dot. We change that now.
+Effect sizes were calculated in excel for this table.
 
-We also convert all the original effect sizes positive.
+We also convert all the original effect sizes in Cohen's d to positive.
 
 ```{r}
 original_effect_sizes <-
@@ -153,7 +176,6 @@ reanalyzed_effect_sizes <-
     analyst_id,
     paper_id,
     reanalysis_es_missing,
-    reanalysis_es_missing_reason,
     reanalysis_type_of_statistic,
     reanalysis_statistic_report,
     reanalysis_degrees_of_freedom_1,
@@ -178,12 +200,32 @@ reanalyzed_effect_sizes |>
   arrange(desc(n))
 ```
 
+There is one duplicate response. We reached out to the analyst to decide which response should we use for further analysis.
+
 Delete the duplicate response.
 
 ```{r}
 reanalyzed_effect_sizes <-
   reanalyzed_effect_sizes |> 
   filter(!(analyst_id == "JX7YO" & paper_id == "Christensen_EurJournPersonality_2018_8R9d" & reanalysis_statistic_report == "0.132"))
+```
+
+Check if there are any cases where df1 is not 1 for chi2 and F statistics.
+
+```{r}
+reanalyzed_effect_sizes |> 
+  dplyr::filter(reanalysis_type_of_statistic %in% c("chi²", "F")) |> 
+  dplyr::filter(reanalysis_degrees_of_freedom_1 != 1)
+```
+
+We cannot use these cases because it would violate our Cohen's d conversion functions assumption.
+
+Are there any cases where the type of test statistics is F but the value of the test statistics is negative?
+
+```{r}
+reanalyzed_effect_sizes |> 
+  dplyr::filter(reanalysis_type_of_statistic == "F") |> 
+  dplyr::filter(reanalysis_statistic_report < 0)
 ```
 
 Calculate the Cohen's ds for the reanalyses.
@@ -194,6 +236,7 @@ reanalysis_vars <- c("reanalysis_type_of_statistic", "reanalysis_statistic_repor
 reanalyzed_effect_sizes <-
   reanalyzed_effect_sizes |> 
   mutate(reanalysis_type_of_statistic = str_replace_all(reanalysis_type_of_statistic, "²", "2")) |> 
+  # We will delete those values from the processed data file for further analysis where it is not possible to calculate the effect size
   mutate(
     across(
       all_of(reanalysis_vars),
@@ -208,7 +251,7 @@ reanalyzed_effect_sizes <-
   )
 
 reanalyzed_effect_sizes <-
-  reanalyzed_effect_sizes %>%
+  reanalyzed_effect_sizes |> 
   mutate(
     reanalysis_statistic_report = dplyr::case_when(
       reanalysis_type_of_statistic == "F" ~ abs(reanalysis_statistic_report),
@@ -267,7 +310,6 @@ task1 <-
   filter(analyst_id %ni% c("8nJioy5V5B", "z2u1wLLVu1"))
 ```
 
-Check whether the paper_id provided by the analyst matches the correct id.
 Check if all paper_id's in 'task1' are present in 'all_paper', if 'FALSE' then ID's match.
 
 ```{r}
@@ -322,11 +364,39 @@ task1 <-
   mutate(analyst_id = str_replace(analyst_id, "_2$", ""))
 ```
 
-Check whether each analyst_id matches with the ID they were assigned in the signup form ('all_people').
-Check if all analyst_id in task1 are present in all_people, if 'FALSE' then all ID's match.
+Check if all analyst_id in task1 are present in all_people, if 'FALSE' then all ID's match, meaning, there are no analyst ids reported in task1 that are not present in our list of analysts and their names.
 
 ```{r}
 any(!(task1$analyst_id %in% all_people$analyst_id)) 
+```
+
+Check if there are responses from the same analyst (individual) but with different analyst_ids and which papers are affected.
+
+```{r}
+task1 |> 
+  left_join(all_people, by = "analyst_id") |> 
+  mutate(full_name = paste(first_name, last_name)) |> 
+  select(analyst_id, paper_id, full_name) |> 
+  mutate(across(c(analyst_id, paper_id, full_name), tolower)) |>
+  distinct(full_name, analyst_id, paper_id, .keep_all = T) |>
+  group_by(full_name) |>
+  mutate(n_analyst_ids = n_distinct(analyst_id)) |>
+  filter(n_analyst_ids > 1) |> 
+  ungroup()
+```
+
+Check if same name maps to multiple IDs within a single paper.
+
+```{r}
+task1 |>
+  left_join(all_people, by = "analyst_id") |>
+  mutate(full_name = paste(first_name, last_name)) |>
+  select(analyst_id, paper_id, full_name) |>
+  mutate(across(c(analyst_id, paper_id, full_name), tolower)) |>
+  distinct(paper_id, full_name, analyst_id) |>
+  group_by(paper_id, full_name) |>
+  summarise(n_analyst_ids = n_distinct(analyst_id), .groups = "drop") |>
+  filter(n_analyst_ids > 1)
 ```
 
 Check for duplicate responses.
@@ -412,6 +482,8 @@ task1 |>
   filter(n > 1)
 ```
 
+There are no duplicate responses to task1 after the cleaning.
+
 Replace the non-detailed responses about the analysis procedure with additional information provided by the analyst as a response to our follow-up questions.
 
 ```{r}
@@ -446,7 +518,6 @@ task2 <-
   )
 ```
 
-Check whether each analyst_id matches with the ID they were assigned in the signup form ('all_people').
 Check if all analyst_id in task2 are present in all_people, if 'FALSE' then all ID's match.
 
 ```{r}
@@ -481,9 +552,24 @@ Verify that there are no missing analyst_ids.
 anti_join(task2, all_people, by = "analyst_id")
 ```
 
+Check if there are responses from the same analyst (individual) but with different analyst_ids and which papers are affected.
+
+```{r}
+task2 |> 
+  left_join(all_people, by = "analyst_id") |> 
+  mutate(full_name = paste(first_name, last_name)) |> 
+  select(analyst_id, paper_id, full_name) |> 
+  mutate(across(c(analyst_id, paper_id, full_name), tolower)) |>
+  distinct(full_name, analyst_id, paper_id, .keep_all = T) |>
+  group_by(full_name) |>
+  mutate(n_analyst_ids = n_distinct(analyst_id)) |>
+  filter(n_analyst_ids > 1) |> 
+  ungroup()
+```
+
 Both Task1 and Task2 analyst_ids's now match with the ID they were assigned to.
 
-Check whether the paper_id provided by the analyst matches the correct paper_id in the meta-information sheet provided by OSF.
+Check whether the paper_id provided by the analyst for task2 matches the correct paper_id in the meta-information sheet provided by OSF.
 
 ```{r}
 any(!(task2$paper_id %in% all_paper$paper_id))
@@ -576,6 +662,26 @@ setdiff(task1$analyst_id, task2$analyst_id)
 setdiff(task2$analyst_id, task1$analyst_id)
 ```
 
+Indeed, there are 5 analysts who finished task1 but not task2. However, there are no analyst who finished task2 but not task1.
+
+Since it is possible for one analyst to analyse multiple papers, we have to make sure that each analyst provided a response for the same paper in task1 and task2.
+
+```{r}
+# Get distinct combinations from both datasets
+task1_ids <- task1 |> distinct(analyst_id, paper_id)
+task2_ids <- task2 |> distinct(analyst_id, paper_id)
+
+# Check combinations present in Task1 but not in Task2
+missing_in_task2 <- anti_join(task1_ids, task2_ids, by = c("analyst_id", "paper_id"))
+nrow(missing_in_task2)
+
+# Check combinations present in Task2 but not in Task1
+missing_in_task1 <- anti_join(task2_ids, task1_ids, by = c("analyst_id", "paper_id"))
+nrow(missing_in_task1)
+```
+
+There are 2 analysts who did multiple analyses and did not follow up with their second analysis by providing responses to task2 as well. These task1 responses therefore will not be included in the processed dataset.
+
 Check the number of distinct papers in task2.
 
 ```{r}
@@ -583,6 +689,8 @@ task2 |>
   distinct(paper_id) |> 
   nrow()
 ```
+
+There are 100 distinct paper ids as it should be.
 
 Replace the non-detailed responses about the analysis procedure with additional information provided by the analyst as a response to our follow-up questions.
 
@@ -617,6 +725,8 @@ multi100_data |>
   distinct(paper_id) |> 
   nrow()
 ```
+
+We have a complete analysis for all 100 papers.
 
 Check number of analyses based on paper_id.
 
@@ -717,7 +827,7 @@ multi100_data <-
     p_value_report, task2_conclusion, direction_of_result, same_statistical_result_as_task1,
     additional_calculations,
     # reproduced effect sizes
-    reanalysis_es_missing, reanalysis_es_missing_reason, reanalysis_type_of_statistic, reanalysis_statistic_report, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2, reanalysis_model_sample_size, reanalysis_correlation_coef, reanalysis_cohens_d
+    reanalysis_es_missing, reanalysis_type_of_statistic, reanalysis_statistic_report, reanalysis_degrees_of_freedom_1, reanalysis_degrees_of_freedom_2, reanalysis_model_sample_size, reanalysis_correlation_coef, reanalysis_cohens_d
     )
 ```
 
@@ -762,7 +872,7 @@ multi100_data <-
   multi100_data %>%
   dplyr::mutate(
     peer_eval_pass = case_when(
-      # add one more based on harry
+      # add one more based on Harry's suggestion
       # Based on expert panel decision
       analyst_id == "NSDML" &
         paper_id == "PALER_AmPoliSciRev_2013_Pxp7" ~ FALSE,
@@ -781,6 +891,18 @@ multi100_data <-
       TRUE ~ TRUE
     )
   )
+```
+
+Check if analyst ids are still unique to people.
+
+```{r}
+multi100_data |>
+  mutate(across(c(first_name, last_name, analyst_id), tolower)) |>
+  mutate(full_name = paste(first_name, last_name)) |> 
+  distinct(analyst_id, full_name) |>
+  group_by(full_name) |>
+  summarise(n_id = n_distinct(analyst_id), .groups = "drop") |>
+  arrange(desc(n_id))
 ```
 
 Some analyst_ids are not unique to the person. We correct this error now before saving the processed dataset.
@@ -869,7 +991,7 @@ peer_eval <-
   slice(1:500)
 ```
 
-Remove 'OTHER' submission - evaluator did not provide the ID of the co-analyst and so should be removed for now.
+Remove 'OTHER' submission - evaluator did not provide the ID of the co-analyst and so should be removed.
 This is submission number 459.
 
 ```{r}
@@ -931,7 +1053,7 @@ Fixing erroneous ids:
 * SN. 446 submitted the co-analysts ID as their own ID - it should be NSDML (based on the email address they provided)
 
 Alter either the analyst_id or paper_id as appropriate.
-TODO: change the ids to actual text for safety
+
 ```{r}
 peer_eval <-
   peer_eval %>%
