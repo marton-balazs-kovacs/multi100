@@ -371,28 +371,40 @@ non_detailed_responses_codebook <-
 
 ```{r}
 task1 <- recode_colnames(task1, task1_codebook)
+colnames(task1)
 
 task2 <- recode_colnames(task2, task2_codebook)
+colnames(task2)
 
 all_people <- recode_colnames(all_people, all_people_codebook)
+colnames(all_people)
 
 all_paper <- recode_colnames(all_paper, all_paper_codebook)
+colnames(all_paper)
 
 master <- recode_colnames(master, master_codebook)
+colnames(master)
 
 original_effect_sizes <- recode_colnames(original_effect_sizes, original_effect_sizes_codebook)
+colnames(original_effect_sizes)
 
 reanalyzed_effect_sizes <- recode_colnames(reanalyzed_effect_sizes, reanalyzed_effect_sizes_codebook)
+colnames(reanalyzed_effect_sizes)
 
 peer_eval <- recode_colnames(peer_eval, peer_eval_codebook)
+colnames(peer_eval)
 
 peer_eval_review <- recode_colnames(peer_eval_review, peer_eval_review_codebook)
+colnames(peer_eval_review)
 
 analyst_payments <- recode_colnames(analyst_payments, analyst_payments_codebook)
+colnames(analyst_payments)
 
 claim_direction_review <- recode_colnames(claim_direction_review, claim_direction_review_codebook)
+colnames(claim_direction_review)
 
 non_detailed_responses <- recode_colnames(non_detailed_responses, non_detailed_responses_codebook)
+colnames(non_detailed_responses)
 ```
 
 ## Saving private demographic information separately

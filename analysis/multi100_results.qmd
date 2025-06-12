@@ -48,12 +48,19 @@ processed |>
 ```
 
 ```{r checks, include=FALSE}
-# Check if the analyst_id's are always unique to one person
+# Check if any person is associated with multiple analyst IDs
 processed |>
   dplyr::distinct(first_name, last_name, analyst_id) |>
   dplyr::group_by(first_name, last_name) |>
   dplyr::mutate(n_analyst_id = dplyr::n()) |>
-  dplyr::arrange(dplyr::desc(n_analyst_id))
+  dplyr::filter(n_analyst_id > 1)
+
+# Check if the analyst_id's are always unique to one person
+processed |>
+  dplyr::distinct(analyst_id, first_name, last_name) |>
+  dplyr::group_by(analyst_id) |>
+  dplyr::mutate(n_names = dplyr::n_distinct(paste(first_name, last_name))) |>
+  dplyr::filter(n_names > 1)
 ```
 
 Over the past decade, social and behavioural scientists have been striving to enhance the robustness, objectivity, and replicability of their findings through systemic reforms in the conduct and communication of empirical research. Practices such as preregistration1, registered reports2, multisite replications3, analytical reproducibility checks4,5, and automated result validation techniques6 have been investigated and recommended to produce robust and replicable findings. An important aspect of robustness has yet to be systematically charted across these sciences: the contingency of the results on researchers’ analytical choices.
@@ -296,9 +303,9 @@ tolerance_region_main_plot <-
     panel.grid.minor.x = ggplot2::element_blank(),
     panel.background = ggplot2::element_blank(),
     axis.title = ggplot2::element_text(size = 20),
-    axis.text.y = ggplot2::element_text(size = 10),
+    axis.text.y = ggplot2::element_text(size = 10, color = "black"),
     # axis.text.x = ggplot2::element_text(angle = 90, size = 5)
-    axis.text.x = ggplot2::element_text(size = 13)
+    axis.text.x = ggplot2::element_text(size = 13, color = "black")
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
@@ -381,7 +388,7 @@ tolerance_region_all_plot <- plot_tolarence_region(data = tolerance_region_all_d
   ggplot2::theme(
     axis.title = ggplot2::element_text(size = 15),
     legend.text = ggplot2::element_text(size = 10),
-    axis.text.x = ggplot2::element_text(size = 13)
+    axis.text.x = ggplot2::element_text(size = 13, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/tolerance_region_all_plot.jpg"), tolerance_region_all_plot, width = 8.27, height = 11.69, dpi = 300)
@@ -441,7 +448,7 @@ estimate_range_discipline_plot <-
             trans = "log10",
             breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60)) +
   ggplot2::theme(
-    axis.title = element_text(size = 9)
+    axis.title = element_text(size = 9, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/estimate_range_discipline_plot.jpg"), estimate_range_discipline_plot, dpi = 300)
@@ -492,7 +499,7 @@ estimate_range_studytype_plot <- plot_rain(
   # ggplot2::coord_flip() +
   ggplot2::theme(
     axis.title = element_text(size = 9),
-    axis.text = element_text(size = 7)
+    axis.text = element_text(size = 7, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/estimate_range_studytype_plot.jpg"), estimate_range_studytype_plot, dpi = 300)
@@ -607,7 +614,7 @@ tolerance_region_samplesize_plot <-
   ) +
   ggplot2::coord_flip() +
   ggplot2::theme(
-    axis.title.x = element_text(size = 9)
+    axis.title.x = element_text(size = 9, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/tolerance_region_samplesize_plot.jpg"), tolerance_region_samplesize_plot, dpi = 300)
@@ -681,7 +688,7 @@ round(mean(effec_size_corr_plot_data$original_cohens_d), 2)
 ```
 
 ```{r generating effec_size_corr_plot, include=FALSE}
-effec_size_corr_plot <- plot_effect_size_correlation(effec_size_corr_plot_data, x_limits = c(0, 5), y_limits = c(-5, 5), annotate_positions = c(4.7, 4))
+effec_size_corr_plot <- plot_effect_size_correlation(effec_size_corr_plot_data, x_limits = c(0, 7), y_limits = c(-5, 5), annotate_positions = c(4.7, 4))
 
 # Save plot
 ggplot2::ggsave(
@@ -813,8 +820,8 @@ conclusion_main_plot <-
     coord_flip = TRUE
   ) +
   theme(
-    axis.text.y = element_text(size = 8),
-    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 8, color = "black"),
+    axis.text.x = element_text(size = 10, color = "black"),
     axis.title.x = element_text(size = 15),
     legend.justification = "left",
     legend.box = "horizontal",
@@ -848,7 +855,7 @@ conclusions_discipline_robustness_plot <-
     with_labels = TRUE,
     y_lab = "Percentage of studies",
     x_lab = "Disciplines",
-    colors = c("#000004FF", "#FCFDBFFF"),
+    colors = c("#440154FF", "#FDE725FF"),
     rev_limits = FALSE
   ) +
   ggplot2::theme(
@@ -900,7 +907,7 @@ conclusions_studytype_robustness_plot <-
     y_lab = "Percentage of studies",
     x_lab = "Study type",
     with_labels = TRUE,
-     colors = c("#000004FF", "#FCFDBFFF"),
+     colors = c("#440154FF", "#FDE725FF"),
     rev_limits = FALSE
   ) +
   ggplot2::theme(
@@ -1049,7 +1056,8 @@ conclusions_familiarity_plot <-
     categorization_var = categorisation,
     with_labels = TRUE,
     y_lab = "Percentage of re-analyses",
-    x_lab = "Analyst familiarity with the paper") + 
+    x_lab = "Analyst familiarity with the paper",
+    bar_outline = NA) + 
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
     legend.text = element_text(size = 8),
@@ -1069,9 +1077,13 @@ conclusions_samplesize_plot <-
                 reanalysis_model_sample_size) |>
   dplyr::filter(!is.na(reanalysis_model_sample_size)) |>
   dplyr::mutate(
+    categorisation = dplyr::case_when(
+      categorisation == "No effect/inconclusive" ~ "No effect\ninconclusive",
+      TRUE ~ categorisation
+    ),
     categorisation = forcats::fct_relevel(
       categorisation,
-      c("Same conclusion", "No effect/inconclusive", "Opposite effect")
+      c("Same conclusion", "No effect\ninconclusive", "Opposite effect")
     )
   ) |> 
   plot_rain(
@@ -1084,7 +1096,7 @@ conclusions_samplesize_plot <-
   ) +
   ggplot2::coord_flip() +
   ggplot2::theme(
-    axis.title = element_text(size = 9)
+    axis.title = element_text(size = 9, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)

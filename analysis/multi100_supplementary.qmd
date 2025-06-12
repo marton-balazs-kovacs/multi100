@@ -18,6 +18,7 @@ library(gt)
 library(grid)
 library(patchwork)
 library(purrr)
+library(ggdist)
 
 # Load custom functions
 script_files <- list.files(here::here("R"), pattern = "\\.R$", full.names = TRUE)
@@ -1583,8 +1584,25 @@ min(heterogeneity_data$heterogeneity_ratio)
 max(heterogeneity_data$heterogeneity_ratio)
 
 IQR(heterogeneity_data$heterogeneity_ratio)
+```
 
-hist(heterogeneity_data$heterogeneity_ratio)
+```{r}
+heterogeneity_data |>
+  ggplot2::ggplot() +
+  ggplot2::aes(x = 1, y = heterogeneity_ratio) +
+  ggrain::geom_rain(rain.side = 'r') +
+  ggplot2::labs(y = "Heterogeneity Ratio (log10 transformed)",
+                x = "") +
+  ggplot2::scale_y_continuous(trans = "log10",
+                              breaks = c(1, 10, 100, 1000),
+                              labels = scales::comma) +
+  ggplot2::theme(
+    panel.background = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = ggplot2::element_blank(),
+  )
 ```
 
 ### Open data availability

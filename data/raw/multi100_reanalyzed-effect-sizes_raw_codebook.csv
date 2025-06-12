@@ -16,7 +16,7 @@ df_1,reanalysis_degrees_of_freedom_1
 df_2,reanalysis_degrees_of_freedom_2
 Sample Size,reanalysis_model_sample_size
 Cleaned By,cleaned_by
-Notes by DON,cleaning_notes_by_dvr
+Notes,cleaning_notes
 Notes by Marton Kovacs,cleaning_notes_by_mk
 Action,cleaning_action
 Status,cleaning_status

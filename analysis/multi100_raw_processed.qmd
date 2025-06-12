@@ -228,6 +228,8 @@ reanalyzed_effect_sizes |>
   dplyr::filter(reanalysis_statistic_report < 0)
 ```
 
+There is one, but we drop this case for now.
+
 Calculate the Cohen's ds for the reanalyses.
 
 ```{r}
@@ -1188,7 +1190,7 @@ peer_eval_to_change <-
 
 peer_eval_changed <-
   peer_eval %>%
-  pivot_longer(cols = c(-analyst_id, -paper_id, -evaluator_id, -peereval_timestamp, -peereval_submission_number, -eval_id, -evaluator_comments), names_to = "variable_name") %>%
+  pivot_longer(cols = c(-analyst_id, -paper_id, -evaluator_id, -peereval_timestamp, -peereval_submission_number, -eval_id), names_to = "variable_name") %>%
   left_join(
     .,
     peer_eval_to_change,

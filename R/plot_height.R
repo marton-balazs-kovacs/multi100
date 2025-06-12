@@ -1,4 +1,3 @@
-# TODO: bad name, replace it later
 plot_height <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE) {
   
   if (with_sum) {
@@ -7,7 +6,7 @@ plot_height <- function(data, grouping_var, categorization_var, with_labels = FA
       paste0(
         data[[quo_name(enquo(grouping_var))]],
         "\n",
-        "(N = " ,
+        "(𝑁 = " ,
         data[["N"]],
         ")"
       )
@@ -66,7 +65,8 @@ plot_height <- function(data, grouping_var, categorization_var, with_labels = FA
       plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
       legend.position = "bottom",
       panel.background = ggplot2::element_blank(),
-      panel.grid = ggplot2::element_blank()
+      panel.grid = ggplot2::element_blank(),
+      legend.key = element_rect(color = "black", linewidth = 0.2)
     )
   
   if (with_labels) {

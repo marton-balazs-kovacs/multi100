@@ -16,8 +16,9 @@ plot_effect_size_correlation <- function(data, x_limits, y_limits, annotate_posi
   # Create the scatter plot
   scatter <-
     data |> 
-    ggplot(aes(x = original_cohens_d, y = effect_size, color = as.factor(colors))) +
+    ggplot(aes(x = original_cohens_d, y = effect_size)) +
     geom_point(color = "Grey30",
+               size = 3.5,
                shape = 21,
                alpha = .8) +
     geom_smooth(
@@ -26,21 +27,23 @@ plot_effect_size_correlation <- function(data, x_limits, y_limits, annotate_posi
       color = "black",
       alpha = 0.2
     ) +
-    annotate("text", x = annotate_positions[1], y = annotate_positions[2], label = bquote(italic(beta) == .(round(beta, 2))), size = 4, color = "black") +
+    annotate("text", x = annotate_positions[1], y = annotate_positions[2], label = bquote(italic(beta) == .(round(beta, 2))), size = 10, color = "black") +
     geom_rug(
-      aes(color = "Original"),
+      aes(x = original_cohens_d),
       size = 1,
       sides = "b",
-      alpha = .6
+      alpha = .6,
+      color = I("#440154FF")  # Original
     ) +
     geom_rug(
-      aes(color = "Replication"),
+      aes(y = effect_size),
       size = 1,
       sides = "l",
-      alpha = .6
+      alpha = .6,
+      color = I("#FDE725FF")  # Replication
     ) +
-    scale_color_manual(values = colors) + 
-    geom_hline(aes(yintercept = 0), linetype = 2) +
+    # scale_color_manual(values = colors) + 
+    geom_hline(yintercept = 0, linetype = 2) +
     geom_abline(intercept = 0,
                 slope = 1,
                 color = "Grey60") +
@@ -61,16 +64,18 @@ plot_effect_size_correlation <- function(data, x_limits, y_limits, annotate_posi
       panel.grid = element_blank(),
       axis.line = element_line(color = "black"),
       legend.position = "none",
-      axis.title = element_text(size = 25),
-      axis.text = element_text(size = 20)
+      axis.title = element_text(size = 35, color = "black"),
+      axis.text = element_text(size = 30, color = "black")
     )
-  
+ 
   # Add density plots on the axes
-  ggExtra::ggMarginal(
+  plot_with_margins <- ggExtra::ggMarginal(
     scatter,
     type = "density",
     margins = "both",
     xparams = list(fill = colors["Original"], alpha = 0.5),
     yparams = list(fill = colors["Replication"], alpha = 0.5)
   )
+  
+  return(plot_with_margins)
 }

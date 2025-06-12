@@ -1,5 +1,5 @@
 #' plot percentage
-plot_percentage <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE, coord_flip = FALSE, colors = NULL) {
+plot_percentage <- function(data, grouping_var, categorization_var, with_labels = FALSE, x_lab = NULL, y_lab = NULL, legend_lab = NULL, with_sum = TRUE, reverse = TRUE, rev_limits = TRUE, coord_flip = FALSE, colors = NULL, bar_outline = "black") {
   
   if (with_sum) {
     new_labels <- setNames(
@@ -7,7 +7,7 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
       paste0(
         data[[quo_name(enquo(grouping_var))]],
         "\n",
-        "(N = " ,
+        "(𝑁 = " ,
         data[["N"]],
         ")"
       )
@@ -31,10 +31,11 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
       fill = {{ categorization_var }}
     ) +
     ggplot2::geom_bar(
-      color = "black",
+      color = bar_outline,
       stat = "identity",
       width = 0.8,
-      position = position_stack(reverse = reverse)
+      position = position_stack(reverse = reverse),
+      size = 0.2
     ) +
     ggplot2::scale_y_continuous(
       expand = c(0, 0),
@@ -72,11 +73,13 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
     ggplot2::theme(
       axis.ticks = ggplot2::element_blank(),
       # axis.title.y = element_blank(),
+      axis.text = ggplot2::element_text(color = "black"),
       legend.box = "horizontal",
       plot.margin = ggplot2::margin(t = 10, r = 20, b = 10, l = 10, "pt"),
       legend.position = "bottom",
       panel.background = ggplot2::element_blank(),
-      panel.grid = ggplot2::element_blank()
+      panel.grid = ggplot2::element_blank(),
+      legend.key = element_rect(color = "black", linewidth = 0.2)
     )
   
   if (with_labels) {
@@ -93,7 +96,9 @@ plot_percentage <- function(data, grouping_var, categorization_var, with_labels 
   
   # Check if coord_flip is TRUE, then apply coord_flip()
   if (coord_flip) {
-    plot <- plot + ggplot2::coord_flip()
+    plot <- plot + ggplot2::coord_flip(clip = "off")
+  } else {
+    plot <- plot + ggplot2::coord_cartesian(clip = "off")
   }
   
   return(plot)
