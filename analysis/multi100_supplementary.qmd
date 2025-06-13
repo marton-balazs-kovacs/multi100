@@ -1678,7 +1678,7 @@ inferential_threshold_robustness_plot <-
     breaks = seq(0, 100, 10),
     limits = c(0, 100)
   ) +
-  labs(x = "Threshold of proportion of re-analyses arriving at the same conclusion as the original study",
+  labs(x = "Threshold of proportion of re-analyses\narriving at the same conclusion as the original study",
        y = "Percentage of studies") +
   ggplot2::theme(
     panel.background = element_blank(),
