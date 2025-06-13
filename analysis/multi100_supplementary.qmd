@@ -1587,7 +1587,8 @@ IQR(heterogeneity_data$heterogeneity_ratio)
 ```
 
 ```{r}
-heterogeneity_data |>
+heterogeneity_distribution_plot <-
+  heterogeneity_data |>
   ggplot2::ggplot() +
   ggplot2::aes(x = 1, y = heterogeneity_ratio) +
   ggrain::geom_rain(rain.side = 'r') +
@@ -1603,6 +1604,10 @@ heterogeneity_data |>
     axis.text.x = element_blank(),
     axis.ticks.x = ggplot2::element_blank(),
   )
+
+ggplot2::ggsave(here::here("figures/supplement/heterogeneity_distribution_plot.jpg"), heterogeneity_distribution_plot, height = 4, dpi = 300)
+
+heterogeneity_distribution_plot
 ```
 
 ### Open data availability
@@ -1658,7 +1663,8 @@ inferential_threshold_robustness_plot_data <-
 ```
 
 ```{r}
-inferential_threshold_robustness_plot_data |>
+inferential_threshold_robustness_plot <-
+  inferential_threshold_robustness_plot_data |>
   ggplot() +
   aes(x = threshold,
       y = robustness) +
@@ -1680,5 +1686,9 @@ inferential_threshold_robustness_plot_data |>
     axis.line = element_line(color = "black"),
     legend.position = c(0.8, 0.8)
   )
+
+ggplot2::ggsave(here::here("figures/supplement/inferential_threshold_robustness_plot.jpg"), inferential_threshold_robustness_plot, height = 4, dpi = 300)
+
+inferential_threshold_robustness_plot
 ```
 
