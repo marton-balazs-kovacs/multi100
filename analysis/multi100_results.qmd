@@ -302,10 +302,10 @@ tolerance_region_main_plot <-
     # panel.grid.major.x = ggplot2::element_blank(),
     panel.grid.minor.x = ggplot2::element_blank(),
     panel.background = ggplot2::element_blank(),
-    axis.title = ggplot2::element_text(size = 20),
+    axis.title = ggplot2::element_text(size = 15),
     axis.text.y = ggplot2::element_text(size = 10, color = "black"),
     # axis.text.x = ggplot2::element_text(angle = 90, size = 5)
-    axis.text.x = ggplot2::element_text(size = 13, color = "black")
+    axis.text.x = ggplot2::element_text(size = 10, color = "black")
     # axis.text.y=element_text(margin = margin(1, unit = "cm"), vjust =1.5)
     )
 
@@ -419,12 +419,13 @@ tolerance_region_discipline_plot <-
     grouping_var = paper_discipline,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
-    x_lab = "Disciplines",
+    x_lab = "",
     with_labels = TRUE,
     rev_limits = FALSE
   ) +
   ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13),
+    axis.text = element_text(size = 10, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/tolerance_region_discipline_plot.jpg"), tolerance_region_discipline_plot, dpi = 300)
@@ -443,12 +444,13 @@ estimate_range_discipline_plot <-
   plot_rain(data = estimate_range_discipline_data,
             grouping_var = paper_discipline,
             response_var = estimate_range,
-            x_lab = "Disciplines",
+            x_lab = "",
             y_lab = "Effect size estimate range in Cohen's d",
             trans = "log10",
             breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60)) +
   ggplot2::theme(
-    axis.title = element_text(size = 9, color = "black")
+    axis.title.y = element_text(hjust = 1, size = 13, color = "black"),
+    axis.text = element_text(size = 10, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/estimate_range_discipline_plot.jpg"), estimate_range_discipline_plot, dpi = 300)
@@ -468,12 +470,13 @@ tolerance_region_studytype_plot <-
     grouping_var = experimental_or_observational,
     categorization_var = is_within_region,
     y_lab = "Percentage of re-analysis results",
-    x_lab = "Study type",
+    x_lab = "",
     with_labels = TRUE,
     rev_limits = FALSE
   ) +
   ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13),
+    axis.text = element_text(size = 10, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/tolerance_region_studytype_plot.jpg"), tolerance_region_studytype_plot, dpi = 300)
@@ -491,15 +494,15 @@ estimate_range_studytype_plot <- plot_rain(
   data = estimate_range_studytype_data,
   grouping_var = experimental_or_observational,
   response_var = estimate_range,
-  x_lab = "Study type",
+  x_lab = "",
   y_lab = "Effect size estimate range in Cohen's d",
   trans = "log10",
   breaks = c(0.01, 0.1, 0.5, 1, 5, 10, 30, 60)
 ) +
   # ggplot2::coord_flip() +
   ggplot2::theme(
-    axis.title = element_text(size = 9),
-    axis.text = element_text(size = 7, color = "black")
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 10, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/estimate_range_studytype_plot.jpg"), estimate_range_studytype_plot, dpi = 300)
@@ -540,6 +543,9 @@ tolerance_region_expertise_plot <-
     with_labels = TRUE,
     rev_limits = FALSE,
     with_sum = FALSE
+  ) +
+  ggplot2::theme(
+    axis.title = element_text(size = 13)
   )
 
 ggplot2::ggsave(here::here("figures/tolerance_region_expertise_plot.jpg"), tolerance_region_expertise_plot, dpi = 300,
@@ -567,13 +573,17 @@ tolerance_region_familiarity_plot <-
     x_lab = "Familiar with the paper",
     with_labels = TRUE
   ) +
-  ggplot2::theme(plot.margin = margin(
+  ggplot2::theme(
+    plot.margin = margin(
     t = 20,
     r = 10,
     b = 10,
     l = 10,
     unit = "pt"
-  ))
+  ),
+  axis.title = element_text(size = 13),
+  axis.text = element_text(size = 10)
+  )
 
 ggplot2::ggsave(here::here("figures/tolerance_region_familiarity_plot.jpg"), tolerance_region_familiarity_plot, dpi = 300)
 ```
@@ -614,7 +624,8 @@ tolerance_region_samplesize_plot <-
   ) +
   ggplot2::coord_flip() +
   ggplot2::theme(
-    axis.title.x = element_text(size = 9, color = "black")
+    axis.title.x = element_text(size = 13, color = "black"),
+    axis.title.y = element_text(size = 13, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/tolerance_region_samplesize_plot.jpg"), tolerance_region_samplesize_plot, dpi = 300)
@@ -626,25 +637,16 @@ ggplot2::ggsave(here::here("figures/tolerance_region_samplesize_plot.jpg"), tole
 #| out-width: 100%
 #| fig-dpi: 300
 
-main_section <- 
-  tolerance_region_main_plot +
-  tolerance_region_all_plot +
-  plot_layout(widths = c(2, 1))
-
 # Define the remaining plots section
 small_plot_section <-
-  (
-    tolerance_region_discipline_plot |
-      estimate_range_discipline_plot 
-  ) /
-  ( tolerance_region_studytype_plot | estimate_range_studytype_plot) /
-  (tolerance_region_expertise_plot |
-     tolerance_region_familiarity_plot | tolerance_region_samplesize_plot) +
+  (tolerance_region_discipline_plot | estimate_range_discipline_plot) /
+  (tolerance_region_studytype_plot | estimate_range_studytype_plot) /
+  (tolerance_region_expertise_plot | tolerance_region_familiarity_plot | tolerance_region_samplesize_plot) +
   plot_layout(ncol = 1, nrow = 3)
 
 # Combine the main section and the remaining plots section
 estimate_panel <-
-  (main_section | small_plot_section) + plot_annotation(tag_levels = 'a')
+  (tolerance_region_main_plot | small_plot_section | tolerance_region_all_plot) + plot_layout(widths = c(1, 2, 1)) + plot_annotation(tag_levels = 'a')
 
 estimate_panel
 
@@ -820,9 +822,9 @@ conclusion_main_plot <-
     coord_flip = TRUE
   ) +
   theme(
-    axis.text.y = element_text(size = 8, color = "black"),
+    axis.text.y = element_text(size = 10, color = "black"),
     axis.text.x = element_text(size = 10, color = "black"),
-    axis.title.x = element_text(size = 15),
+    axis.title.x = element_text(size = 13),
     legend.justification = "left",
     legend.box = "horizontal",
     legend.position = "bottom",
@@ -854,12 +856,12 @@ conclusions_discipline_robustness_plot <-
     grouping_var = paper_discipline,
     with_labels = TRUE,
     y_lab = "Percentage of studies",
-    x_lab = "Disciplines",
+    x_lab = "",
     colors = c("#440154FF", "#FDE725FF"),
     rev_limits = FALSE
   ) +
   ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13)
   )
 
 ggsave(here::here("figures/conclusions_discipline_robustness_plot.jpg"), conclusions_discipline_robustness_plot, dpi = 300)
@@ -873,13 +875,13 @@ conclusions_discipline_plot <-
     categorization_var = categorisation,
     with_labels = TRUE,
     y_lab = "Percentage of re-analyses",
-    x_lab = "Disciplines",
+    x_lab = "",
     rev_limits = FALSE
   ) + 
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
     legend.text = element_text(size = 8),
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13)
     )
 
 ggplot2::ggsave(here::here("figures/conclusions_discipline_plot.jpg"), conclusions_discipline_plot, dpi = 300)
@@ -905,13 +907,13 @@ conclusions_studytype_robustness_plot <-
     categorization_var = robust,
     grouping_var = experimental_or_observational,
     y_lab = "Percentage of studies",
-    x_lab = "Study type",
+    x_lab = "",
     with_labels = TRUE,
      colors = c("#440154FF", "#FDE725FF"),
     rev_limits = FALSE
   ) +
   ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13)
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_studytype_robustness_plot.jpg"), conclusions_studytype_robustness_plot, dpi = 300)
@@ -926,7 +928,7 @@ conclusions_studytype_plot <-
     data = conclusions_studytype_data,
     grouping_var = experimental_or_observational,
     categorization_var = categorisation,
-    x_lab = "Study type",
+    x_lab = "",
     y_lab = "Percentage of re-analyses",
     with_labels = TRUE,
     rev_limits = FALSE
@@ -942,7 +944,7 @@ conclusions_studytype_plot <-
     legend.text = element_text(size = 8)
   ) +
     ggplot2::theme(
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13)
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_studytype_plot.jpg"), conclusions_studytype_plot, dpi = 300)
@@ -979,7 +981,10 @@ conclusions_expertise_plot <-
     with_sum = FALSE,
     rev_limits = FALSE
   ) +
-  theme(legend.text = element_text(size = 8))
+  theme(
+    legend.text = element_text(size = 8),
+    axis.title = element_text(size = 13)
+    )
 
 ggsave(here::here("figures/conclusions_expertise_plot.jpg"), conclusions_expertise_plot, 
        height = 6, width = 8,
@@ -1033,7 +1038,8 @@ peer_eval_subset_task1_plot <-
   ) +
   ggplot2::theme(
     legend.text = element_text(size = 8),
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13),
+    axis.title.x = element_text(size = 13)
   )
 
 ggsave(here::here("figures/peer_eval_subset_task1_plot.jpg"), peer_eval_subset_task1_plot, dpi = 300)
@@ -1061,7 +1067,8 @@ conclusions_familiarity_plot <-
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
     legend.text = element_text(size = 8),
-    axis.title.y = element_text(hjust = 1)
+    axis.title.y = element_text(hjust = 1, size = 13),
+    axis.title.x = element_text(size = 13)
     )
 
 ggsave(here::here("figures/conclusions_familiarity_plot.jpg"), conclusions_familiarity_plot, dpi = 300)
@@ -1092,14 +1099,66 @@ conclusions_samplesize_plot <-
     trans = "log10",
     breaks = c(10, 100, 1000, 10000, 100000),
     x_lab = "Direction of the re-analysis conclusion\ncompared to the original effect",
-    y_lab = "Sample size"
+    y_lab = "Sample size",
+    color_by_group = TRUE
   ) +
   ggplot2::coord_flip() +
   ggplot2::theme(
-    axis.title = element_text(size = 9, color = "black")
+    axis.title.x = element_text(size = 13, color = "black"),
+    axis.title.y = element_text(size = 13, color = "black")
   )
 
 ggplot2::ggsave(here::here("figures/conclusions_samplesize_plot.jpg"), conclusions_samplesize_plot, dpi = 300)
+```
+
+```{r data processing for inferential_threshold_robustness_plot, include=FALSE, message=FALSE, warning=FALSE}
+# Estimate inferential robustness with alternative accordance thresholds
+# We learned that even with a 4 times broader tolerance region  (+/- 0.5 Cohen’s d), we would find that around 80% of the studies still show results outside of this region and around half of the individual reanalysis effect sizes are outside of this region.
+thresholds <- seq(10, 100, by = 1)
+
+inferential_threshold_robustness_plot_data <-
+  tibble(
+    threshold = thresholds,
+    robustness = purrr::map_dbl(
+      threshold,
+      ~ summarize_conclusion_robustness(
+        processed,
+        threshold = .x,
+        operator = dplyr::if_else(.x == 100, "==", ">")
+      ) |> 
+        dplyr::filter(robust == "Inferentially robust") |> 
+        dplyr::pull(percentage)
+    )
+  )
+```
+
+```{r generating inferential_threshold_robustness_plot plot, include=FALSE}
+inferential_threshold_robustness_plot <-
+  inferential_threshold_robustness_plot_data |>
+  ggplot() +
+  aes(x = threshold,
+      y = robustness) +
+  geom_line() +
+  scale_x_continuous(
+    breaks = seq(10, 100, 10), 
+    labels = scales::percent_format(scale = 1),
+    limits = c(0, 100)) +
+  scale_y_continuous(
+    labels = scales::percent_format(scale = 1),
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100)
+  ) +
+  labs(x = "Threshold of proportion of re-analyses\narriving at the same conclusion as the original study",
+       y = "Percentage of studies") +
+  ggplot2::theme(
+    panel.background = element_blank(),
+    panel.grid = element_blank(),
+    axis.line = element_line(color = "black"),
+    legend.position = c(0.8, 0.8),
+    axis.title = element_text(size = 13)
+  )
+
+ggplot2::ggsave(here::here("figures/inferential_threshold_robustness_plot.jpg"), inferential_threshold_robustness_plot, height = 4, dpi = 300)
 ```
 
 ```{r generating inferential_panel, echo=FALSE, message=FALSE, warning=FALSE}
@@ -1118,7 +1177,8 @@ inferential_panel <- (
     conclusions_expertise_plot +
     peer_eval_subset_task1_plot +
     conclusions_familiarity_plot +
-    conclusions_samplesize_plot
+    conclusions_samplesize_plot +
+    inferential_threshold_robustness_plot
   )
 ) +
   plot_layout(widths = c(1, 3)) + 
