@@ -1155,7 +1155,7 @@ inferential_threshold_robustness_plot <-
     panel.grid = element_blank(),
     axis.line = element_line(color = "black"),
     legend.position = c(0.8, 0.8),
-    axis.title = element_text(size = 13)
+    axis.title = element_text(size = 12)
   )
 
 ggplot2::ggsave(here::here("figures/inferential_threshold_robustness_plot.jpg"), inferential_threshold_robustness_plot, height = 4, dpi = 300)

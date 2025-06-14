@@ -1332,9 +1332,13 @@ analysis_level_tolerance_region <-
   dplyr::count(field_match, is_within_region) |> 
   dplyr::group_by(field_match) |> 
   add_percentage(n)
+
+conclusions_discipline_match_data <-
+  academic_field_match_data |>
+  calculate_conclusion(grouping_var = field_match)
 ```
 
-In an additional analysis, we matched the discipline of the original paper with the background of the re-analysts. For `r academic_field_match_data |> nrow()` re-analyses (from the fields of economics, political science, psychology, and sociology) where we could unambiguously pair the discipline of the study and the analysts’ background, we found a match in `r dplyr::filter(academic_field_match_summary, field_match == "Match") |> pull(percentage) |> round(0)`% of the cases. We recalculated the main results presented in the abstract for each group. We found that `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysis effect sizes were within the .05 tolerance region for matching disciplines, while this value was `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(N)`) for non-matching disciplines. For the matching disciplines, 74% (135 out of 183) of the analyses reached the same conclusion, 24% (43 out of 183) of the analyses were inconclusive, and 3% (5 out of 183) were in the opposite direction from the original claim. In the non-matching disciplines, 70% (153 out of 219) of the analyses reached the same conclusion as the original study, 29% (64 out of 219) were inconclusive, and 1% (2 out of 219) drew the opposite conclusion. These results show very similar patterns for matching and non-matching disciplines, suggesting that the main results are not highly dependent on a match between a paper's field and an analyst's background. We present these results in Tables S7, S8, and S9. 
+In an additional analysis, we matched the discipline of the original paper with the background of the re-analysts. For `r academic_field_match_data |> nrow()` re-analyses (from the fields of economics, political science, psychology, and sociology) where we could unambiguously pair the discipline of the study and the analysts’ background, we found a match in `r dplyr::filter(academic_field_match_summary, field_match == "Match") |> pull(percentage) |> round(0)`% of the cases. We recalculated the main results presented in the abstract for each group. We found that `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysis effect sizes were within the .05 tolerance region for matching disciplines, while this value was `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(N)`) for non-matching disciplines. For the matching disciplines, `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Same conclusion") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Same conclusion") |> pull(N)`) of the analyses reached the same conclusion, `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "No effect/inconclusive") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "No effect/inconclusive") |> pull(N)`) of the analyses were inconclusive, and `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Opposite effect") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Opposite effect") |> pull(N)`) were in the opposite direction from the original claim. In the non-matching disciplines, `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Same conclusion") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Same conclusion") |> pull(N)`) of the analyses reached the same conclusion as the original study, `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "No effect/inconclusive") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive, and `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Opposite effect") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Opposite effect") |> pull(N)`) drew the opposite conclusion. These results show very similar patterns for matching and non-matching disciplines, suggesting that the main results are not highly dependent on a match between a paper's field and an analyst's background. We present these results in Tables S7, S8, and S9. 
 
 __Table S7. \| ...__
 
@@ -1361,7 +1365,7 @@ academic_field_match_summary |>
 
 __Table S8. \| ...__
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 analysis_level_tolerance_region |> 
   dplyr::select(-freq) |> 
   dplyr::mutate(
@@ -1389,11 +1393,7 @@ analysis_level_tolerance_region |>
 
 __Table S9. \| ...__
 
-```{r}
-conclusions_discipline_match_data <-
-  academic_field_match_data |>
-  calculate_conclusion(grouping_var = field_match)
-
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 conclusions_discipline_match_data |> 
   dplyr::select(-freq) |> 
   dplyr::rename(
@@ -1414,7 +1414,9 @@ conclusions_discipline_match_data |>
   )
 ```
 
-```{r}
+__Figure SXXX. \| ...__
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 conclusions_discipline_match_plot <-
   plot_percentage(
     data = conclusions_discipline_match_data,
@@ -1435,13 +1437,11 @@ conclusions_discipline_match_plot <-
 conclusions_discipline_match_plot
 ```
 
-### Analysing the subset of original papers where the COS team did a reproducibility check
-
-```{r}
+```{r, include=FALSE}
 processed |> distinct(simplified_paper_id, .keep_all = T) |> count(reproduction_result_osf)
 ```
 
-```{r}
+```{r, include=FALSE}
 reproducibility_data <-
   processed |>
   dplyr::mutate(
@@ -1460,31 +1460,33 @@ reproducibility_data <-
   )
 ```
 
-```{r}
+```{r, include=FALSE}
 # Number of analysis for reproduced and not papers
 reproducibility_data |> 
   dplyr::count(reproducibility)
 
 # Number of papers that are reproduced and not reproduced
-reproducibility_data |>
+reproducibility_paper_summary <- reproducibility_data |>
   dplyr::distinct(simplified_paper_id, .keep_all = T) |> 
   dplyr::count(reproducibility)
 ```
 
-```{r}
+```{r, include=FALSE}
 # Calculate the main results from the abstract for reproduced and not reproduced papers
-reproducibility_data |> 
+reproduced_abstract_res <- reproducibility_data |> 
   dplyr::filter(reproducibility == "reproduced") |> 
   calculate_abstract_res()
 
-reproducibility_data |> 
+not_reproduced_abstract_res <-reproducibility_data |> 
   dplyr::filter(reproducibility == "not reproduced") |> 
   calculate_abstract_res()
 ```
 
-### Main analysis for results without extreme outliers
+For `r dplyr::filter(reproducibility_paper_summary, reproducibility == "reproduced") |> pull(n)` out of the 100 studies, the COS team could reproduce the original results. For the `r dplyr::filter(reproducibility_paper_summary, reproducibility == "reproduced") |> pull(n)` papers where the original analysis could be reproduced, `r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the present re-analyses yielded the same results (within a tolerance region of +/- 0.05 Cohen’s d). Regarding the conclusions drawn, `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of the re-analyses arrived at the same conclusion,  `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive, and `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`) of the re-analyses arrived at the opposite conclusion as the original study. For the `r dplyr::filter(reproducibility_paper_summary, reproducibility == "not reproduced") |> pull(n)` studies where the original results were not reproducible, `r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the re-analyses yielded the same result within a tolerance region of +/- 0.05 Cohen’s d. `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of the re-analyses arrived at the same conclusion, and `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive. No re-analysts arrived at the opposite conclusion as the original study.
+Please note that those categorised as ‘not being computationally reproduced’ when added to the sample showed only minor differences in the output.
+Further note: ‘not being computationally reproduced’ covers cases such as the validation failed due to technical limitations, or the analysis code was not provided.
 
-```{r}
+```{r, include=FALSE}
 # processed |> 
 #   dplyr::select(reanalysis_cohens_d)
 
@@ -1503,14 +1505,13 @@ processed |> dplyr::filter(!is.na(reanalysis_cohens_d)) |> nrow()
 
 # Calculate the main results from the abstract
 ## No conclusion result
-calculate_abstract_res(outlier_data)
+outlier_res <- calculate_abstract_res(outlier_data)
 ```
 
-### Fig3b modifications
+Without any extreme outliers (Cohen’s d >= 3 and <= -3), we have `r processed |> dplyr::filter(!is.na(reanalysis_cohens_d)) |> nrow()` re-analysis effect sizes. `r outlier_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% of the re-analysis effect sizes are within a tolerance region (+/- 0.05 Cohen’s d), which is almost the same as our overall finding. Although we report these results here, we found the analyses of d > |3| valid and saw no reason to drop these analyses from the study.
 
-Fig 3b could have the re-analysis effect size dots in different form or color when the conclusion was the same as the original.
-
-```{r}
+```{r, include=FALSE}
+# Figure just for the response letter
 reanalysis_data <-
   processed |>
   dplyr::select(simplified_paper_id,
@@ -1544,7 +1545,7 @@ effec_size_corr_plot_data_zoomed <-
   dplyr::filter(original_cohens_d <= 1 & original_cohens_d >= -1)
 ```
 
-```{r}
+```{r, include=FALSE}
 # Based on: https://github.com/CenterForOpenScience/rpp
 colors <- c("Original" = "#440154FF",
             "Replication" = "#FDE725FF")
@@ -1632,32 +1633,38 @@ scatter <-
   )
 
 # Add density plots on the axes
-ggExtra::ggMarginal(
+no_extreme_effec_size_corr_plot <- ggExtra::ggMarginal(
   scatter,
   type = "density",
   margins = "both",
   xparams = list(fill = colors["Original"], alpha = 0.5),
   yparams = list(fill = colors["Replication"], alpha = 0.5)
 )
+
+ggplot2::ggsave(
+  here::here("figures/reply/no_extreme_effec_size_corr_plot.jpg"),
+  plot = no_extreme_effec_size_corr_plot,
+  width = 13,
+  height = 10,
+  dpi = 300
+)
 ```
 
+```{r, include=FALSE}
 ### Checking the main abstract results regarding the inference for  >50% threshold
-
-```{r}
 summarize_conclusion_robustness(data = processed, threshold = 50, operator = ">")
 ```
 
+```{r, include=FALSE}
 ### Calculating heterogeneity ratio
-
-```{r}
-processed |>
+heterogeneity_n <- processed |>
   dplyr::filter(
     !is.na(reanalysis_correlation_coef),!is.na(reanalysis_model_sample_size),!is.na(reanalysis_cohens_d)
   ) |>
   nrow()
 ```
 
-```{r}
+```{r, include=FALSE}
 heterogeneity_data <-
   processed |>
   dplyr::select(
@@ -1679,7 +1686,7 @@ heterogeneity_data <-
 
 nrow(heterogeneity_data)
 
-median(heterogeneity_data$heterogeneity_ratio)
+heterogeneity_median <- median(heterogeneity_data$heterogeneity_ratio)
 
 quantile(heterogeneity_data$heterogeneity_ratio, probs = c(0.25, 0.75))
 
@@ -1687,10 +1694,16 @@ min(heterogeneity_data$heterogeneity_ratio)
 
 max(heterogeneity_data$heterogeneity_ratio)
 
-IQR(heterogeneity_data$heterogeneity_ratio)
+heterogeneity_iqr <-IQR(heterogeneity_data$heterogeneity_ratio)
 ```
 
-```{r}
+To calculate the heterogeneity ratio for the re-analysed studies, we divided the standard deviation across effect size estimates in Cohen’s d (as a proxy of between-analysis variability) by the mean standard error of the estimates in the same units (as a proxy of the sampling variation) using the method suggested by Huntington-Klein et al. (2021) (also see Holzmeister et al., 2024). For the calculation, the results of `r heterogeneity_n` re-analyses were applicable. The median heterogeneity ratio across all papers was `r heterogeneity_median |> round(2)` (IQR = `r heterogeneity_iqr |> round(2)`), which indicates that, on average, the variability due to analytical heterogeneity is about twice as large as the sampling variation. Since this calculation was not planned in the study, the required statistical input values can greatly reflect the re-analysts’ reporting preferences. For example, degrees of freedom (a component of the calculation) can be reported either nominally or reflecting the clustered nature of the model, therefore seriously reduced, by that strongly influencing the output of the calculations. In short, we find this result believable and interesting, but not accurate enough to be discussed in the manuscript.
+
+Holzmeister, F. et al. Heterogeneity in effect size estimates. Proceedings of the National Academy of Sciences. 121, e2403490121 (2024).
+
+Huntington-Klein, N. et al. The influence of hidden researcher decisions in applied microeconomics. Econ. Inq. 59, 944–960 (2021).
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 heterogeneity_distribution_plot <-
   heterogeneity_data |>
   ggplot2::ggplot() +
@@ -1714,18 +1727,15 @@ ggplot2::ggsave(here::here("figures/supplement/heterogeneity_distribution_plot.j
 heterogeneity_distribution_plot
 ```
 
-### Open data availability
+__Figure SXXX. \| ...__
 
-```{r}
+```{r, include=FALSE}
+### Open data availability
 open_data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1GwDGeNqloliZqkaNMbgWGnzAHwWWDoXO-Egc0s9tR60/edit?usp=sharing", col_types = "c") |> 
   dplyr::mutate(available_data = as.logical(available_data))
 ```
 
-```{r}
-count(open_data, available_data)
-```
-
-```{r}
+```{r, include=FALSE}
 open_data_cleaned <- 
   open_data |> 
   dplyr::select(-original_materials) |> 
@@ -1733,13 +1743,14 @@ open_data_cleaned <-
   # dplyr::filter(!is.na(available_data))
 
 # Results in the abstract where the data are available
-open_data_cleaned |> 
+open_data_abstract_res <- open_data_cleaned |> 
   dplyr::filter(available_data == TRUE) |> 
   calculate_abstract_res()
 
 # Results in the abstract where the data are NOT available
-open_data_cleaned |> 
+no_open_data_abstract_res <- open_data_cleaned |> 
   dplyr::filter(available_data == FALSE) |> 
   calculate_abstract_res()
 ```
 
+Upon the reviewer's interest, we checked each study to determine whether it had open data. It is worth noting that data openness is a spectrum. We encountered several instances where data were technically open but still unavailable due to expired links, closed-access articles, defunct pages, etc. We settled on an operationalization where only a few clicks should be enough to get the data. Otherwise, we labeled the data as closed access. Out of the 100 studies, `r count(open_data, available_data) |> dplyr::filter(available_data) |> pull(n)` had available data upon further examination, and `r count(open_data, available_data) |> dplyr::filter(!available_data) |> pull(n)` did not. Where the original data were available, `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysts arrived at the same result as the original study (within a tolerance region of +/- 0.05 Cohen’s d). In contrast, this value was `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) for those papers for which we could not easily locate the original data. Regarding the conclusions drawn, where the data were available, `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of analyses were reported to arrive at the same conclusion as in the original investigation; `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) came to no effects/inconclusive result, and `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`) to the opposite effect as in the original investigation. These values were `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (same; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`), `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (inconclusive; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`), and `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (opposite; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`), where the data were not available.
