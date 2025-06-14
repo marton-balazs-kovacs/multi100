@@ -1160,11 +1160,7 @@ The main milestones of the project were
 
 ## Additional analysis for revision
 
-### Checking whether match between test statistic type between re-analysis and original studies influences the results by study type
-
-We have to exclude re-analysis tests for which we could not convert the test statistic to Cohen's d.
-
-```{r}
+```{r, include=FALSE}
 # Number of papers for which the original type of statistic is missing
 processed |> 
   dplyr::select(
@@ -1208,29 +1204,80 @@ same_test_family <-
       "No match"
     ))
 
-nrow(same_test_family)
-
-same_test_family |> 
+same_test_family_summary <-
+  same_test_family |> 
   count(match) |> 
   add_percentage(n)
 
-# Number and percentage of cases where the original and re-analysis test statistics match by study type
-same_test_family |> 
+same_test_family_design <-
+  same_test_family |> 
   group_by(experimental_or_observational) |> 
   count(match) |> 
   add_percentage(n)
+```
 
+In an additional analysis for Task 2, we categorised whether the re-analysis used the same type of statistical test family as the original analysis. Out of the `r nrow(same_test_family)` available analyses, `r dplyr::filter(same_test_family_summary, match == "Match") |> pull(percentage) |> round(0)`% used the same type of test as the original paper. This percentage was slightly higher for experimental designs  (`r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "experimental") |> pull(percentage) |> round(0)`%, `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "experimental") |> pull(n)` out of `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "experimental") |> pull(N)`) than for observational studies (`r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "observational") |> pull(percentage) |> round(0)`%, `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "observational") |> pull(n)` out of `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "observational") |> pull(N)`). See Tables S5 and S6, which show the number and percentage of matching analyses by study design type, as well as their relationship to the robustness of the re-analysis effect sizes.
+
+__Table S5. \| The Number and Percentage of Matching Analyses by Study Design Type__
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+# Number and percentage of cases where the original and re-analysis test statistics match by study type
+same_test_family_design |> 
+  dplyr::select(-freq) |> 
+  dplyr::mutate(
+    experimental_or_observational = stringr::str_to_title(experimental_or_observational)
+  ) |> 
+  dplyr::rename(
+    `Study type` = experimental_or_observational,
+    `Statistical test family` = match,
+    Percentage = percentage
+  ) |> 
+  gt::gt() |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold"),  # Make header bold
+    locations = cells_column_labels(everything())  # Apply to all headers
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold", style = "italic"),
+    locations = cells_column_labels(columns = c(n, N))
+  )
+```
+
+__Table S6. \| The Number and Percentage of Matching Analyses by Study Design Type and Their Relationship to the Robustness of the Re-analysis Effect Sizes__
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
 # Original and re-analysis test statistics match by study type and tolerance region
 same_test_family |>
   calculate_tolerance_region(threshold = 0.05) |>
   count(experimental_or_observational, match, is_within_region) |>
   group_by(experimental_or_observational, match) |> 
-  add_percentage(n)
+  add_percentage(n) |> 
+  dplyr::select(-freq) |> 
+  dplyr::mutate(
+    is_within_region = dplyr::case_when(
+      is_within_region == "Within tolerance region" ~ "Yes",
+      TRUE ~ "No"
+    ),
+    experimental_or_observational = stringr::str_to_title(experimental_or_observational)
+  ) |> 
+  dplyr::rename(
+    `Study type` = experimental_or_observational,
+    `Statistical test family` = match,
+    `Within tolerance region` = is_within_region,
+    Percentage = percentage
+  ) |> 
+  gt::gt() |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold"),  # Make header bold
+    locations = cells_column_labels(everything())  # Apply to all headers
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold", style = "italic"),
+    locations = cells_column_labels(columns = c(n, N))
+  )
 ```
 
-### Results by analyst academic field and original paper field match
-
-```{r}
+```{r include=FALSE}
 # Missing paper discipline values
 processed |> 
   dplyr::select(paper_discipline, primary_discipline) |> 
@@ -1266,22 +1313,11 @@ academic_field_match_data <-
                                        "Match",
                                        "No match"))
 
-academic_field_match_data |> 
-  nrow()
-  
-# Number and percentage of cases where the field of the analyst matches the field of the study
-academic_field_match_data |> 
+academic_field_match_summary <- 
+  academic_field_match_data |> 
   count(field_match) |> 
   add_percentage(n)
-```
 
-```{r}
-# academic_field_match_data |> 
-#   dplyr::filter(field_match == "Match") |> 
-#   calculate_abstract_res()
-```
-
-```{r}
 # Calculating the frequency of results within tolerance region on the analysis level for matching and non-matching cases with 5% threshold
 analysis_level_tolerance_region <-
   academic_field_match_data |>
@@ -1296,16 +1332,86 @@ analysis_level_tolerance_region <-
   dplyr::count(field_match, is_within_region) |> 
   dplyr::group_by(field_match) |> 
   add_percentage(n)
-
-analysis_level_tolerance_region
 ```
+
+In an additional analysis, we matched the discipline of the original paper with the background of the re-analysts. For `r academic_field_match_data |> nrow()` re-analyses (from the fields of economics, political science, psychology, and sociology) where we could unambiguously pair the discipline of the study and the analysts’ background, we found a match in `r dplyr::filter(academic_field_match_summary, field_match == "Match") |> pull(percentage) |> round(0)`% of the cases. We recalculated the main results presented in the abstract for each group. We found that `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysis effect sizes were within the .05 tolerance region for matching disciplines, while this value was `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(N)`) for non-matching disciplines. For the matching disciplines, 74% (135 out of 183) of the analyses reached the same conclusion, 24% (43 out of 183) of the analyses were inconclusive, and 3% (5 out of 183) were in the opposite direction from the original claim. In the non-matching disciplines, 70% (153 out of 219) of the analyses reached the same conclusion as the original study, 29% (64 out of 219) were inconclusive, and 1% (2 out of 219) drew the opposite conclusion. These results show very similar patterns for matching and non-matching disciplines, suggesting that the main results are not highly dependent on a match between a paper's field and an analyst's background. We present these results in Tables S7, S8, and S9. 
+
+__Table S7. \| ...__
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Number and percentage of cases where the field of the analyst matches the field of the study
+academic_field_match_summary |> 
+  dplyr::select(-freq) |> 
+  dplyr::rename(
+    Percentage = percentage
+  ) |> 
+  gt::gt() |> 
+  gt::cols_label(
+    field_match = html("Discipline of original paper<br>and re-analyst")
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold"),  # Make header bold
+    locations = cells_column_labels(everything())  # Apply to all headers
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold", style = "italic"),
+    locations = cells_column_labels(columns = c(n, N))
+  )
+```
+
+__Table S8. \| ...__
+
+```{r}
+analysis_level_tolerance_region |> 
+  dplyr::select(-freq) |> 
+  dplyr::mutate(
+    is_within_region = dplyr::case_when(
+      is_within_region == "Within tolerance region" ~ "Yes",
+      TRUE ~ "No"
+    )) |> 
+  dplyr::rename(
+    Percentage = percentage,
+    `Within tolerance region` = is_within_region
+  ) |> 
+  gt::gt() |> 
+  gt::cols_label(
+    field_match = html("Discipline of original paper<br>and re-analyst")
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold"),  # Make header bold
+    locations = cells_column_labels(everything())  # Apply to all headers
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold", style = "italic"),
+    locations = cells_column_labels(columns = c(n, N))
+  )
+```
+
+__Table S9. \| ...__
 
 ```{r}
 conclusions_discipline_match_data <-
   academic_field_match_data |>
   calculate_conclusion(grouping_var = field_match)
 
-conclusions_discipline_match_data
+conclusions_discipline_match_data |> 
+  dplyr::select(-freq) |> 
+  dplyr::rename(
+    Percentage = percentage,
+    Categorisation = categorisation
+  ) |> 
+  gt::gt() |> 
+  gt::cols_label(
+    field_match = html("Discipline of original paper<br>and re-analyst")
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold"),  # Make header bold
+    locations = cells_column_labels(everything())  # Apply to all headers
+  ) |> 
+  gt::tab_style(
+    style = cell_text(weight = "bold", style = "italic"),
+    locations = cells_column_labels(columns = c(n, N))
+  )
 ```
 
 ```{r}
@@ -1316,13 +1422,14 @@ conclusions_discipline_match_plot <-
     categorization_var = categorisation,
     with_labels = TRUE,
     y_lab = "Percentage of re-analyses",
-    x_lab = "Disciplines",
+    x_lab = "",
     rev_limits = FALSE
   ) + 
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
-    legend.text = element_text(size = 8),
-    axis.title.y = element_text(hjust = 1)
+    legend.text = element_text(size = 10),
+    axis.title.y = element_text(hjust = 1, size = 15),
+    axis.text = element_text(color = "black", size = 13)
     )
 
 conclusions_discipline_match_plot
@@ -1351,9 +1458,6 @@ reproducibility_data <-
       TRUE ~ "reproduced"
     )
   )
-
-# reproducibility_data |> 
-#   dplyr::select(reproducibility, reproduction_result_osf)
 ```
 
 ```{r}
@@ -1404,7 +1508,7 @@ calculate_abstract_res(outlier_data)
 
 ### Fig3b modifications
 
-Fig 3b could have the re-analysis effect size dots in different form or colour when the conclusion was the same as the original.
+Fig 3b could have the re-analysis effect size dots in different form or color when the conclusion was the same as the original.
 
 ```{r}
 reanalysis_data <-
@@ -1537,7 +1641,7 @@ ggExtra::ggMarginal(
 )
 ```
 
-### Checking the main abstract results regarding the inference for  >=50% threshold
+### Checking the main abstract results regarding the inference for  >50% threshold
 
 ```{r}
 summarize_conclusion_robustness(data = processed, threshold = 50, operator = ">")
