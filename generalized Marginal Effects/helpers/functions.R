@@ -76,14 +76,19 @@ forest_density_plot_publication <- function(df, title, subtitle, xLabel, xBreaks
     #scale_y_discrete(labels = gsub("`", "",paste0(labels[[1]],unlist(lapply(strwrap(labels[[2]], width = 55, simplify = FALSE), paste, collapse = "<br> "))))) +
     scale_x_continuous(breaks = xBreaks,limits = c(lim_min,lim_max),
                        expand = expansion(mult = c(0.0001,0),add = c(0, 0.002))) +
+     guides(fill = guide_legend(nrow = 2)) +
     #facet_grid(group ~ ., scales = "free", space = "free") +
     theme(axis.text.y = element_blank(),
-      axis.text.x = element_text(size = 12),
-      axis.title = element_text(size = 14),
-      plot.title = element_text(size = 16, face = "bold"),
-      plot.subtitle = element_text(size = 14, face = "italic"),
+      axis.text.x = element_text(size = 22),
+      axis.title = element_text(size = 26),
+      plot.title = element_text(size = 20, face = "bold"),
+      plot.subtitle = element_text(size = 18, face = "italic"),
       legend.position = "bottom",
       panel.margin = unit(1, "lines"),
-      strip.background = element_rect(color = "black", size = 1.5, linetype = "solid"))
+      strip.background = element_rect(color = "black", size = 1.5, linetype = "solid"),
+      legend.text = element_text(size = 20),
+      legend.key.size = unit(1.5, "lines"),
+      legend.key.width = unit(1.5, "lines")
+      )
   return(output)
 }

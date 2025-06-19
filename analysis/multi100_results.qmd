@@ -792,9 +792,12 @@ conclusion_robust_80_percentage <- filter(conclusions_main_robustness_80_data, r
 
 # When threshold is 60% same conclusion for robust result
 conclusions_main_robustness_60_data <- summarize_conclusion_robustness(data = processed, threshold = 60, operator = ">")
+
+### Inference for  >50% threshold
+conclusions_main_robustness_50_data <- summarize_conclusion_robustness(data = processed, threshold = 50, operator = ">")
 ```
 
-Another focal question of our study was whether the re-analysts arrive at the same qualitative conclusions as the original study analysts. To answer this question, we asked the re-analysts to implement any statistical re-analysis they deemed most appropriate to test the original claim using the original data, with the goal of arriving at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed claims, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)` % were robust to independent re-analysis, such that all re-analysts reported that they found evidence for the originally reported claim. With a more liberal definition of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)` % when \>80% re-analysis agreement with the original conclusion defined analytical robustness. 
+Another focal question of our study was whether the re-analysts arrive at the same qualitative conclusions as the original study analysts. To answer this question, we asked the re-analysts to implement any statistical re-analysis they deemed most appropriate to test the original claim using the original data, with the goal of arriving at a single conclusion. Out of `r distinct(conclusions_main_robustness_data, N) |> pull(N)` re-analysed claims, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)` % were robust to independent re-analysis, such that all re-analysts reported that they found evidence for the originally reported claim. With a more liberal definition of analytical robustness, this value was `r filter(conclusions_main_robustness_80_data, robust == "Inferentially robust") |> pull(percentage)` % when \>80% re-analysis agreement with the original conclusion defined analytical robustness, but `r  filter(conclusions_main_robustness_50_data, robust == "Inferentially robust") |> pull(percentage)` for >50% (the results with alternative levels of agreement are displayed on Fig. 4j).
 
 ```{r include=FALSE}
 conclusions_analysis_data <- 

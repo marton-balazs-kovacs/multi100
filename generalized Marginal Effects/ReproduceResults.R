@@ -56,25 +56,84 @@ PIETRYKA_Draws_updated <- manipulate_data(PIETRYKA_Draws,75)
 
 colors_publication <- scale_fill_manual(values=c("Original analysis"="forestgreen", "Re-analysis"="gray"),drop=FALSE)
 
-plot_Fuhrmann_publication <- forest_density_plot_publication(Fuhrmann_Draws_updated,"Fuhrmann paper", "Exemplary plot", "Average change in probability", seq(-0.015,0.06,by=0.01),collevs = "Family: binomial(Link: probit)") +
-  colors_publication
-plot_Brancati_publication <- forest_density_plot_publication(Brancati_Draws_updated,"Brancati paper", "Exemplary plot", "Average change in probability", seq(-0.015,0.015,by=0.005)) +
-  colors_publication
-plot_Luttrell_publication <- forest_density_plot_publication(Luttrell_Draws_updated,"Luttrell paper", "Exemplary plot", "Average change",seq(-0.1,0.2,by=0.05)) +
-  colors_publication
-plot_PIETRYKA_publication <- forest_density_plot_publication(PIETRYKA_Draws_updated,"PIETRYKA paper", "Exemplary plot", "Average change",seq(-0.2,0.6,by=0.1)) +
-  colors_publication
+plot_Fuhrmann_publication <-
+  forest_density_plot_publication(
+    Fuhrmann_Draws_updated,
+    "Fuhrmann paper",
+    "Exemplary plot",
+    "Average change in probability",
+    seq(-0.015, 0.06, by = 0.01),
+    collevs = "Family: binomial(Link: probit)"
+  ) +
+  colors_publication +  theme(strip.text = element_text(size = 22))
+plot_Brancati_publication <-
+  forest_density_plot_publication(
+    Brancati_Draws_updated,
+    "Brancati paper",
+    "Exemplary plot",
+    "Average change in probability",
+    seq(-0.015, 0.015, by = 0.005)
+  ) +
+  colors_publication +  theme(strip.text = element_text(size = 22))
+plot_Luttrell_publication <-
+  forest_density_plot_publication(
+    Luttrell_Draws_updated,
+    "Luttrell paper",
+    "Exemplary plot",
+    "Average change",
+    seq(-0.1, 0.2, by = 0.05)
+  ) +
+  colors_publication + theme(strip.text = element_text(size = 22))
+plot_PIETRYKA_publication <-
+  forest_density_plot_publication(
+    PIETRYKA_Draws_updated,
+    "PIETRYKA paper",
+    "Exemplary plot",
+    "Average change",
+    seq(-0.2, 0.6, by = 0.1)
+  ) +
+  colors_publication + theme(strip.text = element_text(size = 22))
 
 
-ggarrange(plot_Fuhrmann_publication+facet_grid(group~.)+ggtitle("")+labs(subtitle = "",x="")+theme(plot.margin = unit(c(0.2,0.2,-1,0.2), 'lines')),
-          plot_Brancati_publication+facet_grid(group~.)+ggtitle("")+labs(subtitle = "",x="")+theme(plot.margin = unit(c(0.2,0.2,-1,0.2), 'lines')),
-          plot_PIETRYKA_publication+facet_grid(group~.)+ggtitle("")+labs(subtitle = "",x="")+theme(plot.margin = unit(c(0.2,0.2,-1,0.2), 'lines')),
-          plot_Luttrell_publication+facet_grid(group~.)+ggtitle("")+labs(subtitle = "",x="Average change in target expectation")+theme(plot.margin = unit(c(-1,0.2,0.2,0.2), 'lines')),
-          nrow=4,common.legend = TRUE,legend="top",heights=c(8,6.5,7,6.5))
+combined_plot <-ggarrange(
+  plot_Fuhrmann_publication +
+    facet_grid(group~.) +
+    ggtitle("") +
+    labs(subtitle = "", x = "") +
+    theme(
+      plot.margin = unit(c(0.2,0.2,-1,0.2), 'lines')    ),
+  
+  plot_Brancati_publication +
+    facet_grid(group~.) +
+    ggtitle("") +
+    labs(subtitle = "", x = "") +
+    theme(
+      plot.margin = unit(c(0.2,0.2,-1,0.2), 'lines')
+    ),
+  
+  plot_PIETRYKA_publication +
+    facet_grid(group~.) +
+    ggtitle("") +
+    labs(subtitle = "", x = "") +
+    theme(
+      plot.margin = unit(c(0.2,0.2,-1,0.2), 'lines')
+    ),
+  
+  plot_Luttrell_publication +
+    facet_grid(group~.) +
+    ggtitle("") +
+    labs(subtitle = "", x = "Average change in target expectation") +
+    theme(
+      plot.margin = unit(c(-1,0.2,0.2,0.2), 'lines')
+    ),
+  nrow = 4,
+  common.legend = TRUE,
+  legend = "top",
+  heights = c(8, 6.5, 7, 6.5)
+)
 
 
-
-ggsave(filename = paste0(dirname(rstudioapi::getSourceEditorContext()$path),"/gMEs.png"),width=12,height=18)
+ggsave(filename = paste0(dirname(rstudioapi::getSourceEditorContext()$path),"/gMEs.png"),plot = combined_plot,width=12,height=18,bg = "white")
 
 
 

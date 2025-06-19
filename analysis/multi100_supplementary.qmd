@@ -306,7 +306,7 @@ ggplot2::ggsave(here::here("figures/supplement/demographic_country_plot.jpg"), c
 country_map_plot
 ```
 
-__Fig. S2 \| The analysts’ country of residence.__ 
+__Fig. S2 \| The analysts country of residence.__ 
 When an analyst submitted more than one re-analysis, and they moved between the submissions, we only kept their first response.
 
 ```{r include=FALSE}
@@ -1567,11 +1567,9 @@ scatter <-
   effec_size_corr_plot_data_zoomed |>
   ggplot(aes(
     x = original_cohens_d,
-    y = effect_size,
-    color = as.factor(colors)
+    y = effect_size
   )) +
   geom_point(
-    # TODO:  Is this the only place where I have to use direction_of_result and not task1_categorisation
     aes(fill = direction_of_result),
     shape = 21,
     color = "Grey30",
@@ -1627,7 +1625,9 @@ scatter <-
     legend.position = "bottom",
     legend.direction = "horizontal",
     legend.box = "horizontal",
-    legend.title = element_blank(),
+    legend.title = element_blank(),  # now works
+    legend.text = element_text(size = 14),
+    # legend.key.size = unit(1.5, "lines"),
     axis.title = element_text(size = 22),
     axis.text = element_text(size = 20)
   )
