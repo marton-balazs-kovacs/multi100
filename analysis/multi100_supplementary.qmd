@@ -287,14 +287,14 @@ world_map <-
     )
   )
 
-country_map <- dplyr::left_join(world_map, country, by = c("region", "subregion"))
+country_map <- dplyr::left_join(world_map, country, by = c("region", "subregion")) |> dplyr::filter(region != "Antarctica")
 
 country_map_plot <- 
   country_map |> 
   ggplot2::ggplot() +
   ggplot2::aes(x = long, y = lat, group = group, fill = n) +
   ggplot2::geom_polygon(color = "white", linewidth = 0.2) +
-  ggplot2::scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalyst") +
+  ggplot2::scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalysts") +
   ggplot2::theme_void() +
   ggplot2::theme(
     legend.title = element_text(size = 6),
