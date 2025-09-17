@@ -216,8 +216,6 @@ age_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/supplement/demographic_age_plot.jpg"), age_plot, dpi = 300)
-
-age_plot
 ```
 
 __Fig. S1 \| The distribution of the analysts’ age.__
@@ -302,8 +300,6 @@ country_map_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/supplement/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
-
-country_map_plot
 ```
 
 __Fig. S2 \| The analysts country of residence.__ 
@@ -380,8 +376,6 @@ analyst_experience_years_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/supplement/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
-
-analyst_experience_years_plot
 ```
 
 __Fig. S3 \| The analysts’ years of experience with data analysis.__
@@ -390,31 +384,23 @@ We only kept their first response when an analyst submitted additional re-analys
 ```{r include=FALSE}
 check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
 
-analysis_frequency_count <-
-  processed |> 
-  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |> 
+analysis_frequency_data <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |>
   # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp)
+
+analysis_frequency_count <-
+  analysis_frequency_data |> 
   dplyr::count(analysis_frequency)
 ```
 
 We asked our re-analysts how regularly they perform data analysis. Fig. S4 shows that the most frequent category was `r dplyr::filter(analysis_frequency_count, n == max(n)) |> dplyr::pull(analysis_frequency)`.
 
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
-```
-
 ```{r echo=FALSE, message=FALSE}
-analysis_frequency_count <-
-  processed |> 
-  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  dplyr::count(analysis_frequency)
-
 # For this question we report the responses by analysis and not analyst 
 analysis_frequency_plot <-
-  analysis_frequency_count |>
+  analysis_frequency_data |>
   dplyr::mutate(
     analysis_frequency = dplyr::case_when(
       analysis_frequency == "2-3 times a week" ~ "2-3 times\na week",
@@ -436,8 +422,8 @@ analysis_frequency_plot <-
     )
   ) |>
   ggplot2::ggplot() +
-  ggplot2::aes(x = analysis_frequency, y = n) +
-  ggplot2::geom_bar(stat = "identity") +
+  ggplot2::aes(x = analysis_frequency) +
+  ggplot2::geom_bar() +
   ggplot2::scale_y_continuous(expand = c(0, 0)) +
   ggplot2::labs(x = "Frequency of doing data analysis",
                 y = "Number of co-analysts") +
@@ -493,8 +479,6 @@ expertise_self_rating_plot <-
   )
 
 ggsave(here::here("figures/supplement/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
-
-expertise_self_rating_plot
 ```
 
 __Fig. S5 \| The analysts’ self-rated level of expertise in data analysis.__
@@ -599,8 +583,6 @@ software_plot <-
   )
 
 ggsave(here::here("figures/supplement/demographic_software_plot.jpg"), software_plot, dpi = 300)
-
-software_plot
 ```
 
 __Fig. S6 \| The software the analysts used for their re-analysis tasks.__ 
@@ -655,12 +637,21 @@ total_hours_plot <-
   )
 
 ggsave(here::here("figures/supplement/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
-
-total_hours_plot
 ```
 
 __Fig. S7 \| The reported total hours the analyst spent on Task 1 and Task 2 together.__
 In case an analyst completed multiple re-analyses, we kept all their responses for this figure. One response was excluded due to being an outlier (999 hours).
+
+```{r generating demographic panel, echo=FALSE, warning=FALSE, message=FALSE}
+# Define the remaining plots section
+demographic_panel <-
+  (age_plot | country_map_plot | analyst_experience_years_plot) /
+  (expertise_self_rating_plot | software_plot | total_hours_plot) +
+  # plot_layout(ncol = 3, nrow = 2) +
+  plot_annotation(tag_levels = 'a')
+
+ggsave(here::here("figures/supplement/demographic_panel.jpg"), demographic_panel, width = 30, height = 15, dpi = 300)
+```
 
 ## Peer evaluation
 ### Peer evaluators
@@ -712,8 +703,6 @@ peer_analyst_experience_years_plot <-
   )
 
 ggsave(here::here("figures/supplement/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
-
-peer_analyst_experience_years_plot
 ```
 
 __Fig. S8 \| The peer evaluators’ years of experience with data analysis.__
@@ -772,8 +761,6 @@ peer_analysis_frequency_plot <-
   )
 
 ggsave(here::here("figures/supplement/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
-
-peer_analysis_frequency_plot
 ```
 
 Fig. S10 indicates that most peer evaluators rate themselves close to expert level in data analysis.
@@ -815,12 +802,20 @@ peer_expertise_self_rating_plot <-
   )
 
 ggsave(here::here("figures/supplement/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
-
-peer_expertise_self_rating_plot
 ```
 
 __Fig. S10 \| The peer evaluators’ self-rated level of expertise in data analysis.__
 When a peer evaluator submitted more than one re-analysis, we kept only their first response.
+
+```{r generating peer analyst panel, echo=FALSE, warning=FALSE, message=FALSE}
+# Define the remaining plots section
+peer_analyst_panel <-
+  (peer_analyst_experience_years_plot | peer_analysis_frequency_plot | peer_expertise_self_rating_plot) +
+  plot_layout(ncol = 1, nrow = 3) +
+  plot_annotation(tag_levels = 'a')
+
+ggsave(here::here("figures/supplement/peer-analyst_panel.jpg"), peer_analyst_panel, width = 10, height = 10, dpi = 300)
+```
 
 ## Peer evaluations
 ### Descriptives of peer evaluations
@@ -987,8 +982,6 @@ threshold_robustness_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/supplement/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
-
-threshold_robustness_plot
 ```
 
 __Fig. S 11 \| Estimate robustness with different widths (+/-[0.01-0.20] Cohen’s d) of tolerance region.__
@@ -1043,11 +1036,19 @@ threshold_weighted_robustness_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/supplement/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
-
-threshold_weighted_robustness_plot
 ```
 
 __Fig. S 12 \| Estimate robustness with different percentages (5-20%) of Cohen’s d as tolerance region.__
+
+```{r generating threshold panel, echo=FALSE}
+# Define the remaining plots section
+threshold_panel <-
+  (threshold_robustness_plot | threshold_weighted_robustness_plot) +
+  plot_layout(ncol = 1, nrow = 2) +
+  plot_annotation(tag_levels = 'a')
+
+ggsave(here::here("figures/supplement/threshold_panel.jpg"), threshold_panel, width = 10, height = 10, dpi = 300)
+```
 
 ## Additional analyses
 While Cohen’s d has the advantage of being easy to compute and comparable across different analyses, Kümpel and Hoffmann26 recently proposed the concept of generalised marginal effects (gMEs), an effect size metric that is both formally applicable and comparable across different statistical models. When standardised, the value of gMEs is equal to the value of Cohen’s d, where the latter effect size measure is strictly applicable. Otherwise, gME-values are very intuitive to interpret and communicate, as they give the average expected change of the target variable. We had not originally planned to calculate standardised gMEs, and, accordingly, did not collect all required analysis outputs to compute them across the board. Still, we calculated gMEs for a sample of our studies (n = 4) to showcase their potential for future multi-analyst studies (Fig. S13).
@@ -1433,8 +1434,6 @@ conclusions_discipline_match_plot <-
     axis.title.y = element_text(hjust = 1, size = 15),
     axis.text = element_text(color = "black", size = 13)
     )
-
-conclusions_discipline_match_plot
 ```
 
 ```{r, include=FALSE}
@@ -1723,8 +1722,6 @@ heterogeneity_distribution_plot <-
   )
 
 ggplot2::ggsave(here::here("figures/supplement/heterogeneity_distribution_plot.jpg"), heterogeneity_distribution_plot, height = 4, dpi = 300)
-
-heterogeneity_distribution_plot
 ```
 
 __Figure SXXX. \| ...__
@@ -1754,3 +1751,14 @@ no_open_data_abstract_res <- open_data_cleaned |>
 ```
 
 Upon the reviewer's interest, we checked each study to determine whether it had open data. It is worth noting that data openness is a spectrum. We encountered several instances where data were technically open but still unavailable due to expired links, closed-access articles, defunct pages, etc. We settled on an operationalization where only a few clicks should be enough to get the data. Otherwise, we labeled the data as closed access. Out of the 100 studies, `r count(open_data, available_data) |> dplyr::filter(available_data) |> pull(n)` had available data upon further examination, and `r count(open_data, available_data) |> dplyr::filter(!available_data) |> pull(n)` did not. Where the original data were available, `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysts arrived at the same result as the original study (within a tolerance region of +/- 0.05 Cohen’s d). In contrast, this value was `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) for those papers for which we could not easily locate the original data. Regarding the conclusions drawn, where the data were available, `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of analyses were reported to arrive at the same conclusion as in the original investigation; `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) came to no effects/inconclusive result, and `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`) to the opposite effect as in the original investigation. These values were `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (same; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`), `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (inconclusive; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`), and `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (opposite; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`), where the data were not available.
+
+```{r generating additional analysis panel, echo=FALSE, warning=FALSE, message=FALSE}
+# Define the remaining plots section
+additional_analysis_panel <-
+  (conclusions_discipline_match_plot | heterogeneity_distribution_plot) +
+  plot_layout(ncol = 1, nrow = 2) +
+  plot_annotation(tag_levels = 'a')
+
+ggsave(here::here("figures/supplement/additional-analysis_panel.jpg"), additional_analysis_panel, width = 10, height = 15, dpi = 300)
+```
+

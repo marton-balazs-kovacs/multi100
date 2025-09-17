@@ -162,7 +162,7 @@ First, we explored the degree to which the reanalyses arrived to the same statis
 A challenge in any multi-analyst project is to find a common metric that allows the results of the different analyses to be compared. A practical solution is to transform the reported point estimates into a common effect size measure. Although these transformations have limitations and their calculation relies on assumptions that may not hold in all considered analysis settings25–28, for the sake of comparability we decided to compute Cohen’s d for each re-analysis, wherever it was feasible. (For an alternative approach, see Additional Results in the Supplementary information.) In our preregistration, we defined that we consider two results qualitatively the same when their effect sizes are within our tolerance region: +/- 0.05 Cohen’s d, but we provide analyses with alternative tolerance regions in the next paragraph. Our results revealed how far the new estimates were from the original ones (Fig. 2a) and how often the effect sizes of the re-analyses fell within this tolerance region (Fig. 2b).
 
 ```{r data processing for tolerance_region_main_plot, include=FALSE}
-# Number of cases where the original effect size is missing
+# Number of papers where the original effect size is missing
 missing_original_n <-
   processed |> 
   dplyr::distinct(paper_id, .keep_all = T) |> 
@@ -178,14 +178,15 @@ processed |>
   dplyr::mutate(
     number_of_analysis = dplyr::n() 
   ) |> 
-  dplyr::filter(is.na(original_cohens_d)) |> 
+  dplyr::filter(is.na(original_cohens_d)) |>
   mutate(
     number_of_analysis_after_filtering = dplyr::n()
   ) |> 
   dplyr::ungroup() |> 
   dplyr::mutate(
     match = dplyr::if_else(number_of_analysis == number_of_analysis_after_filtering, TRUE, FALSE)
-  )
+  ) |> 
+  dplyr::filter(!match)
 
 # Number of cases where the reanalysed effect size is missing
 missing_reanalysis_n <-
@@ -194,29 +195,14 @@ missing_reanalysis_n <-
   dplyr::filter(`is.na(reanalysis_cohens_d)`) |> 
   dplyr::pull(n)
 
-# Are there any cases where the original effect size is present but the reanalyzed is not and vica versa?
-processed |> 
-  dplyr::select(original_cohens_d, reanalysis_cohens_d) |> 
-  dplyr::mutate(
-    both_present_or_missing = is.na(original_cohens_d) == is.na(reanalysis_cohens_d)
-  ) |> 
-  dplyr::count(both_present_or_missing)
-
 # Number of cases where reanalyzed effect size is comparable to original effect size
 processed |>
-  dplyr::select(original_cohens_d, reanalysis_cohens_d) |>
-  filter(!is.na(original_cohens_d)) |>
-  filter(!is.na(reanalysis_cohens_d)) |> 
-  nrow()
-
-# Check if there are any cases where everything is missing
-processed |> 
-  dplyr::group_by(paper_id) |>
-  dplyr::mutate(
-    both_missing = all(is.na(original_cohens_d) & is.na(reanalysis_cohens_d))
-  ) |>
-  dplyr::ungroup() |> 
-  dplyr::count(both_missing)
+  dplyr::select(original_cohens_d, reanalysis_cohens_d) |> 
+  dplyr::summarise(
+    both_missing = sum(is.na(original_cohens_d) & is.na(reanalysis_cohens_d)),
+    both_present = sum(!is.na(original_cohens_d) & !is.na(reanalysis_cohens_d)),
+    one_missing = sum(is.na(original_cohens_d) != is.na(reanalysis_cohens_d))
+  )
   
 # Preparing the data for the plot
 reanalysis_data <-
@@ -253,7 +239,7 @@ original_data <-
   dplyr::filter(!is.na(original_cohens_d))
 
 excluded_es <-
-  dplyr::filter(reanalysis_data, effect_size > 5 | effect_size < -5) |> 
+  dplyr::filter(reanalysis_data, effect_size > 4.5 | effect_size < -2) |> 
   mutate(excluded = glue::glue("study {simplified_paper_id}: {effect_size}")) |> 
   summarise(excluded_list = glue::glue_collapse(excluded, sep = "; "))
 ```
@@ -261,7 +247,7 @@ excluded_es <-
 ```{r generating tolerance_region_main_plot, include=FALSE}
 tolerance_region_main_plot <-
   reanalysis_data |> 
-  dplyr::filter(effect_size <= 5 & effect_size >= -5) |> 
+  dplyr::filter(effect_size <= 4.5 & effect_size >= -2) |> 
   ggplot2::ggplot() +
   ggplot2::aes(
     y = simplified_paper_id,
@@ -292,7 +278,7 @@ tolerance_region_main_plot <-
     y = "Study number"
   ) +
   ggplot2::guides(color = "none") +
-  ggplot2::scale_x_continuous(breaks = seq(-5.0, 5.0, by = 0.5)) +
+  ggplot2::scale_x_continuous(breaks = seq(-2.0, 4.5, by = 0.5)) +
   ggplot2::theme(
     axis.ticks = ggplot2::element_blank(),
     legend.title = ggplot2::element_blank(),
@@ -654,7 +640,7 @@ ggsave(here::here("figures/estimate_panel.png"), estimate_panel, width = 30, hei
 ```
 
 __Fig. 2 \| Analytical robustness of the statistical results.__
-__a,__ Effect size of the original analysis (black square; all represented as positive values) and the effect sizes of the re-analyses (green dot) for each study after conversions to Cohen’s d. The figure displays 447 re-analysis effect size estimates. For 57 re-analyses, the reported effect size was not convertible to Cohen’s d. Furthermore, the figure does not show 5 re-analysed effect sizes outside the \[-5,5\] range. For the seven studies listed at the bottom of the figure, we could not determine the original effect size due to missing information (for details see Supplementary information). Study numbers correspond to studies listed in [https://osf.io/mkwhn](). The studies are ordered by the size of the original effect size. __b,__ Proportion of effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The studies are ordered by the displayed proportion. __c,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by major disciplines. The figure displays the count of re-analyses next to each discipline name. __d,__ Distributions of effect size estimate ranges (lowest to highest) calculated per study for each major discipline. __e,__ Proportion of re-analysis results falling within or outside of the tolerance region of the original results of the studies by study type. The figure displays the count of re-analyses next to each discipline name. __f,__ Distribution of effect size estimate ranges (lowest to highest) calculated per study for observational and experimental studies. __g,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by self-rated expertise (on a scale from 1 (Beginner) to 10 (Expert)). __h,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by declared familiarity with the study. __i,__ Distribution of sample sizes separately for re-analysis effect sizes falling within or outside of the tolerance region of the original results. In this figure, we could not include those studies where the original effect sizes were missing, and cases where the re-analysis effect size or sample size were missing (for details see Supplement).
+__a,__ Effect size of the original analysis (black square; all represented as positive values) and the effect sizes of the re-analyses (green dot) for each study after conversions to Cohen’s d. The figure displays `r processed |>  filter(reanalysis_cohens_d <= 4.5 & reanalysis_cohens_d >= -2) |> filter(!is.na(reanalysis_cohens_d)) |> nrow()` re-analysis effect size estimates. For `r missing_reanalysis_n` re-analyses, the reported effect size was not convertible to Cohen’s d. Furthermore, the figure does not show `r processed |>  filter(reanalysis_cohens_d > 4.5 | reanalysis_cohens_d < -2) |> filter(!is.na(reanalysis_cohens_d)) |> nrow()` re-analysed effect sizes outside the \[-2, 4.5\] range. For the `r missing_original_n` studies listed at the bottom of the figure, we could not determine the original effect size due to missing information (for details see Supplementary information). Study numbers correspond to studies listed in [https://osf.io/mkwhn](). The studies are ordered by the size of the original effect size. __b,__ Proportion of effect sizes falling within the preset tolerance range (+/- 0.05 Cohen’s d) for each study. The studies are ordered by the displayed proportion. __c,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by major disciplines. The figure displays the count of re-analyses next to each discipline name. __d,__ Distributions of effect size estimate ranges (lowest to highest) calculated per study for each major discipline. __e,__ Proportion of re-analysis results falling within or outside of the tolerance region of the original results of the studies by study type. The figure displays the count of re-analyses next to each discipline name. __f,__ Distribution of effect size estimate ranges (lowest to highest) calculated per study for observational and experimental studies. __g,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by self-rated expertise (on a scale from 1 (Beginner) to 10 (Expert)). __h,__ Percentage of re-analysis results falling within or outside of the tolerance region of the original results of the studies by declared familiarity with the study. __i,__ Distribution of sample sizes separately for re-analysis effect sizes falling within or outside of the tolerance region of the original results. In this figure, we could not include those studies where the original effect sizes were missing, and cases where the re-analysis effect size or sample size were missing (for details see Supplement).
 
 We found that only in `r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially robust") |> dplyr::pull(percentage)`% of the studies for which we could obtain the original effect size (`r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially robust") |> dplyr::pull(n)` out of `r dplyr::filter(paper_level_inferential_robustness, robust == "Inferentially not Robust") |> dplyr::pull(N)`) , were all re-analysis effect sizes inside the tolerance region (+/- 0.05 Cohen’s d) of the result of the original study (Fig. 2a). Out of the `r dplyr::distinct(analysis_level_tolerance_region, N) |> dplyr::pull(N)` available re-analysis effect sizes, `r dplyr::filter(analysis_level_tolerance_region, is_within_region == "Within tolerance region") |> dplyr::pull(percentage)` % were inside the tolerance region. As a robustness test of our analysis, we explored the degree to which we would observe different results with different tolerance regions.
 
