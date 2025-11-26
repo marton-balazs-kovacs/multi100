@@ -1,0 +1,137 @@
+name: Reproduce Manuscript
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    name: Reproduce on Ubuntu 22.04
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgsl-dev \
+            cmake \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libfontconfig1-dev \
+            libharfbuzz-dev \
+            libfribidi-dev \
+            libfreetype6-dev \
+            libpng-dev \
+            libtiff5-dev \
+            libjpeg-dev \
+            gettext \
+            libcairo2-dev \
+            libxt-dev \
+            libglpk-dev \
+            libgdal-dev \
+            libproj-dev \
+            libgeos-dev \
+            libudunits2-dev
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4.2'
+          use-public-rspm: true
+
+      - name: Cache R packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/renv
+          key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-renv-
+
+      - name: Install renv
+        run: |
+          install.packages('renv', repos = 'https://cloud.r-project.org/')
+        shell: Rscript {0}
+
+      - name: Restore R package dependencies
+        run: |
+          renv::restore()
+        shell: Rscript {0}
+        env:
+          RENV_PATHS_ROOT: ~/.local/share/renv
+
+      - name: Install Pandoc 3.1.11
+        run: |
+          wget https://github.com/jgm/pandoc/releases/download/3.1.11/pandoc-3.1.11-1-amd64.deb
+          sudo dpkg -i pandoc-3.1.11-1-amd64.deb
+          pandoc --version
+
+      - name: Set reproducible timestamp
+        run: echo "SOURCE_DATE_EPOCH=0" >> $GITHUB_ENV
+
+      - name: Render manuscript
+        run: |
+          Rscript -e "rmarkdown::render('analysis/multi100_results.qmd')"
+        env:
+          SOURCE_DATE_EPOCH: 0
+
+      - name: List generated files
+        run: |
+          echo "=== Analysis output ==="
+          ls -lh analysis/
+          echo ""
+          echo "=== Figures directory ==="
+          ls -lh figures/
+
+      - name: Generate SHA256 hashes
+        run: |
+          # Hash the main output files
+          find analysis -name "*.html" -o -name "*.docx" | while read file; do
+            sha256sum "$file" | tee -a hashes.txt
+          done
+
+          # Hash generated figures
+          find figures -name "*.jpg" -o -name "*.png" | sort | while read file; do
+            sha256sum "$file" | tee -a hashes.txt
+          done
+
+          echo ""
+          echo "=== Generated Hashes ==="
+          cat hashes.txt
+
+      - name: Upload manuscript artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: manuscript-ubuntu-22.04
+          path: |
+            analysis/*.html
+            analysis/*.docx
+            analysis/*_files/
+
+      - name: Upload figures
+        uses: actions/upload-artifact@v4
+        with:
+          name: figures-ubuntu-22.04
+          path: figures/
+
+      - name: Upload hashes
+        uses: actions/upload-artifact@v4
+        with:
+          name: hashes-ubuntu-22.04
+          path: hashes.txt
+
+      - name: Upload reproduction report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reproduction-report
+          path: |
+            hashes.txt
+            analysis/*.log
