@@ -117,7 +117,7 @@ same_test_family <-
   dplyr::filter(!is.na(reanalysis_statistic_report) &
                   !is.na(reanalysis_type_of_statistic)) |> 
   dplyr::mutate(
-    reanalysis_statistic_report = round(reanalysis_statistic_report, 0),
+    reanalysis_statistic_report = round(reanalysis_statistic_report, 2),
     reanalysis_statistic = interaction(reanalysis_type_of_statistic, reanalysis_statistic_report)
   ) |>
   dplyr::group_by(simplified_paper_id, reanalysis_statistic) |>
@@ -1185,7 +1185,7 @@ We presented some exploratory analyses, but there are many other factors to expl
 
 # Discussion
 
-Are published results in the social and behavioural sciences robust to independent re-analyses? The present exploration shows considerable variability due to researcher degrees of freedom in statistical choices. Overall, when independent researchers analysed the same research question on the original data, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)`% of studies remained robust to independent re-analysis in the sense that all re-analysts arrived at the same conclusion as the original analyst or analyst team. Notably, the new conclusions converged with the original ones in `r filter(conclusions_analysis_data, categorisation != "Same conclusion") |> summarize(total = sum(percentage)) |>  round(0)`% of the individual re-analyses. Our descriptive results suggest a number of hypotheses concerning the circumstances in which we could expect greater analytical variability.
+Are published results in the social and behavioural sciences robust to independent re-analyses? The present exploration shows considerable variability due to researcher degrees of freedom in statistical choices. Overall, when independent researchers analysed the same research question on the original data, `r filter(conclusions_main_robustness_data, robust == "Inferentially robust") |> pull(percentage)`% of studies remained robust to independent re-analysis in the sense that all re-analysts arrived at the same conclusion as the original analyst or analyst team. Notably, the new conclusions converged with the original ones in `r filter(conclusions_analysis_data, categorisation == "Same conclusion") |> summarize(total = sum(percentage)) |>  round(0)`% of the individual re-analyses. Our descriptive results suggest a number of hypotheses concerning the circumstances in which we could expect greater analytical variability.
 
 ## Why can there be multiple answers?
 
