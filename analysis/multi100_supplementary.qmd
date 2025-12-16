@@ -1,5 +1,6 @@
 ---
-title: "Supplementary information: Investigating the analytical robustness of the social and behavioural sciences"
+title: "Supplementary information"
+subtitle: "Investigating the analytical robustness of the social and behavioural sciences"
 format: docx
 editor: source
 editor_options: 
@@ -74,7 +75,7 @@ analyst_submitted <-
   nrow()
 ```
 
-Responding to our recruitment call, `r nrow(analyst_signed_up)` researchers signed up to participate in our study. Of these volunteers, `r analyst_submitted` signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
+Responding to our recruitment call, `r nrow(analyst_signed_up)` researchers signed up to express initial interest in participating in our study. Of these, `r analyst_submitted` ultimately analysed at least one dataset and submitted their work by the deadline or an extended deadline.
 
 ```{r include=FALSE}
 n_analysis <-
@@ -82,7 +83,7 @@ n_analysis <-
   nrow()
 ```
 
-Throughout the project, `r n_analysis` re-analyses have been submitted. This number is higher than the number of re-analysts as some re-analysts volunteered to analyse more than one dataset.
+Throughout the project, `r n_analysis` re-analyses were submitted. This number is higher than the number of re-analysts as some re-analysts volunteered to analyse more than one dataset.
 
 ```{r include=FALSE}
 n_failed_peer <-
@@ -91,7 +92,7 @@ n_failed_peer <-
   nrow()
 ```
 
-Out of the submitted analyses, `r nrow(dplyr::filter(processed, !peer_eval_pass))` was omitted from the summary analysis as its analysis failed the peer evaluation, and an additional `r nrow(dplyr::filter(processed, !incomplete_response_pass))` analyses were excluded due to incomplete responses.
+Out of the submitted analyses, `r nrow(dplyr::filter(processed, !peer_eval_pass))` was omitted from the summary analysis as it failed the peer evaluation, and an additional `r nrow(dplyr::filter(processed, !incomplete_response_pass))` analyses were excluded due to incomplete responses.
 
 ```{r include=FALSE}
 # Excluding analyst who failed the peer evaluation from the rest of the analysis
@@ -109,7 +110,7 @@ final_n_analyst <-
 
 As a result, we ended up with `r nrow(processed)` re-analyses submitted by `r final_n_analyst` re-analysts.
 
-Although we invited more than 5 re-analysts to work on each of the 100 studies, due to drop-outs and peer evaluation exclusions, the final number of completed analyses ranged between `r min(dplyr::count(processed, paper_id)$n)` and `r max(dplyr::count(processed, paper_id)$n)` Table S1 shows the distribution of the number of analyses for individual studies.
+Although we invited more than 5 re-analysts to work on each of the 100 studies, due to dropouts and peer evaluation exclusions, the final number of completed analyses ranged from `r min(dplyr::count(processed, paper_id)$n)` to `r max(dplyr::count(processed, paper_id)$n)`. Table S1 shows the distribution of the number of analyses for individual studies.
 
 __Table S1. \| The Distribution of the Number of Analyses for Studies__
 
@@ -126,7 +127,7 @@ processed |>
   )
 ```
 
-## Basic demographics of the re-analysts
+## Demographics of the re-analysts
 
 ```{r include=FALSE}
 # Checking if analysts consistently reported their current position
@@ -155,7 +156,7 @@ position <-
   ))
 ```
 
-Out of all the re-analysts who submitted their work by the deadline, there were `r dplyr::filter(position, position == "Professor") |> dplyr::pull(n)` professors, `r dplyr::filter(position, position == "Associate Professor") |> dplyr::pull(n)` associate professors, `r filter(position, position == "Assistant Professor") |> dplyr::pull(n)` assistant professors, `r dplyr::filter(position, position == "Post-Doc Researcher") |> dplyr::pull(n)` post-doctoral researchers, `r dplyr::filter(position, position == "Doctoral Student") |> dplyr::pull(n)` doctoral students, `r dplyr::filter(position, position == "Other academic/research position") |> dplyr::pull(n)` from other academic/research positions. 
+Out of all the re-analysts who submitted their work by the deadline, there were `r dplyr::filter(position, position == "Professor") |> dplyr::pull(n)` professors, `r dplyr::filter(position, position == "Associate Professor") |> dplyr::pull(n)` associate professors, `r filter(position, position == "Assistant Professor") |> dplyr::pull(n)` assistant professors, `r dplyr::filter(position, position == "Post-Doc Researcher") |> dplyr::pull(n)` post-doctoral researchers, `r dplyr::filter(position, position == "Doctoral Student") |> dplyr::pull(n)` doctoral students, and `r dplyr::filter(position, position == "Other academic/research position") |> dplyr::pull(n)` from other academic/research positions. 
 
 ```{r include=FALSE}
 gender <-
@@ -166,7 +167,7 @@ gender <-
   dplyr::count(gender)
 ```
 
-The gender distribution of the re-analysts is as follows: `r dplyr::filter(gender, gender == "Female") |> dplyr::pull(n)` female, `r dplyr::filter(gender, gender == "Male") |> dplyr::pull(n)` male, `r dplyr::filter(gender, gender == "Non-binary") |> dplyr::pull(n)` other, and `r dplyr::filter(gender, gender == "Prefer not to say") |> dplyr::pull(n)` didn't want to respond to this question.
+The gender distribution of the re-analysts was as follows: `r dplyr::filter(gender, gender == "Female") |> dplyr::pull(n)` females, `r dplyr::filter(gender, gender == "Male") |> dplyr::pull(n)` males, `r dplyr::filter(gender, gender == "Non-binary") |> dplyr::pull(n)` other, and `r dplyr::filter(gender, gender == "Prefer not to say") |> dplyr::pull(n)` did not want to respond to this question.
 
 ```{r include=FALSE}
 age <-
@@ -193,7 +194,7 @@ age_group <-
   tidyr::complete(age_group, fill = list(n = 0))
 ```
 
-The age distribution of the re-analysts is depicted in Fig. S1: `r dplyr::filter(age_group, age_group == "young") |> dplyr::pull(n)` young adults (-39 years); `r dplyr::filter(age_group, age_group == "middle") |> dplyr::pull(n)` middle-aged adults (40-59 years); and no older adults (60- years).
+The age distribution of the re-analysts was as follows: `r dplyr::filter(age_group, age_group == "young") |> dplyr::pull(n)` young adults (<39 years); `r dplyr::filter(age_group, age_group == "middle") |> dplyr::pull(n)` middle-aged adults (40-59 years); and no older adults (>60 years).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 age_plot <- 
@@ -212,14 +213,13 @@ age_plot <-
   ggplot2::theme(
     panel.grid = ggplot2::element_blank(),
     panel.background = ggplot2::element_blank(),
-    axis.line = ggplot2::element_line()
+    axis.line = ggplot2::element_line(),
+    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 24)
   )
 
 ggplot2::ggsave(here::here("figures/supplement/demographic_age_plot.jpg"), age_plot, dpi = 300)
 ```
-
-__Fig. S1 \| The distribution of the analysts’ age.__
-When an analyst submitted additional re-analyses with a higher reported age, we kept only their age at the time of their first submission. Moreover, one analyst was excluded because they did not disclose their age.
 
 ```{r include=FALSE}
 check_diff_response(data = processed, id_var = analyst_id, response_var = education_level)
@@ -273,7 +273,93 @@ region <-
   dplyr::summarise(N = sum(n))
 ```
 
-The country of residence of the re-analysts is shown on the map in Fig. S2. Regarding the continents,  `r dplyr::filter(continent, continent == "Africa") |> dplyr::pull(N)` re-analyst was from Africa, `r dplyr::filter(continent, continent == "Asia") |> dplyr::pull(N)` were from Asia, `r dplyr::filter(continent, continent == "Oceania") |> dplyr::pull(N)` from Oceania, `r dplyr::filter(continent, continent == "Europe") |> dplyr::pull(N)` from Europe, `r dplyr::filter(region, UNREGION1 == "Northern America") |> dplyr::pull(N)` from North America, and `r dplyr::filter(region, UNREGION1 %in% c("Central America", "South America")) |> dplyr::summarise(sum(N)) |> dplyr::pull("sum(N)")` were from South America.
+Regarding the continents,  `r dplyr::filter(continent, continent == "Africa") |> dplyr::pull(N)` re-analyst was from Africa, `r dplyr::filter(continent, continent == "Asia") |> dplyr::pull(N)` were from Asia, `r dplyr::filter(continent, continent == "Oceania") |> dplyr::pull(N)` from Oceania, `r dplyr::filter(continent, continent == "Europe") |> dplyr::pull(N)` from Europe, `r dplyr::filter(region, UNREGION1 == "Northern America") |> dplyr::pull(N)` from North America, and `r dplyr::filter(region, UNREGION1 %in% c("Central America", "South America")) |> dplyr::summarise(sum(N)) |> dplyr::pull("sum(N)")` were from South America.
+
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
+
+analyst_experience_years_data <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
+  # Dropped because of faulty response
+  dplyr::filter(analyst_id != "RTX71")
+```
+
+The median duration of experience with data analysis was `r median(analyst_experience_years_data$years_of_experience)` years among our re-analysts.
+
+```{r include=FALSE}
+check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
+
+analysis_frequency_data <-
+  processed |>
+  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |>
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp)
+
+analysis_frequency_count <-
+  analysis_frequency_data |> 
+  dplyr::count(analysis_frequency)
+```
+
+We asked our re-analysts how regularly they perform data analysis. The most frequent category was `r dplyr::filter(analysis_frequency_count, n == max(n)) |> dplyr::pull(analysis_frequency)`.
+
+```{r include=FALSE}
+expertise_self_rating_data <-
+  processed |> 
+  # Keeping only the first response per analyst
+  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |>
+  dplyr::count(expertise_self_rating)
+```
+
+We also asked them to rate their level of expertise in data analysis on a scale of 1 (Beginner) to 10 (Expert). The most prevalent answer was `r dplyr::filter(expertise_self_rating_data, n == max(n)) |> dplyr::pull(expertise_self_rating)`.
+
+```{r include=FALSE}
+familiar_with_paper_data <-
+  calculate_percentage(processed, familiar_with_paper)
+```
+
+In `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(percentage)`% (`r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(n)` out of `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(N)`) of the cases, the re-analysts were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
+
+```{r include=FALSE}
+processed |> 
+  count(communication_check)
+```
+
+All re-analysts reported that they had not communicated the details of their analysis with other re-analysts working with the same dataset.
+
+```{r include=FALSE}
+software_data <-
+  processed |> 
+  dplyr::reframe(
+    software = c(task1_software, task2_software),
+    software = tolower(software),
+  ) |> 
+  separate_rows(software, sep = ",\\s*") |> 
+  mutate(
+    software = case_when(
+      software == "ms excel" ~ "excel",
+      software == "r markdown" ~ "rmarkdown",
+      software == "process v4.0 by hayes for r" ~ "process v4.0",
+      software == "jamovi 1.6.23.0" ~ "jamovi",
+      software == "jamovi 2.3.9" ~ "jamovi",
+      software == "text editor to look at the stata code of the original paper" ~ "text editor",
+      software == "text editor to read the stata code in the replication materials" ~ "text editor",
+      TRUE ~ software
+    )
+  ) |> 
+  calculate_percentage(software) |> 
+  arrange(desc(n)) |> 
+  mutate(
+    software = case_when(
+      software %in% c("r", "stata", "spss", "jasp") ~ toupper(software),
+      TRUE ~ stringr::str_to_title(software)
+    )
+  )
+```
+
+We asked the re-analysts which programming language, software, or tool they used in their data analysis during Tasks 1 and 2. `r slice(software_data, 1) |> pull(software)` (`r slice(software_data, 1) |> pull(percentage)`%), `r slice(software_data, 2) |> pull(software)` (`r slice(software_data, 2) |> pull(percentage)`%), and `r slice(software_data, 3) |> pull(software)` (`r slice(software_data, 3) |> pull(percentage)`%) were the most popular responses.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 world_map <- 
@@ -293,17 +379,17 @@ country_map_plot <-
   ggplot2::aes(x = long, y = lat, group = group, fill = n) +
   ggplot2::geom_polygon(color = "white", linewidth = 0.2) +
   ggplot2::scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Number of\nanalysts") +
+  ggplot2::coord_fixed(ratio = 1.3) +
   ggplot2::theme_void() +
   ggplot2::theme(
-    legend.title = element_text(size = 6),
+    legend.title = element_text(size = 26, margin = margin(b = 15)),
+    legend.text = element_text(size = 24),
+    legend.spacing = unit(0.8, "cm"),
     plot.margin = margin(t = 10, r = 20, b = 10, l = 10, unit = "pt")
   )
 
 ggplot2::ggsave(here::here("figures/supplement/demographic_country_plot.jpg"), country_map_plot, dpi = 300)
 ```
-
-__Fig. S2 \| The analysts country of residence.__ 
-When an analyst submitted more than one re-analysis, and they moved between the submissions, we only kept their first response.
 
 ```{r include=FALSE}
 check_diff_response(data = processed, id_var = analyst_id, response_var = primary_discipline)
@@ -318,9 +404,9 @@ analyst_discipline <-
   dplyr::arrange(dplyr::desc(dplyr::if_else(discipline == "Other", -Inf, percentage)))
 ```
 
-We asked the re-analysts which discipline is the closest to their research area. The following Table S2 summarises the distribution of their disciplinary orientation. Re-analysts from `r dplyr::slice(analyst_discipline, 1) |> dplyr::pull(discipline)` and `r dplyr::slice(analyst_discipline, 2) |> dplyr::pull(discipline)` disciplines participated in the highest ratio in this study.
+We asked the re-analysts which discipline is closest to their research area. Table S2 summarises the distribution of their disciplinary orientations. The largest subgroups of re-analysts were from `r dplyr::slice(analyst_discipline, 1) |> dplyr::pull(discipline)` and `r dplyr::slice(analyst_discipline, 2) |> dplyr::pull(discipline)`.
 
-__Table 2. \| The Distribution of Co-analysts’ Disciplinary Orientation__
+__Table 2. \| The Distribution of Re-analysts’ Disciplinary Orientation__
 
 ```{r, echo=FALSE}
 analyst_discipline |>
@@ -346,20 +432,6 @@ analyst_experience_years_data <-
   keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
   # Dropped because of faulty response
   dplyr::filter(analyst_id != "RTX71")
-```
-
-The distribution of the years of experience with data analysis is depicted in Fig. S3. The median duration of experience with data analysis was `r median(analyst_experience_years_data$years_of_experience)` years among our re-analysts.
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = years_of_experience)
-
-analyst_experience_years_data <-
-  processed |>
-  dplyr::select(analyst_id, paper_id, years_of_experience, task1_timestamp) |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |> 
-  # Dropped because of faulty response
-  dplyr::filter(analyst_id != "RTX71")
 
 analyst_experience_years_plot <-
   analyst_experience_years_data |> 
@@ -372,30 +444,13 @@ analyst_experience_years_plot <-
   ggplot2::theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
+    axis.line = element_line(color = "black"),
+    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 24)
   )
 
 ggplot2::ggsave(here::here("figures/supplement/demographic_experience_years_plot.jpg"), analyst_experience_years_plot, dpi = 300)
 ```
-
-__Fig. S3 \| The analysts’ years of experience with data analysis.__
-We only kept their first response when an analyst submitted additional re-analyses with a higher reported age.
-
-```{r include=FALSE}
-check_diff_response(data = processed, id_var = analyst_id, response_var = analysis_frequency)
-
-analysis_frequency_data <-
-  processed |>
-  dplyr::select(analyst_id, paper_id, analysis_frequency, task1_timestamp) |>
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp)
-
-analysis_frequency_count <-
-  analysis_frequency_data |> 
-  dplyr::count(analysis_frequency)
-```
-
-We asked our re-analysts how regularly they perform data analysis. Fig. S4 shows that the most frequent category was `r dplyr::filter(analysis_frequency_count, n == max(n)) |> dplyr::pull(analysis_frequency)`.
 
 ```{r echo=FALSE, message=FALSE}
 # For this question we report the responses by analysis and not analyst 
@@ -439,16 +494,6 @@ ggplot2::ggsave(here::here("figures/supplement/demographic_analysis_frequency_pl
 analysis_frequency_plot
 ```
 
-```{r include=FALSE}
-expertise_self_rating_data <-
-  processed |> 
-  # Keeping only the first response per analyst
-  keep_first_response(id_var = analyst_id, time_var = task1_timestamp) |>
-  dplyr::count(expertise_self_rating)
-```
-
-We also asked them how they rated their level of expertise in data analysis between Beginner (1) and Expert (10). The distribution in Fig. S5 shows that the most prevalent answer was `r dplyr::filter(expertise_self_rating_data, n == max(n)) |> dplyr::pull(expertise_self_rating)`.
-
 ```{r echo=FALSE, message=FALSE}
 expertise_self_rating_plot <-
   expertise_self_rating_data |>
@@ -475,61 +520,13 @@ expertise_self_rating_plot <-
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
+    axis.line = element_line(color = "black"),
+    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 24)
   )
 
 ggsave(here::here("figures/supplement/demographic_expertise_self_rating_plot.jpg"), expertise_self_rating_plot, dpi = 300)
 ```
-
-__Fig. S5 \| The analysts’ self-rated level of expertise in data analysis.__
-When an analyst submitted more than one re-analysis, we only kept their first response.
-
-```{r include=FALSE}
-familiar_with_paper_data <-
-  calculate_percentage(processed, familiar_with_paper)
-```
-
-In `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(percentage)` % (`r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(n)` out of `r filter(familiar_with_paper_data, familiar_with_paper == "Yes") |> pull(N)`) of the cases, the re-analysts were familiar with the paper that the provided dataset belongs to before beginning their work on the project.
-
-
-```{r include=FALSE}
-processed |> 
-  count(communication_check)
-```
-
-All re-analysts reported that they had not communicated the details of their analysis with other re-analysts working with the same dataset.
-
-```{r include=FALSE}
-software_data <-
-  processed |> 
-  dplyr::reframe(
-    software = c(task1_software, task2_software),
-    software = tolower(software),
-  ) |> 
-  separate_rows(software, sep = ",\\s*") |> 
-  mutate(
-    software = case_when(
-      software == "ms excel" ~ "excel",
-      software == "r markdown" ~ "rmarkdown",
-      software == "process v4.0 by hayes for r" ~ "process v4.0",
-      software == "jamovi 1.6.23.0" ~ "jamovi",
-      software == "jamovi 2.3.9" ~ "jamovi",
-      software == "text editor to look at the stata code of the original paper" ~ "text editor",
-      software == "text editor to read the stata code in the replication materials" ~ "text editor",
-      TRUE ~ software
-    )
-  ) |> 
-  calculate_percentage(software) |> 
-  arrange(desc(n)) |> 
-  mutate(
-    software = case_when(
-      software %in% c("r", "stata", "spss", "jasp") ~ toupper(software),
-      TRUE ~ stringr::str_to_title(software)
-    )
-  )
-```
-
-We asked the re-analysts what programming language/software/tool they used in their data analysis during Task 1 and Task 2. The following figure indicates that `r slice(software_data, 1) |> pull(software)` (`r slice(software_data, 1) |> pull(percentage)`%), `r slice(software_data, 2) |> pull(software)` (`r slice(software_data, 2) |> pull(percentage)`%), and `r slice(software_data, 3) |> pull(software)` (`r slice(software_data, 3) |> pull(percentage)`%) were the most popular responses. Fig. S6 shows the distribution of these responses.
 
 ```{r include=FALSE}
 software_data <-
@@ -562,9 +559,6 @@ software_data <-
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-#| label: fig-software
-#| fig-cap: "The figure shows which software the analysts used for their re-analysis tasks. In case an analyst completed multiple re-analyses or reported the use of multiple software we kept all their responses for this figure. The figure shows only software that was used by more than 1% of the analysts."
-
 software_plot <-
   software_data |>
   dplyr::filter(percentage > 1) |>
@@ -579,39 +573,38 @@ software_plot <-
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
+    axis.line = element_line(color = "black"),
+    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 24)
   )
 
 ggsave(here::here("figures/supplement/demographic_software_plot.jpg"), software_plot, dpi = 300)
 ```
 
-__Fig. S6 \| The software the analysts used for their re-analysis tasks.__ 
-In case an analyst completed multiple re-analyses or reported using multiple software applications, we kept all their responses for this figure. The figure shows only software applications that were used by more than 1% of the analysts.
-
 ## Descriptives of the statistical analyses
 
-A difference in Task 2 compared to Task 1 was that the re-analysts received some constraints for their analysis to focus on a single result in the original study (see Methods for more details).
+The primary difference between Task 2 and Task 1 was that the re-analysts were given specific constraints on their analysis, which focused on a single result from the original study (see Methods for more details).
 
 ```{r include=FALSE}
 p_value_or_bayes_data <-
   calculate_percentage(processed, p_value_or_bayes)
 ```
 
-In Task 2, when we asked the re-analysts to present one main statistical result, in `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(percentage)`% of the analyses (`r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(N)`), the conclusion was based on a p-value. A Bayes Factor was chosen in `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(percentage)`% of the cases (`r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(N)`).
+In Task 2, when we asked the re-analysts to present one main statistical result, in `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(percentage)`% of the analyses (`r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "p-value") |> pull(N)`), the conclusion was based on a *p*-value. A Bayes Factor was chosen in `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(percentage)`% of the cases (`r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(n)` out of `r filter(p_value_or_bayes_data, p_value_or_bayes == "Bayes factor") |> pull(N)`).
 
 ```{r include=FALSE}
 additional_calculations_data <-
   calculate_percentage(processed, additional_calculations)
 ```
 
-For `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(N)`) of the analyses, the re-analysts reported having to make additional calculations in Task 2 compared to Task 1. In the remaining `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(N)`) of the cases, the re-analysts indicated that despite the requirements of the instructions, they could conduct the same analyses as in Task 1.
+For `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "Yes") |> pull(N)`) of the analyses, the re-analysts reported having to make additional calculations in Task 2 compared to Task 1. In the remaining `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(percentage)`% (`r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(n)` out of `r filter(additional_calculations_data, additional_calculations == "No, I already had the neccessary calculations in Task 1") |> pull(N)`) of the cases, the re-analysts indicated that they could conduct the same analyses as in Task 1 and meet the requirements of the task instructions.
 
 ```{r include=FALSE}
 direction_of_result_data <- 
   calculate_percentage(processed, direction_of_result)
 ```
 
-In Task 2, `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(percentage)`% of the results (`r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(n)` out of `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(N)`) were in the opposite direction as claimed by the original study, disregarding whether the effect was conclusive/significant.
+In Task 2, `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(percentage)`% of the results (`r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(n)` out of `r filter(direction_of_result_data, direction_of_result == "Opposite as claimed by the original study") |> pull(N)`)were in the opposite direction from those claimed by the original study, disregarding whether the effect was conclusive/significant.
 
 ```{r include=FALSE}
 total_hours_data <-
@@ -619,7 +612,7 @@ total_hours_data <-
   filter(total_hours != 999)
 ```
 
-The re-analysts were asked to estimate their time spent performing Task 1 and Task 2 together. The median value of their response is `r median(total_hours_data$total_hours)` hours (Fig. S7).
+The re-analysts were asked to estimate their time spent performing Task 1 and Task 2 together. The median value of their response is `r median(total_hours_data$total_hours)` hours.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 total_hours_plot <-
@@ -633,14 +626,13 @@ total_hours_plot <-
   theme(
     panel.background = element_blank(),
     panel.grid = element_blank(),
-    axis.line = element_line(color = "black")
+    axis.line = element_line(color = "black"),
+    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 24)
   )
 
 ggsave(here::here("figures/supplement/demographic_total_hours_plot.jpg"), total_hours_plot, dpi = 300)
 ```
-
-__Fig. S7 \| The reported total hours the analyst spent on Task 1 and Task 2 together.__
-In case an analyst completed multiple re-analyses, we kept all their responses for this figure. One response was excluded due to being an outlier (999 hours).
 
 ```{r generating demographic panel, echo=FALSE, warning=FALSE, message=FALSE}
 # Define the remaining plots section
@@ -648,16 +640,16 @@ demographic_panel <-
   (age_plot | country_map_plot | analyst_experience_years_plot) /
   (expertise_self_rating_plot | software_plot | total_hours_plot) +
   # plot_layout(ncol = 3, nrow = 2) +
-  plot_annotation(tag_levels = 'a')
+  plot_annotation(tag_levels = 'a') &
+  theme(plot.tag = element_text(size = 24, face = "bold"))
 
 ggsave(here::here("figures/supplement/demographic_panel.jpg"), demographic_panel, width = 30, height = 15, dpi = 300)
 ```
 
-## Peer evaluation
-### Peer evaluators
-#### Basic demographics of the peer evaluators
+# Peer evaluation
+## Peer evaluators
 
-Fig. S8 shows that most peer evaluators have many years of experience with conducting statistical analysis.
+Most peer evaluators have many years of experience conducting statistical analysis, perform data analysis regularly, and rate themselves close to expert level in data analysis.
 
 ```{r include=FALSE}
 # Get peer evaluator demographic info from task1 and task2 survey results
@@ -704,13 +696,6 @@ peer_analyst_experience_years_plot <-
 
 ggsave(here::here("figures/supplement/demographic_evaluators_experience_years_plot.jpg"), peer_analyst_experience_years_plot, dpi = 300)
 ```
-
-__Fig. S8 \| The peer evaluators’ years of experience with data analysis.__
-When a peer evaluator submitted more than one evaluation and a year passed between the responses, we kept only their first response.
-
-Fig. S9 indicates that peer evaluators regularly perform data analysis.
-
-__Fig. S9 \| The regularity that the peer evaluators perform data analysis.__
 
 ```{r include=FALSE}
 check_diff_response(peer_evaluator_data, evaluator_id, analysis_frequency)
@@ -763,8 +748,6 @@ peer_analysis_frequency_plot <-
 ggsave(here::here("figures/supplement/demographic_evaluators_analysis_frequency_plot.jpg"), peer_analysis_frequency_plot, dpi = 300)
 ```
 
-Fig. S10 indicates that most peer evaluators rate themselves close to expert level in data analysis.
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 peer_expertise_self_rating_data <-
   peer_evaluator_data |> 
@@ -804,9 +787,6 @@ peer_expertise_self_rating_plot <-
 ggsave(here::here("figures/supplement/demographic_evaluators_expertise_self_rating_plot.jpg"), peer_expertise_self_rating_plot, dpi = 300)
 ```
 
-__Fig. S10 \| The peer evaluators’ self-rated level of expertise in data analysis.__
-When a peer evaluator submitted more than one re-analysis, we kept only their first response.
-
 ```{r generating peer analyst panel, echo=FALSE, warning=FALSE, message=FALSE}
 # Define the remaining plots section
 peer_analyst_panel <-
@@ -817,8 +797,7 @@ peer_analyst_panel <-
 ggsave(here::here("figures/supplement/peer-analyst_panel.jpg"), peer_analyst_panel, width = 10, height = 10, dpi = 300)
 ```
 
-## Peer evaluations
-### Descriptives of peer evaluations
+## Descriptives of peer evaluations
 
 ```{r include=FALSE}
 # Number of peer evaluations
@@ -827,7 +806,7 @@ nrow(peer_eval_not_reviewed)
 nrow(peer_eval)
 ```
 
-In total, we received `r nrow(peer_eval_not_reviewed) + 1` peer evaluation reports. One peer evaluation was removed because the ID of the analyst was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated, leaving us with a total of `r nrow(peer_eval_not_reviewed)` peer evaluation reports on `r nrow(distinct(peer_eval_not_reviewed, paper_id))` different papers. After the panel members had reviewed the peer evaluations (see ‘Peer Evaluation: Review and Decisions’ for all decisions and reasoning behind each case), the final result of the peer evaluation was as follows:
+In total, we received `r nrow(peer_eval_not_reviewed) + 1` peer evaluation reports. One peer evaluation was removed because the analyst's ID was not provided, and as such, we could not verify with certainty which re-analysis was being evaluated, leaving us with a total of `r nrow(peer_eval_not_reviewed)` peer evaluation reports for `r nrow(distinct(peer_eval_not_reviewed, paper_id))` different papers. After the panel members had reviewed the peer evaluations (see ‘Peer Evaluation: Review and Decisions’ for all decisions and reasoning behind each case), the final result of the peer evaluation was as follows:
 
 ```{r include=FALSE}
 dplyr::count(peer_eval, task1_pipeline_acceptable)
@@ -835,7 +814,7 @@ dplyr::count(peer_eval, task1_conclusion_follows_results)
 dplyr::count(peer_eval, task2_pipeline_acceptable)
 ```
 
-At the end of the peer evaluation process, one analysis was deemed to contain an unacceptable analysis pipeline. Therefore, we removed this single analysis from our results. For the remaining analyses, it was determined that all Task 1 and Task 2 analysis pipelines were acceptable. Furthermore, all remaining Task 1 conclusions were considered to follow from the results accurately, and the analysts’ self-categorization of the results was considered adequate.
+At the end of the peer evaluation process, one analysis contained an unacceptable analysis pipeline due to quality concerns. Therefore, we removed this single analysis from our results. For the remaining analyses, it was determined that all Task 1 and Task 2 analysis pipelines were acceptable. Furthermore, all remaining Task 1 conclusions were considered to follow from the results accurately, and the analysts’  self-categorisation of the results was deemed adequate.
 
 ```{r include=FALSE}
 reproducibility_checks_data <-
@@ -850,12 +829,12 @@ reproducibility_checks_n <-
 
 `r reproducibility_checks_n` analytical reproducibility checks were successfully conducted, and mismatches were identified in `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)` analyses. In all of these cases, we verified that the mismatches did not have a meaningful impact on the reported conclusion, categorisation, or effect size.
 
-## Robustness Analyses
-### Inferential robustness by the level of confidence with the suitability of the analysis
+# Robustness analyses
+## Robustness of the conclusions by the level of confidence in the suitability of the analysis
 
 Table S3 shows the percentage of same conclusion, no effect/inconclusive, and opposite effect of the re-analyses by the analyst’s level of confidence with the suitability of the analysis.
 
-__Table S3. Inferential Robustness by the Level of Confidence with the Suitability of the Analysis__
+__Table S3. Robustness of the Conclusions by the Level of Confidence with the Suitability of the Analysis__
 ```{r echo=FALSE, message=FALSE}
 conclusions_suitability_data <- 
   processed |> 
@@ -912,7 +891,7 @@ effect_region_suitability_data <-
 
 effect_region_suitability_data |>
   dplyr::mutate(Count = paste(n, "/", N),
-                percentage = paste0(round(percentage, 2), "%")) |>
+                percentage = paste0(round(percentage, 0), "%")) |>
   dplyr::select(
     `Confidence rating` = confidence_in_approach,
     `Is the estimate within the tolerance region?` = is_within_region,
@@ -926,9 +905,9 @@ effect_region_suitability_data |>
   )
 ```
 
-### Estimate robustness with alternative tolerance regions
+## Robustness of the statistical results with alternative tolerance regions
 
-We learned that even with a 4 times broader tolerance region  (+/- 0.5 Cohen’s d), we would find that around 80% of the studies still show results outside of this region and around half of the individual reanalysis effect sizes are outside of this region (Fig. S11).
+Even with a 4 times broader tolerance region  (+/- 0.5 Cohen’s *d*), around 80% of the studies still show results outside of this region and around half of the individual reanalysis effect sizes are outside of this region (Extended Data Fig. 4a).
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
 thresholds <- seq(0.01, 0.2, by = 0.001)
@@ -984,9 +963,7 @@ threshold_robustness_plot <-
 ggplot2::ggsave(here::here("figures/supplement/threshold_robustness_plot.jpg"), threshold_robustness_plot, height = 4, dpi = 300)
 ```
 
-__Fig. S 11 \| Estimate robustness with different widths (+/-[0.01-0.20] Cohen’s d) of tolerance region.__
-
-Alternatively, we could define the tolerance region as a percentage of the given effect size. As an additional robustness test, we varied the tolerance region between +/-5% and +/-20%. Fig. S12 shows that there was barely any difference regarding the percentage of robust studies. 
+Alternatively, we could define the tolerance region as a percentage of the given effect size. As an additional robustness test, we varied the tolerance region between +/-5% and +/-20%. Extended Data Fig. 4b shows that there was barely any difference regarding the percentage of robust studies. 
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
 weights <- seq(0.05, 0.2, by = 0.001)
@@ -1038,8 +1015,6 @@ threshold_weighted_robustness_plot <-
 ggplot2::ggsave(here::here("figures/supplement/threshold_weighted_robustness_plot.jpg"), threshold_weighted_robustness_plot, height = 4, dpi = 300)
 ```
 
-__Fig. S 12 \| Estimate robustness with different percentages (5-20%) of Cohen’s d as tolerance region.__
-
 ```{r generating threshold panel, echo=FALSE}
 # Define the remaining plots section
 threshold_panel <-
@@ -1050,116 +1025,21 @@ threshold_panel <-
 ggsave(here::here("figures/supplement/threshold_panel.jpg"), threshold_panel, width = 10, height = 10, dpi = 300)
 ```
 
-## Additional analyses
-While Cohen’s d has the advantage of being easy to compute and comparable across different analyses, Kümpel and Hoffmann26 recently proposed the concept of generalised marginal effects (gMEs), an effect size metric that is both formally applicable and comparable across different statistical models. When standardised, the value of gMEs is equal to the value of Cohen’s d, where the latter effect size measure is strictly applicable. Otherwise, gME-values are very intuitive to interpret and communicate, as they give the average expected change of the target variable. We had not originally planned to calculate standardised gMEs, and, accordingly, did not collect all required analysis outputs to compute them across the board. Still, we calculated gMEs for a sample of our studies (n = 4) to showcase their potential for future multi-analyst studies (Fig. S13).
+# Generalised marginal effects
+
+While Cohen’s d has the advantage of being easy to compute and comparable across different analyses, Kümpel and Hoffmann26 recently proposed the concept of generalised marginal effects (gMEs), an effect size metric that is both formally applicable and comparable across different statistical models. When standardised, the value of gMEs is equal to the value of Cohen’s d, where the latter effect size measure is strictly applicable. Otherwise, gME-values are intuitive to interpret and communicate, as they give the average expected change of the target variable. We had not originally planned to calculate standardised gMEs, and, accordingly, did not collect all required analysis outputs to compute them across the board. Still, we calculated gMEs for a sample of our studies (*n* = 4) to showcase their potential for future multi-analyst studies (Fig. S1).
 
 ```{r echo=FALSE}
 knitr::include_graphics(here::here("generalized Marginal Effects/gMEs.png"))
 ```
 
-__Fig. S13 \|__ 
-For each original and re-analysis of papers 22, 40, 63, and 75, the figure shows a forest-density plot of non-standardized gME values, as defined by Kümpel and Hoffmann26. Specifically, the black dots give the point estimates of the average change in target expectation attributed to the regressor of interest by each analysis, whereas the thicker and thinner lines depict the 0.66 and 0.95 quantiles of the corresponding densities. Study numbers correspond to studies listed in Table S1.
+__Fig. S1 \| gMEs for a sample of the studies__ 
+For each original and re-analysis of papers 22, 40, 63, and 75, the figure shows a forest-density plot of non-standardised gME values, as defined by Kümpel and Hoffmann26. Specifically, the black dots give the point estimates of the average change in target expectation attributed to the regressor of interest by each analysis, whereas the thicker and thinner lines depict the 0.66 and 0.95 quantiles of the corresponding densities. Study numbers correspond to studies listed in Table S1.
 
-# Additional Details of Methods
-## Project contributors
+# Analyses requested during the review process
+## Robustness by analysis method
 
-_Lead team:_ The project was coordinated by a lead team (consisting of Balazs Aczel, Barnabas Szaszi, Harry Clelland, Livia Kosa, Zoltan Torma, Felix Holzmeister, Marton Kovacs, and Gustav Nilsonne). The lead team was responsible for the development of the research methodology, preregistration of the project, overall analysis of the results, and preparation of a manuscript for publication. Furthermore, the lead team provided the materials to re-analysts and peer evaluators; and communicated with the project management team, the expert panel, re-analysts and peer evaluators to ensure that the project proceeded as intended.
-_Project management team:_ The project management team consisted of the SCORE team of the Center for Open Science and recruited research assistants. The project management team provided financial support, oversaw the legal and ethical aspects of the project, provided the infrastructure and support for data management, and supported the use of materials adopted from other SCORE projects.
-_Expert panel:_ A group of experts who have previously conducted multi-analyst studies and/or are experts of relevant methodology were invited to participate in the project as members of an expert panel. The panel’s task was to oversee the research plan and remain available to comment on methodological questions throughout the project. The list of expert panel members is available here. 
-_Re-analysts:_ Analysts who independently analysed the target datasets. 
-_Peer evaluators:_ Peer evaluators were also re-analysts who were asked to evaluate the completed analyses.
-
-# Materials
-## Study and claim selection
-
-__Fig. S14 \| The sampling process of scientific claims.__
-
-After selecting 100 studies from our collection (Fig. S14), we selected one empirical claim from each (see Method). We provided the re-analysts with the claims to test on the original datasets, but we did not give them specific research questions. Instead, we used the selected claims to focus the analysts on an underlying research question. We decided to follow this approach because the original papers almost never contained a well-formulated research question, and we judged that any of our attempts to translate the extracted claims to research questions would carry the danger of influencing the analysts by our own understanding.
-
-## Peer evaluations
-### Peer evaluators
-
-When volunteering to be a re-analyst in the project, researchers could indicate whether they would be willing to serve as peer evaluators as well. They were informed that peer evaluators could become co-authors of the resulting article and that they would be remunerated for their efforts. Peer evaluators were asked to deliver five evaluations by a predefined due date and will be paid a flat fee of $10 per evaluation as an incentive to comply with the agreement. 8 peer evaluators evaluated more than 5 ( 6-10) analyses and were paid accordingly.
-
-We originally aimed to recruit at least two peer evaluations for each re-analysis. Therefore, our aim was to reach a total of 100 x 5 x 2 = 1,000 evaluations. In reality, this plan turned out to be overly ambitious due to the very labour-intensive coordination and assessment work. Therefore, after the completion of an initial 507 peer evaluations, we judged that our sample could provide us with a rough estimate of the potentially unacceptable analyses and since we found this value relatively low (see Results), we ceased to continue with further peer evaluations. 
-
-### Peer Evaluation Procedure
-
-The peer evaluation procedure described below follows our preregistered protocol. All minor deviations are listed in the ‘Deviations from Preregistration’ document.
-
-In addition to completing a re-analysis, re-analysts who signed up to the Multi100 could opt-in to serve as a peer evaluator on the project. That is, the re-analyst who responded ‘Yes’ when asked “Are you interested in serving as an evaluator for this project?” was later approached to serve as peer evaluator. The role of a peer evaluator was to check the plausibility and legitimacy of an analysis based on a summary of the analysis submitted by the analyst. In order to successfully evaluate a given re-analysis, peer evaluators were provided with instructions and a summary of the re-analysts’ analysis (i.e., responses to their Task 1 and Task 2 post-analysis survey questions). A template of instructions is provided in the Figure below.
-
-_Peer evaluation task template sent out to all evaluators. Square brackets indicate variable information that is specific to the re-analysis being evaluated._
-
-## Main outputs of the peer evaluation
-
-```{r include=FALSE}
-count(peer_eval_not_reviewed, task1_pipeline_acceptable)
-count(peer_eval_not_reviewed, task1_conclusion_follows_results)
-count(peer_eval_not_reviewed, task1_categorisation_is_accurate)
-count(peer_eval_not_reviewed, task2_pipeline_acceptable)
-```
-
-Re-analyses were evaluated on five key metrics.
-
-First, peer evaluators judged whether the analysis pipeline of Task 1 was acceptable. That is, they judged whether it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Each re-analysis pipeline was rated as either (1) Unacceptable, (2) Acceptable but low quality, (3) Acceptable and medium quality, or (4) Acceptable and high quality. In cases where the analysis pipeline was deemed unacceptable, evaluators provided their reasoning via an open text box.
-
-Second, peer evaluators judged whether the conclusion provided in Task 1 adequately followed from the results of the analysis. Each conclusion was rated as either (1) It adequately follows from the results of the analysis, or (2) It does not follow adequately from the results of the analysis. In cases where the conclusion was judged not to follow adequately from the results, evaluators provided their reasoning via an open text box.
-
-Third, peer evaluators judged whether the analyst’s categorisation of the Task 1 result was adequate. For example, regarding an analyst who has claimed that the results of their analysis show evidence in favour of the original effect/relationship, the evaluator considered whether this judgment is adequate. Each categorisation was rated as either (1) Adequate, or (2) Inadequate. Given that the analyst’s categorisation of the results is tied to their conclusion, there was no open text box provided for inadequate ratings.
-
-Fourth, peer evaluators judged whether the analysis pipeline of Task 2 was acceptable. That is, they judged whether it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Each re-analysis pipeline was rated as either (1) Unacceptable, (2) Acceptable but low quality, (3) Acceptable and medium quality, (4) Acceptable and high quality, or (5) Incomplete or missing analysis. In cases where the analysis pipeline was deemed unacceptable, evaluators provided their reasoning via an open text box.
-
-Finally, peer evaluators could optionally complete a code reproducibility check. They were asked whether any mismatches were found between the executed code and the reported results. For each analysis, the evaluator indicated either (1) I didn’t try to execute it, (2) I tried but didn’t manage to execute it, (3) I executed it and I found no mismatches, or (4) I executed it and I found mismatches. In cases where mismatches were found, evaluators described the nature of these mismatches via an open text box.
-
-Accordingly, the Task 1 analysis pipeline was rated as ‘Unacceptable’ in `r nrow(filter(peer_eval_not_reviewed, task1_pipeline_acceptable == "(1) Unacceptable"))` cases, the Task 1 conclusion was judged not to follow adequately from the results in `r nrow(filter(peer_eval_not_reviewed, task1_conclusion_follows_results == "(2) It does not follow adequately from the results of the analysis"))` cases, the Task 1 self-categorization of the result was rated as ‘inadequate’ in `r nrow(filter(peer_eval_not_reviewed, task1_categorisation_is_accurate == "(2) Inadequate"))` cases, the Task 2 analysis pipeline was rated as ‘unacceptable’ in `r nrow(filter(peer_eval_not_reviewed, task2_pipeline_acceptable == "(1) Unacceptable"))` cases, the Task 2 analysis pipeline was judged as ‘incomplete or missing’ in `r nrow(filter(peer_eval_not_reviewed, task2_pipeline_acceptable == "(5) Incomplete or missing analysis"))` cases, and the code reproducibility checks revealed `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)` mismatches.
-
-## Review of the peer evaluation reports
-
-To identify potential errors or misunderstandings in the peer evaluations, each issue raised (above) by a peer evaluator was reviewed by a member of the expert panel who considered the information provided by the peer evaluator and, where necessary, contrasted it with the information provided by the re-analyst. For each issue, the panel member reviewed the evaluators’ initial categorisation and their reasoning. Note that our aim in the project was to explore the sensitivity of analytical results to the analytical choices of the re-analysts. Hence, during the process of peer evaluation, our goal was not to ensure that each analysis pipeline consisted of the most ideal steps from every possible perspective but to ensure that the steps of the analyses were within the variations that could be considered appropriate by the scientific community in addressing the given analytical task. For that reason, during the review of the peer evaluations, the expert panel member left the ratings of the peer evaluators ‘Unacceptable’ only if the analyst made one or more mistakes that could be objectively judged as incorrect. For all the other cases where the peer-evaluator categorised the analysis pipeline ‘Unacceptable’ based on non-objective reasoning (e.g., not adding control variables or controlling for another variable), the expert panel member adjusted the rating from ‘Unacceptable’ to ‘Acceptable but low quality’. We aimed to remove re-analyses from the dataset, which was judged as ‘Unacceptable’.
-
-As a consequence of the full peer evaluation review, one analysis was rejected. What follows is a summary of revisions made to peer evaluator’s initial ratings as an outcome of the peer evaluation review.
-
-```{r include=FALSE}
-# peer eval data before changing the responses based on the review but after excluding the one analysis
-peer_eval_after_exclusion <- 
-  peer_eval_not_reviewed |>
-  dplyr::filter(!(analyst_id == "NSDML" &
-                  paper_id == "PALER_AmPoliSciRev_2013_Pxp7"))
-# Number of task1_analysis_pipeline remaining unacceptable after the review of peer evaluations
-nrow(filter(peer_eval, task1_pipeline_acceptable == "(1) Unacceptable"))
-```
-
-Following the Task 1 analysis pipeline review, ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. Following the Task 1 conclusion review, ratings of ‘(2) It does not follow adequately from the results of the analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_conclusion_follows_results == "(2) It does not follow adequately from the results of the analysis"))`) were revised to ‘(1) It follows adequately from the results of the analysis’.
-
-Following the Task 1 categorization review, ratings of ‘(2) Inadequate’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_categorisation_is_accurate == "(2) Inadequate"))`) were revised to ‘(1) Adequate’. In many cases, evaluators made their judgment of ‘inadequate’ on the basis of their Task 1 conclusion rating. Put simply, evaluators often considered the categorisation of results to be inadequate when they also judged that the conclusion does not follow from the results. It was often the case that verifying the legitimacy of the Task 1 conclusion also verified the legitimacy of the Task 1 categorisation. 
-
-Following the Task 2 analysis pipeline review, all initial ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. Ratings of ‘(5) Incomplete or missing analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(5) Incomplete or missing analysis"))`) were also revised. Many of these ratings were made simply because the re-analysts’ Task 1 submission also satisfied the requirements of Task 2 (i.e., the paper-specific instructions given in Task 2 had already been adhered to in Task 1), and as a result, no further analysis was needed. For each case, the panel verified that the analyst had reported their test statistic appropriately in the Task 2 survey response and that their analysis files had been uploaded to the OSF as requested. 
-
-Finally, no changes were made to initial ratings following the review of code mismatches. In the cases where evaluators reported ‘(4) I executed it and found mismatches’ (n = `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)`), the panel verified that the mismatches did not have a meaningful impact on the re-analyst’s reported conclusion, categorisation, or effect size.
-The issues raised by the peer evaluators and the decisions of the expert panel are documented in full in the ‘Peer Evaluation: Review and Decisions’ supplement. This document also contains the panel’s reasoning in each case.
-
-### Resulting actions
-
-Re-analyses: Rejected re-analyses were excluded from overall data analyses. Those re-analysts with no accepted analyses were not co-authors on the resulting publication unless they earned it by completing peer evaluations.
-
-## Analysis methods
-### Marginal Effect sizes
-
-The generalised Marginal Effects (gMEs) were calculated as specified by definition 3 of Kümpel and Hoffmann (2022). Specifically, the calculation of means was based on the empirical distribution of the data each analyst used to fit a given model or compute a test statistic. The standardised gME values were obtained by dividing each gME point estimate by the standard deviation of the target variable. To facilitate this calculation, it was necessary to replicate the analysis code of each analyst and extract the data after preprocessing as well as draws from the posterior distribution or, alternatively, point estimates and variance-covariance matrices (for details see Kümpel & Hoffmann, 2022). Where applicable, precisely in a single instance, t-test analyses were redone by fitting a simple linear regression model, i.e., a linear regression with a single independent variable.
-
-## Project timeline
-The main milestones of the project were
-
-* Start of the project Feb 10, 2021
-* Recruitment of expert panel Feb 24, 2021
-* Start of re-analyst recruitment Jan 21, 2022
-* Start of re-analyses Nov 19, 2022
-* Completion of the project Oct 22, 2024
-
----
-
-## Additional analysis for revision
+In the following, we explore the robustness of the statistical results separated by whether the re-analyst used the same or different analysis method as the original study, displayed separately for experimental and observational designs.
 
 ```{r, include=FALSE}
 # Number of papers for which the original type of statistic is missing
@@ -1216,8 +1096,6 @@ same_test_family_design <-
   count(match) |> 
   add_percentage(n)
 ```
-
-In an additional analysis for Task 2, we categorised whether the re-analysis used the same type of statistical test family as the original analysis. Out of the `r nrow(same_test_family)` available analyses, `r dplyr::filter(same_test_family_summary, match == "Match") |> pull(percentage) |> round(0)`% used the same type of test as the original paper. This percentage was slightly higher for experimental designs  (`r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "experimental") |> pull(percentage) |> round(0)`%, `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "experimental") |> pull(n)` out of `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "experimental") |> pull(N)`) than for observational studies (`r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "observational") |> pull(percentage) |> round(0)`%, `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "observational") |> pull(n)` out of `r dplyr::filter(same_test_family_design, match == "Match" & experimental_or_observational == "observational") |> pull(N)`). See Tables S5 and S6, which show the number and percentage of matching analyses by study design type, as well as their relationship to the robustness of the re-analysis effect sizes.
 
 __Table S5. \| The Number and Percentage of Matching Analyses by Study Design Type__
 
@@ -1339,9 +1217,11 @@ conclusions_discipline_match_data <-
   calculate_conclusion(grouping_var = field_match)
 ```
 
+## Robustness of the statistical results separated by matches and non-matches between the discipline of the re-analyst and the original study
+
 In an additional analysis, we matched the discipline of the original paper with the background of the re-analysts. For `r academic_field_match_data |> nrow()` re-analyses (from the fields of economics, political science, psychology, and sociology) where we could unambiguously pair the discipline of the study and the analysts’ background, we found a match in `r dplyr::filter(academic_field_match_summary, field_match == "Match") |> pull(percentage) |> round(0)`% of the cases. We recalculated the main results presented in the abstract for each group. We found that `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "Match" & is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysis effect sizes were within the .05 tolerance region for matching disciplines, while this value was `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(n)` out of `r dplyr::filter(analysis_level_tolerance_region, field_match == "No match" & is_within_region == "Within tolerance region") |> pull(N)`) for non-matching disciplines. For the matching disciplines, `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Same conclusion") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Same conclusion") |> pull(N)`) of the analyses reached the same conclusion, `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "No effect/inconclusive") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "No effect/inconclusive") |> pull(N)`) of the analyses were inconclusive, and `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Opposite effect") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "Match" & categorisation == "Opposite effect") |> pull(N)`) were in the opposite direction from the original claim. In the non-matching disciplines, `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Same conclusion") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Same conclusion") |> pull(N)`) of the analyses reached the same conclusion as the original study, `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "No effect/inconclusive") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive, and `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Opposite effect") |> pull(n)` out of `r dplyr::filter(conclusions_discipline_match_data, field_match == "No match" & categorisation == "Opposite effect") |> pull(N)`) drew the opposite conclusion. These results show very similar patterns for matching and non-matching disciplines, suggesting that the main results are not highly dependent on a match between a paper's field and an analyst's background. We present these results in Tables S7, S8, and S9. 
 
-__Table S7. \| ...__
+__Table S7. \| The Matches and Nonmatches Between the Discipline of the Re-analyst and the Original Study__
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Number and percentage of cases where the field of the analyst matches the field of the study
@@ -1364,7 +1244,7 @@ academic_field_match_summary |>
   )
 ```
 
-__Table S8. \| ...__
+__Table S8. \| The Robustness of the Conclusions by Matches and Nonmatches Between the Discipline of the Re-analyst and the Original Study__
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 analysis_level_tolerance_region |> 
@@ -1392,7 +1272,7 @@ analysis_level_tolerance_region |>
   )
 ```
 
-__Table S9. \| ...__
+__Table S9. \| The Robustness of the Statistical Results by Matches and Nonmatches Between the Discipline of the Re-analyst and the Original Study__
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 conclusions_discipline_match_data |> 
@@ -1426,88 +1306,20 @@ conclusions_discipline_match_plot <-
     with_labels = TRUE,
     y_lab = "Percentage of re-analyses",
     x_lab = "",
-    rev_limits = FALSE
+    rev_limits = FALSE,
+    coord_flip = FALSE
   ) + 
   theme(
     plot.margin = margin(t = 20, r = 10, b = 10, l = 10, unit = "pt"),
-    legend.text = element_text(size = 10),
-    axis.title.y = element_text(hjust = 1, size = 15),
-    axis.text = element_text(color = "black", size = 13)
+    legend.text = element_text(size = 24),
+    legend.title = element_text(size = 24),
+    axis.title.y = element_text(hjust = 0.5, size = 28, vjust = 0.5),
+    axis.title.x = element_text(size = 28),
+    axis.text = element_text(color = "black", size = 24),
+    axis.text.y = element_text(size = 24),
+    axis.text.x = element_text(size = 24)
     )
 ```
-
-```{r, include=FALSE}
-processed |> distinct(simplified_paper_id, .keep_all = T) |> count(reproduction_result_osf)
-```
-
-```{r, include=FALSE}
-reproducibility_data <-
-  processed |>
-  dplyr::mutate(
-    reproducibility = dplyr::case_when(
-      reproduction_result_osf %in% c(
-        "never attempted",
-        "not evaluated -- analysis code not provided",
-        "not evaluated -- code did not run",
-        "not reproduced",
-        "not evaluated -- dataset could not be opened",
-        "not evaluated -- not all variables are publicly available",
-        "not evaluated -- number of observations doesn't match paper and variables in code don't match dataset"
-      ) ~ "not reproduced",
-      TRUE ~ "reproduced"
-    )
-  )
-```
-
-```{r, include=FALSE}
-# Number of analysis for reproduced and not papers
-reproducibility_data |> 
-  dplyr::count(reproducibility)
-
-# Number of papers that are reproduced and not reproduced
-reproducibility_paper_summary <- reproducibility_data |>
-  dplyr::distinct(simplified_paper_id, .keep_all = T) |> 
-  dplyr::count(reproducibility)
-```
-
-```{r, include=FALSE}
-# Calculate the main results from the abstract for reproduced and not reproduced papers
-reproduced_abstract_res <- reproducibility_data |> 
-  dplyr::filter(reproducibility == "reproduced") |> 
-  calculate_abstract_res()
-
-not_reproduced_abstract_res <-reproducibility_data |> 
-  dplyr::filter(reproducibility == "not reproduced") |> 
-  calculate_abstract_res()
-```
-
-For `r dplyr::filter(reproducibility_paper_summary, reproducibility == "reproduced") |> pull(n)` out of the 100 studies, the COS team could reproduce the original results. For the `r dplyr::filter(reproducibility_paper_summary, reproducibility == "reproduced") |> pull(n)` papers where the original analysis could be reproduced, `r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the present re-analyses yielded the same results (within a tolerance region of +/- 0.05 Cohen’s d). Regarding the conclusions drawn, `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of the re-analyses arrived at the same conclusion,  `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive, and `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`) of the re-analyses arrived at the opposite conclusion as the original study. For the `r dplyr::filter(reproducibility_paper_summary, reproducibility == "not reproduced") |> pull(n)` studies where the original results were not reproducible, `r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the re-analyses yielded the same result within a tolerance region of +/- 0.05 Cohen’s d. `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of the re-analyses arrived at the same conclusion, and `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive. No re-analysts arrived at the opposite conclusion as the original study.
-Please note that those categorised as ‘not being computationally reproduced’ when added to the sample showed only minor differences in the output.
-Further note: ‘not being computationally reproduced’ covers cases such as the validation failed due to technical limitations, or the analysis code was not provided.
-
-```{r, include=FALSE}
-# processed |> 
-#   dplyr::select(reanalysis_cohens_d)
-
-# Excluding extreme outliers larger than 3 or smaller than -3 Cohen's d from the re-analysis effect sizes
-outlier_data <- 
-  processed |> 
-  dplyr::filter(
-    !is.na(reanalysis_cohens_d),
-    reanalysis_cohens_d <= 3,
-    reanalysis_cohens_d >= -3
-  )
-
-# Number of reanalysis remaining
-nrow(outlier_data)
-processed |> dplyr::filter(!is.na(reanalysis_cohens_d)) |> nrow()
-
-# Calculate the main results from the abstract
-## No conclusion result
-outlier_res <- calculate_abstract_res(outlier_data)
-```
-
-Without any extreme outliers (Cohen’s d >= 3 and <= -3), we have `r processed |> dplyr::filter(!is.na(reanalysis_cohens_d)) |> nrow()` re-analysis effect sizes. `r outlier_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% of the re-analysis effect sizes are within a tolerance region (+/- 0.05 Cohen’s d), which is almost the same as our overall finding. Although we report these results here, we found the analyses of d > |3| valid and saw no reason to drop these analyses from the study.
 
 ```{r, include=FALSE}
 # Figure just for the response letter
@@ -1545,99 +1357,13 @@ effec_size_corr_plot_data_zoomed <-
 ```
 
 ```{r, include=FALSE}
-# Based on: https://github.com/CenterForOpenScience/rpp
-colors <- c("Original" = "#440154FF",
-            "Replication" = "#FDE725FF")
-
-# Fit the linear model
-lm_fit <-
-  lm(effect_size ~ original_cohens_d, data = effec_size_corr_plot_data_zoomed)
-
-# Extract slope
-beta <- coef(lm_fit)[2]
-
-# Calculate the breaks based on the supplied limits
-x_breaks <- seq(from = 0, to = 1, by = 0.5)
-
-y_breaks <- seq(from = -1, to = 1, by = 0.5)
-
-# Create the scatter plot
-scatter <-
-  effec_size_corr_plot_data_zoomed |>
-  ggplot(aes(
-    x = original_cohens_d,
-    y = effect_size
-  )) +
-  geom_point(
-    aes(fill = direction_of_result),
-    shape = 21,
-    color = "Grey30",
-    alpha = 0.8
-  ) +
-  scale_fill_viridis_d(option = "D") +
-  geom_smooth(
-    method = "lm",
-    se = FALSE,
-    color = "black",
-    alpha = 0.2
-  ) +
-  annotate(
-    "text",
-    x = 0.97,
-    y =  0.8,
-    label = bquote(italic(beta) == .(round(beta, 2))),
-    size = 4,
-    color = "black"
-  ) +
-  geom_rug(
-    aes(color = "Original"),
-    size = 1,
-    sides = "b",
-    alpha = .6,
-    show.legend = FALSE
-  ) +
-  geom_rug(
-    aes(color = "Replication"),
-    size = 1,
-    sides = "l",
-    alpha = .6,
-    show.legend = FALSE
-  ) +
-  scale_color_manual(values = colors) +
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  geom_abline(intercept = 0,
-              slope = 1,
-              color = "Grey60") +
-  scale_x_continuous(limits = c(0, 1),
-                     breaks = x_breaks) +
-  scale_y_continuous(limits = c(-1, 1),
-                     breaks = y_breaks) +
-  labs(
-    x = expression("Original effect size in Cohen's " * italic("d")),
-    y = expression("Re-analysis effect size in Cohen's " * italic("d")),
-    fill = "Conclusion"
-  ) +
-  theme(
-    panel.background = element_blank(),
-    panel.grid = element_blank(),
-    axis.line = element_line(color = "black"),
-    legend.position = "bottom",
-    legend.direction = "horizontal",
-    legend.box = "horizontal",
-    legend.title = element_blank(),  # now works
-    legend.text = element_text(size = 14),
-    # legend.key.size = unit(1.5, "lines"),
-    axis.title = element_text(size = 22),
-    axis.text = element_text(size = 20)
-  )
-
-# Add density plots on the axes
-no_extreme_effec_size_corr_plot <- ggExtra::ggMarginal(
-  scatter,
-  type = "density",
-  margins = "both",
-  xparams = list(fill = colors["Original"], alpha = 0.5),
-  yparams = list(fill = colors["Replication"], alpha = 0.5)
+no_extreme_effec_size_corr_plot <- plot_effect_size_correlation(
+  data = effec_size_corr_plot_data_zoomed,
+  x_limits = c(0, 1),
+  y_limits = c(-1, 1),
+  annotate_positions = c(0.97, 0.8),
+  fill_var = "direction_of_result",
+  show_legend = TRUE
 )
 
 ggplot2::ggsave(
@@ -1696,7 +1422,9 @@ max(heterogeneity_data$heterogeneity_ratio)
 heterogeneity_iqr <-IQR(heterogeneity_data$heterogeneity_ratio)
 ```
 
-To calculate the heterogeneity ratio for the re-analysed studies, we divided the standard deviation across effect size estimates in Cohen’s d (as a proxy of between-analysis variability) by the mean standard error of the estimates in the same units (as a proxy of the sampling variation) using the method suggested by Huntington-Klein et al. (2021) (also see Holzmeister et al., 2024). For the calculation, the results of `r heterogeneity_n` re-analyses were applicable. The median heterogeneity ratio across all papers was `r heterogeneity_median |> round(2)` (IQR = `r heterogeneity_iqr |> round(2)`), which indicates that, on average, the variability due to analytical heterogeneity is about twice as large as the sampling variation. Since this calculation was not planned in the study, the required statistical input values can greatly reflect the re-analysts’ reporting preferences. For example, degrees of freedom (a component of the calculation) can be reported either nominally or reflecting the clustered nature of the model, therefore seriously reduced, by that strongly influencing the output of the calculations. In short, we find this result believable and interesting, but not accurate enough to be discussed in the manuscript.
+To calculate the relation between the variability over the re-analyses and the sampling variability of the original study effect size estimates, the heterogeneity ratio, we divided the standard deviation across effect size estimates in Cohen’s *d* (as a proxy of between-analysis variability) by the mean standard error of the estimates in the same units (as a proxy of the sampling variation) using the method suggested by Huntington-Klein et al. (2021) (also see Holzmeister et al., 2024). For the calculation, the results of `r heterogeneity_n` re-analyses were applicable. The median heterogeneity ratio across all papers was `r heterogeneity_median |> round(2)` (IQR = `r heterogeneity_iqr |> round(2)`) which indicates that, on average, the variability due to analytical heterogeneity is about twice as large as the sampling variation. The distribution of the heterogeneity ratios is shown in Fig. S5b.
+
+This calculation was not planned in advance, and the required statistical input values can greatly reflect the re-analysts’ reporting preferences. Therefore, we regard these results as rough estimates and do not discuss them in the manuscript.
 
 Holzmeister, F. et al. Heterogeneity in effect size estimates. Proceedings of the National Academy of Sciences. 121, e2403490121 (2024).
 
@@ -1712,19 +1440,102 @@ heterogeneity_distribution_plot <-
                 x = "") +
   ggplot2::scale_y_continuous(trans = "log10",
                               breaks = c(1, 10, 100, 1000),
-                              labels = scales::comma) +
+                              labels = scales::comma,
+                              position = "left") +
   ggplot2::theme(
     panel.background = ggplot2::element_blank(),
     panel.grid = ggplot2::element_blank(),
     axis.line = ggplot2::element_line(),
     axis.text.x = element_blank(),
     axis.ticks.x = ggplot2::element_blank(),
+    axis.title.y = element_text(size = 28, hjust = 0.5, vjust = 0.5),
+    axis.title.x = element_text(size = 28),
+    axis.text.y = element_text(size = 24),
+    legend.text = element_text(size = 24),
+    legend.title = element_text(size = 24)
   )
 
 ggplot2::ggsave(here::here("figures/supplement/heterogeneity_distribution_plot.jpg"), heterogeneity_distribution_plot, height = 4, dpi = 300)
 ```
 
-__Figure SXXX. \| ...__
+## Robustness results only when the original results were analytically reproduced
+
+```{r, include=FALSE}
+processed |> distinct(simplified_paper_id, .keep_all = T) |> count(reproduction_result_osf)
+```
+
+```{r, include=FALSE}
+reproducibility_data <-
+  processed |>
+  dplyr::mutate(
+    reproducibility = dplyr::case_when(
+      reproduction_result_osf %in% c(
+        "never attempted",
+        "not evaluated -- analysis code not provided",
+        "not evaluated -- code did not run",
+        "not reproduced",
+        "not evaluated -- dataset could not be opened",
+        "not evaluated -- not all variables are publicly available",
+        "not evaluated -- number of observations doesn't match paper and variables in code don't match dataset"
+      ) ~ "not reproduced",
+      TRUE ~ "reproduced"
+    )
+  )
+```
+
+```{r, include=FALSE}
+# Number of analysis for reproduced and not papers
+reproducibility_data |> 
+  dplyr::count(reproducibility)
+
+# Number of papers that are reproduced and not reproduced
+reproducibility_paper_summary <- reproducibility_data |>
+  dplyr::distinct(simplified_paper_id, .keep_all = T) |> 
+  dplyr::count(reproducibility)
+```
+
+```{r, include=FALSE}
+# Calculate the main results from the abstract for reproduced and not reproduced papers
+reproduced_abstract_res <- reproducibility_data |> 
+  dplyr::filter(reproducibility == "reproduced") |> 
+  calculate_abstract_res()
+
+not_reproduced_abstract_res <-reproducibility_data |> 
+  dplyr::filter(reproducibility == "not reproduced") |> 
+  calculate_abstract_res()
+```
+
+For `r dplyr::filter(reproducibility_paper_summary, reproducibility == "reproduced") |> pull(n)` out of the 100 studies, the COS team could reproduce the original results. For the `r dplyr::filter(reproducibility_paper_summary, reproducibility == "reproduced") |> pull(n)` papers where the original analysis could be reproduced, `r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the present re-analyses yielded the same results (within a tolerance region of +/- 0.05 Cohen’s d). Regarding the conclusions drawn, `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of the re-analyses arrived at the same conclusion,  `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive, and `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`) of the re-analyses arrived at the opposite conclusion as the original study. For the `r dplyr::filter(reproducibility_paper_summary, reproducibility == "not reproduced") |> pull(n)` studies where the original results were not reproducible, `r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the re-analyses yielded the same result within a tolerance region of +/- 0.05 Cohen’s d. `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of the re-analyses arrived at the same conclusion, and `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r not_reproduced_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) were inconclusive. No re-analysts arrived at the opposite conclusion as the original study.
+
+Please note that those studies categorised as ‘not being computationally reproduced’ when added to the sample showed only minor differences in the output. Further, ‘not being computationally reproduced’ covers cases such as the validation failing due to technical limitations, or the analysis code not being available.
+
+## Robustness results without outlier effect sizes
+
+```{r, include=FALSE}
+# processed |> 
+#   dplyr::select(reanalysis_cohens_d)
+
+# Excluding extreme outliers larger than 3 or smaller than -3 Cohen's d from the re-analysis effect sizes
+outlier_data <- 
+  processed |> 
+  dplyr::filter(
+    !is.na(reanalysis_cohens_d),
+    reanalysis_cohens_d <= 3,
+    reanalysis_cohens_d >= -3
+  )
+
+# Number of reanalysis remaining
+nrow(outlier_data)
+processed |> dplyr::filter(!is.na(reanalysis_cohens_d)) |> nrow()
+
+# Calculate the main results from the abstract
+## No conclusion result
+outlier_res <- calculate_abstract_res(outlier_data)
+```
+
+Without any outliers (Cohen’s *d* >= 3 and <= -3), we have `r processed |> dplyr::filter(!is.na(reanalysis_cohens_d)) |> nrow()` re-analysis effect sizes. `r outlier_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% of the re-analysis effect sizes are within a tolerance region (+/- 0.05 Cohen’s *d*), which is almost the same as our overall finding. Although we report these results here, we found the analyses of d > |3| valid and saw no reason to drop these analyses from the study.
+
+## Robustness results only for studies with openly available data
 
 ```{r, include=FALSE}
 ### Open data availability
@@ -1750,15 +1561,118 @@ no_open_data_abstract_res <- open_data_cleaned |>
   calculate_abstract_res()
 ```
 
-Upon the reviewer's interest, we checked each study to determine whether it had open data. It is worth noting that data openness is a spectrum. We encountered several instances where data were technically open but still unavailable due to expired links, closed-access articles, defunct pages, etc. We settled on an operationalization where only a few clicks should be enough to get the data. Otherwise, we labeled the data as closed access. Out of the 100 studies, `r count(open_data, available_data) |> dplyr::filter(available_data) |> pull(n)` had available data upon further examination, and `r count(open_data, available_data) |> dplyr::filter(!available_data) |> pull(n)` did not. Where the original data were available, `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysts arrived at the same result as the original study (within a tolerance region of +/- 0.05 Cohen’s d). In contrast, this value was `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) for those papers for which we could not easily locate the original data. Regarding the conclusions drawn, where the data were available, `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of analyses were reported to arrive at the same conclusion as in the original investigation; `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) came to no effects/inconclusive result, and `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`) to the opposite effect as in the original investigation. These values were `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (same; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`), `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (inconclusive; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`), and `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (opposite; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`), where the data were not available.
+We checked each study to determine whether it had open data. It is worth noting that data openness is a spectrum. We encountered several instances where data were technically open but still unavailable due to expired links, closed-access articles, defunct pages, etc. We settled on an operationalization where only a few clicks should be enough to get the data. Otherwise, we labeled the data as closed access. Out of the 100 studies, `r count(open_data, available_data) |> dplyr::filter(available_data) |> pull(n)` had available data upon further examination, and `r count(open_data, available_data) |> dplyr::filter(!available_data) |> pull(n)` did not. Where the original data were available, `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) of the re-analysts arrived at the same result as the original study (within a tolerance region of +/- 0.05 Cohen’s d). In contrast, this value was `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(percentage) |> round(0)`% (`r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_within_tolerance_region_5 |> dplyr::filter(is_within_region == "Within tolerance region") |> pull(N)`) for those papers for which we could not easily locate the original data. Regarding the conclusions drawn, where the data were available, `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`) of analyses were reported to arrive at the same conclusion as in the original investigation; `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`) came to no effects/inconclusive result, and `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (`r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`) to the opposite effect as in the original investigation. These values were `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(percentage) |> round(0)`% (same; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Same conclusion") |> pull(N)`), `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(percentage) |> round(0)`% (inconclusive; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "No effect/inconclusive") |> pull(N)`), and `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(percentage) |> round(0)`% (opposite; `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(n)` out of `r no_open_data_abstract_res$analysis_level_conclusion |> dplyr::filter(categorisation == "Opposite effect") |> pull(N)`), where the data were not available.
 
 ```{r generating additional analysis panel, echo=FALSE, warning=FALSE, message=FALSE}
 # Define the remaining plots section
 additional_analysis_panel <-
   (conclusions_discipline_match_plot | heterogeneity_distribution_plot) +
   plot_layout(ncol = 1, nrow = 2) +
-  plot_annotation(tag_levels = 'a')
+  plot_annotation(tag_levels = 'a') &
+  theme(plot.tag = element_text(size = 24, face = "bold"))
 
 ggsave(here::here("figures/supplement/additional-analysis_panel.jpg"), additional_analysis_panel, width = 10, height = 15, dpi = 300)
 ```
 
+# Additional Details of Methods
+## Re-analyst recruitment
+
+Our preregistered aim was to have at least five independent re-analyses carried out for each of the 100 selected studies (Fig. S16). Our choice of 5 analyses per study was led by practical considerations, as we judged that recruiting 500 analysts for a project is the limit of our capacity.
+Participation in the project was advertised on social media, at conferences, in mailing lists (e.g., SCORE collaborator list), via personal networks, and in research newsletters. As a response to our recruitment call, 1141 researchers signed up to participate in our study. Out of these volunteers, 459 signed up to analyse at least one dataset and submitted their work by the deadline or an extended deadline.
+
+## Project contributors
+
+_Lead team:_ The project was coordinated by a lead team (consisting of Balazs Aczel, Barnabas Szaszi, Harry Clelland, Livia Kosa, Zoltan Torma, Felix Holzmeister, Marton Kovacs, and Gustav Nilsonne). The lead team was responsible for the development of the research methodology, preregistration of the project, overall analysis of the results, and preparation of a manuscript for publication. Furthermore, the lead team provided the materials to re-analysts and peer evaluators; and communicated with the project management team, the expert panel, re-analysts, and peer evaluators to ensure that the project proceeded as intended.
+_Project management team:_ The project management team consisted of the SCORE team of the Center for Open Science and recruited research assistants. The project management team provided financial support, oversaw the legal and ethical aspects of the project, provided the infrastructure and support for data management, and supported the use of materials adopted from other SCORE projects.
+_Expert panel:_ A group of experts who have previously conducted multi-analyst studies and/or are experts in relevant methodology were invited to participate in the project as members of an expert panel. The panel’s task was to oversee the research plan and remain available to comment on methodological questions throughout the project. The list of expert panel members is available at <https://osf.io/j3a9k>.
+_Re-analysts:_ Analysts who independently analysed the target datasets.
+_Peer evaluators:_ Peer evaluators were also re-analysts who were asked to evaluate the completed analyses.
+
+# Materials
+## Study and claim selection
+
+__Fig. S14 \| The sampling process of scientific claims.__
+
+After selecting 100 studies from our collection, we selected one empirical claim from each (see Method). We provided the re-analysts with the claims to test on the original datasets, but we did not give them specific research questions. Instead, we used the selected claims to focus the analysts on an underlying research question. We decided to follow this approach because the original papers rarely contained a fully specified research question, and we judged that any attempt to translate the extracted claims into research questions would carry the risk of influencing the analysts based on our own interpretation.
+
+## Peer evaluations
+### Peer evaluators
+
+When volunteering to be a re-analyst in the project, researchers could indicate whether they would be willing to serve as peer evaluators as well. They were informed that peer evaluators could become co-authors of the resulting article and that they would be remunerated for their efforts. Peer evaluators were asked to deliver five evaluations by a predefined due date and will be paid a flat fee of $10 per evaluation as an incentive to comply with the agreement. 8 peer evaluators evaluated more than 5 ( 6-10) analyses and were paid accordingly.
+
+We initially aimed to recruit at least two peer evaluations for each re-analysis. Therefore, our aim was to reach a total of 100 x 5 x 2 = 1,000 evaluations. In reality, this plan turned out to be overly ambitious due to the very labour-intensive coordination and assessment work. Therefore, after completing an initial 507 peer evaluations, we judged that our sample could provide us with a rough estimate of the potentially unacceptable analyses, and since we found this value relatively low (see Results), we ceased to continue with further peer evaluations. 
+
+### Peer Evaluation Procedure
+
+The peer evaluation procedure described below follows our preregistered protocol. Deviations are listed in the ‘Deviations from Preregistration’ document.
+
+In addition to completing a re-analysis, re-analysts who signed up for the Multi100 could opt in to serve as peer evaluators on the project. That is, the re-analyst who responded ‘Yes’ when asked, “Are you interested in serving as an evaluator for this project?” was later approached to serve as a peer evaluator. The role of a peer evaluator was to check the plausibility and legitimacy of an analysis based on a summary of the analysis submitted by the analyst. In order to successfully evaluate a given re-analysis, peer evaluators were provided with instructions and a summary of the re-analysts’ analysis (i.e., responses to their Task 1 and Task 2 post-analysis survey questions). A template of instructions is provided in the Figure below.
+
+_Peer evaluation task template sent out to all evaluators. Square brackets indicate variable information that is specific to the re-analysis being evaluated._
+
+## Main outputs of the peer evaluation
+
+```{r include=FALSE}
+count(peer_eval_not_reviewed, task1_pipeline_acceptable)
+count(peer_eval_not_reviewed, task1_conclusion_follows_results)
+count(peer_eval_not_reviewed, task1_categorisation_is_accurate)
+count(peer_eval_not_reviewed, task2_pipeline_acceptable)
+```
+
+Re-analyses were evaluated on five key metrics.
+
+First, peer evaluators judged whether the analysis pipeline of Task 1 was acceptable. That is, they judged whether it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Each re-analysis pipeline was rated as either (1) Unacceptable, (2) Acceptable but low quality, (3) Acceptable and medium quality, or (4) Acceptable and high quality. In cases where the analysis pipeline was deemed unacceptable, evaluators provided their reasoning via an open text box.
+
+Second, peer evaluators judged whether the conclusion provided in Task 1 adequately followed the results of the analysis. Each conclusion was rated as either (1) it adequately follows from the results of the analysis, or (2) it does not follow adequately from the results of the analysis. In cases where the conclusion was judged not to follow adequately from the results, evaluators provided their reasoning via an open text box.
+
+Third, peer evaluators judged whether the analyst’s categorisation of the Task 1 result was adequate. For example, regarding an analyst who has claimed that the results of their analysis show evidence in favour of the original effect/relationship, the evaluator considered whether this judgment is adequate. Each categorisation was rated as either (1) Adequate, or (2) Inadequate. Given that the analyst’s categorisation of the results is tied to their conclusion, there was no open text box provided for inadequate ratings.
+
+Fourth, peer evaluators judged whether the analysis pipeline of Task 2 was acceptable. That is, they judged whether it is within the variations that could be considered appropriate by the scientific community in addressing the underlying research question. Each re-analysis pipeline was rated as either (1) Unacceptable, (2) Acceptable but low quality, (3) Acceptable and medium quality, (4) Acceptable and high quality, or (5) Incomplete or missing analysis. In cases where the analysis pipeline was deemed unacceptable, evaluators provided their reasoning via an open text box.
+
+Finally, peer evaluators could optionally complete a code reproducibility check. They were asked whether any mismatches were found between the executed code and the reported results. For each analysis, the evaluator indicated either (1) I didn’t try to execute it, (2) I tried but didn’t manage to execute it, (3) I executed it and I found no mismatches, or (4) I executed it and I found mismatches. In cases where mismatches were found, evaluators described the nature of these mismatches via an open text box.
+
+Accordingly, the Task 1 analysis pipeline was rated as ‘Unacceptable’ in `r nrow(filter(peer_eval_not_reviewed, task1_pipeline_acceptable == "(1) Unacceptable"))` cases, the Task 1 conclusion was judged not to follow adequately from the results in `r nrow(filter(peer_eval_not_reviewed, task1_conclusion_follows_results == "(2) It does not follow adequately from the results of the analysis"))` cases, the Task 1 self-categorization of the result was rated as ‘inadequate’ in `r nrow(filter(peer_eval_not_reviewed, task1_categorisation_is_accurate == "(2) Inadequate"))` cases, the Task 2 analysis pipeline was rated as ‘unacceptable’ in `r nrow(filter(peer_eval_not_reviewed, task2_pipeline_acceptable == "(1) Unacceptable"))` cases, the Task 2 analysis pipeline was judged as ‘incomplete or missing’ in `r nrow(filter(peer_eval_not_reviewed, task2_pipeline_acceptable == "(5) Incomplete or missing analysis"))` cases, and the code reproducibility checks revealed `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)` mismatches.
+
+## Review of the peer evaluation reports
+
+To identify potential errors or misunderstandings in the peer evaluations, each issue raised (above) by a peer evaluator was reviewed by a member of the expert panel who considered the information provided by the peer evaluator and, where necessary, contrasted it with the information provided by the re-analyst. For each issue, the panel member reviewed the evaluators’ initial categorisation and their reasoning. Note that our aim in the project was to explore the sensitivity of analytical results to the analytical choices of the re-analysts. Hence, during the peer evaluation process, our goal was not to ensure that each analysis pipeline consisted of the ideal steps from every possible perspective but to ensure that the steps of the analyses fell within the variations that could be considered appropriate by the scientific community in addressing the given analytical task. For that reason, during the review of the peer evaluations, the expert panel member left the ratings of the peer evaluators ‘Unacceptable’ only if the analyst made one or more mistakes that could be objectively judged as incorrect. For all the other cases where the peer-evaluator categorised the analysis pipeline ‘Unacceptable’ based on non-objective reasoning (e.g., not adding control variables or controlling for another variable), the expert panel member adjusted the rating from ‘Unacceptable’ to ‘Acceptable but low quality’.
+
+As a consequence of the full peer evaluation review, one analysis was rejected. What follows is a summary of revisions made to peer evaluator’s initial ratings as an outcome of the peer evaluation review.
+
+```{r include=FALSE}
+# peer eval data before changing the responses based on the review but after excluding the one analysis
+peer_eval_after_exclusion <- 
+  peer_eval_not_reviewed |>
+  dplyr::filter(!(analyst_id == "NSDML" &
+                  paper_id == "PALER_AmPoliSciRev_2013_Pxp7"))
+# Number of task1_analysis_pipeline remaining unacceptable after the review of peer evaluations
+nrow(filter(peer_eval, task1_pipeline_acceptable == "(1) Unacceptable"))
+```
+
+Following the Task 1 analysis pipeline review, ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. Following the Task 1 conclusion review, ratings of ‘(2) It does not follow adequately from the results of the analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_conclusion_follows_results == "(2) It does not follow adequately from the results of the analysis"))`) were revised to ‘(1) It follows adequately from the results of the analysis’.
+
+Following the Task 1 categorization review, ratings of ‘(2) Inadequate’ (n = `r nrow(filter(peer_eval_after_exclusion, task1_categorisation_is_accurate == "(2) Inadequate"))`) were revised to ‘(1) Adequate’. In many cases, evaluators made their judgment of ‘inadequate’ on the basis of their Task 1 conclusion rating. Put simply, evaluators often considered the categorisation of results to be inadequate when they also judged that the conclusion does not follow from the results. It was often the case that verifying the legitimacy of the Task 1 conclusion also verified the legitimacy of the Task 1 categorisation. 
+
+Following the Task 2 analysis pipeline review, all initial ratings of ‘(1) Unacceptable’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(1) Unacceptable"))`) were revised to ‘(2) Acceptable but low quality’. Ratings of ‘(5) Incomplete or missing analysis’ (n = `r nrow(filter(peer_eval_after_exclusion, task2_pipeline_acceptable == "(5) Incomplete or missing analysis"))`) were also revised. Many of these ratings were made simply because the re-analysts’ Task 1 submission also satisfied the requirements of Task 2 (i.e., the paper-specific instructions given in Task 2 had already been adhered to in Task 1), and as a result, no further analysis was needed. For each case, the panel verified that the analyst had reported their test statistic appropriately in the Task 2 survey response and that their analysis files had been uploaded to the OSF as requested. 
+
+Finally, no changes were made to initial ratings following the review of code mismatches. In the cases where evaluators reported ‘(4) I executed it and found mismatches’ (*n* = `r filter(reproducibility_checks_data, any_code_mismatches == "(4) I executed it and I found mismatches") |> pull(n)`), the panel verified that the mismatches did not have a meaningful impact on the re-analyst’s reported conclusion, categorisation, or effect size.
+
+The issues raised by the peer evaluators and the decisions of the expert panel are documented in full in the ‘Peer Evaluation: Review and Decisions’ supplement. This document also contains the panel’s reasoning in each case.
+
+### Resulting actions
+
+Rejected re-analyses were excluded from the overall data analyses. Those re-analysts with no accepted analyses were not co-authors on the resulting publication unless they earned it by completing peer evaluations.
+
+## Analysis methods
+### Marginal Effect sizes
+
+The generalised Marginal Effects (gMEs) were calculated as specified by definition 3 of Kümpel and Hoffmann (2022). Specifically, the calculation of means was based on the empirical distribution of the data each analyst used to fit a given model or compute a test statistic. The standardised gME values were obtained by dividing each gME point estimate by the standard deviation of the target variable. To facilitate this calculation, it was necessary to replicate the analysis code of each analyst and extract the data after preprocessing, as well as draws from the posterior distribution or, alternatively, point estimates and variance-covariance matrices (for details see Kümpel & Hoffmann, 2022). Where applicable, precisely in a single instance, t-test analyses were redone by fitting a simple linear regression model, i.e., a linear regression with a single independent variable. 
+
+## Project timeline
+The main milestones of the project were
+
+* Start of the project Feb 10, 2021
+* Recruitment of expert panel Feb 24, 2021
+* Start of re-analyst recruitment Jan 21, 2022
+* Start of re-analyses Nov 19, 2022
+* Completion of the project Oct 22, 2024

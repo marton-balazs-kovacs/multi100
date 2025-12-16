@@ -25,6 +25,8 @@ source(here::here("R/utils.R"))
 ```{r}
 # demographic_information_raw data is not shared
 demographic_information_raw <- readr::read_csv(here::here("data/raw/multi100_demographic-information_raw_data.csv"))
+# read the processed data for filtering
+multi100_processed_data <- readr::read_csv(here::here("data/processed/multi100_processed_data.csv"))
 # 'all_people' data (to be used for checking that ID's match)
 all_people <- readr::read_csv(here::here("data/raw/multi100_all-people_raw_data.csv"))
 ```
@@ -57,29 +59,7 @@ demographic_information_raw <-
     )
 ```
 
-We are excluding the pilot responses. Analysts with analyst_id "8nJioy5V5B" and "z2u1wLLVu1" are test runs (pilot data).
-
-```{r}
-demographic_information_raw <-
-  demographic_information_raw |> 
-  filter(analyst_id %ni% c("8nJioy5V5B", "z2u1wLLVu1"))
-```
-
-Check how many analyses were submitted with '_2' ID's. Some analyst submitted multiple analyses. We assigned '_2' to the analyst_ids of these analyst for the second and possibly third analyses.
-
-```{r}
-demographic_information_multiple_analyses <- 
-  demographic_information_raw |> 
-  filter(str_detect(analyst_id, "_")) |> 
-  dplyr::select(analyst_id, paper_id) |> 
-  arrange(analyst_id) |> 
-  group_by(analyst_id) |> 
-  mutate(n = n())
-```
-
-There are no analysts who did more than 2 analysis.
-
-We are removing '_2' from the end of analyst_id's in both Task 1 and Task 2. They are not needed for further analysis because paper_id and analyst_id together can identify an analysis perfectly.
+We are removing '_2' from the end of analyst_id's. They are not needed for further analysis because paper_id and analyst_id together can identify an analysis perfectly.
 
 ```{r}
 demographic_information_raw <-
@@ -87,12 +67,64 @@ demographic_information_raw <-
   mutate(analyst_id = str_replace(analyst_id, "_2$", ""))
 ```
 
-Check whether each analyst_id matches with the ID they were assigned in the signup form ('all_people').
-Check if all analyst_id in task1 are present in all_people, if 'FALSE' then all ID's match.
+## Fixing mismatched analyst ids in demographic data
+
+Some analyst_ids are not unique to the person. We correct this error now before the exclusion based on the processed dataset.
 
 ```{r}
-any(!(demographic_information_raw$analyst_id %in% all_people$analyst_id)) 
+demographic_information_raw <-
+  demographic_information_raw %>%
+  mutate(analyst_id = case_when(
+    analyst_id == "MX02W" ~ "EZI7J",
+    analyst_id == "NFTMG" ~ "N8P2J",
+    TRUE ~ analyst_id
+  ))
 ```
+
+## Removing analyst based on the exclusion criteria we applied during data processing
+
+During the data processing (multi100_raw_processed.qmd) we excluded multiple analysis due to various reasons. Now, we will use the remaining analyst ids from the processed data file to filter the demographic dataset.
+
+Excluding analyst who failed the peer evaluation from the rest of the analysis.
+
+```{r}
+multi100_processed_data <-
+  multi100_processed_data |> 
+  dplyr::filter(peer_eval_pass & incomplete_response_pass)
+```
+
+```{r}
+demographic_information_raw <-
+  dplyr::semi_join(
+    demographic_information_raw,
+    dplyr::select(multi100_processed_data, analyst_id),
+    by = c("analyst_id")
+  )
+```
+
+Checking the number of unique analyst ids in the demographic data after filtering.
+
+```{r}
+dplyr::distinct(demographic_information_raw, analyst_id) |> nrow()
+```
+
+## Correcting paper_ids in the demographic data
+
+Correcting the erroneous paper_id's:
+* 'XAS95 Raley_JournMarFam_2012_D2LY' should be 'Raley_JournMarFam_2012_D2LY'
+* 'Rjp9' should be 'Jiang_AmJourPoliSci_2018_Rjp9'
+
+```{r}
+demographic_information_raw <-
+  demographic_information_raw |> 
+  mutate(paper_id = case_when(
+    paper_id == "XAS95 Raley_JournMarFam_2012_D2LY" ~ "Raley_JournMarFam_2012_D2LY",
+    paper_id == "Rjp9" ~ "Jiang_AmJourPoliSci_2018_Rjp9",
+    TRUE ~ paper_id
+  ))
+```
+
+## Removing duplicate responses
 
 Check for duplicate responses.
 
@@ -202,5 +234,5 @@ demographic_information <- demographic_information |>
 ## Save processed dataset
 
 ```{r}
-saveRDS(demographic_information, "data/processed/multi100_demographic-information_data.rds")
+saveRDS(demographic_information, here::here("data/processed/multi100_demographic-information_data.rds"))
 ```

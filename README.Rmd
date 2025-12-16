@@ -20,7 +20,7 @@ codes for the Multi 100 study.
 ## Folder structure
 
 The `data/` folder contains all the datafiles that are needed to
-reproduce the results of the project. The datafiles that contains
+reproduce the results of the project. The datafiles that contain
 personal information are not shared (e.g. source files with email
 addresses).
 
@@ -32,15 +32,24 @@ documents. Within this folder you can find the following files:
     from Google Forms as is) to the raw datafile (datafile with standard
     names). We also made sure that the raw datafiles do not contain any
     the email adresses of analysts and peer evaluators.
--   `multi100_raw_processed.Rmd` file contains the code that cleans the
+-   `multi100_raw_processed.qmd` file contains the code that cleans the
     dataset and transforms is into a tidy format ready for the analysis.
     We also merge the analyst responses for task 1 and task 2 into one
     datafile and store the peer evaluations in a separate file.
--   `multi100_analysis.Rmd` file contains the code for the figure
+-   `multi100_analysis.qmd` file contains the code for the figure
     creation and the analysis.
+-   `multi100_supplementary.qmd` file contains the code to calculate the
+    the results for the Supplementary materials.
+-   `multi100_studyids.qmd` file contains the code to generate the table
+    that maps the original paper IDs to the simplified paper ids used on
+    the figures.
+-   `multi100_demographic_processing.qmd` contains the code for making the
+    the demographic information of the re-analyst anonymized per their
+    request. Should be run after `multi100_raw_processed.qmd` finishes.
 
 The `figures/` folder contains all the figures that are created in the
-`multi100_analysis.Rmd` file.
+`multi100_analysis.Rmd` file. Note that the figures will not look exactly the
+same as in the final paper due to post-hoc editing.
 
 ## Reproducibility and Software Environment
 
